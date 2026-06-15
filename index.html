@@ -483,18 +483,31 @@ function parseSchoolRecordsHtml(html) {
   const doc = parser.parseFromString(html, 'text/html');
   const schools = [];
 
-  // Extract lines from a table cell. Google Docs published HTML wraps each
-  // entry in its own <p> tag inside the <td>. Some cells also use <br> tags
-  // or runs of 3+ spaces. We handle all three.
+  // Extract lines from a table cell. Google Docs published HTML can use:
+  // 1. Separate <p> tags per entry (most reliable)
+  // 2. <br> tags between entries
+  // 3. Multiple regular spaces or &nbsp; chains between entries (print-layout trick)
+  // 4. Unicode non-breaking spaces (\u00a0) between entries
   function cellLines(cell) {
-    // If the cell has <p> children, each <p> is one entry
-    const paras = cell.querySelectorAll('p');
+    // Clone so we don't mutate the DOM
+    const clone = cell.cloneNode(true);
+
+    // If multiple <p> children, each is one entry
+    const paras = Array.from(clone.querySelectorAll('p'));
     if (paras.length > 1) {
-      return Array.from(paras).map(p => p.textContent.trim()).filter(Boolean);
+      const lines = paras.map(p => p.textContent.replace(/\u00a0/g, ' ').trim()).filter(Boolean);
+      if (lines.length > 1) return lines;
     }
-    // Otherwise fall back to <br> or 3+ spaces
-    cell.querySelectorAll('br').forEach(br => br.replaceWith('|'));
-    return cell.textContent.split(/\||[ ]{3,}/).map(s => s.trim()).filter(Boolean);
+
+    // Replace <br> with pipe
+    clone.querySelectorAll('br').forEach(br => br.replaceWith('|'));
+
+    // Get full text, normalizing non-breaking spaces to regular spaces
+    const text = clone.textContent.replace(/\u00a0/g, ' ');
+
+    // Split on pipe (from <br>), or on 2+ spaces
+    const parts = text.split(/\||[ ]{2,}/).map(s => s.trim()).filter(Boolean);
+    return parts.length > 0 ? parts : [text.trim()].filter(Boolean);
   }
 
   doc.querySelectorAll('h1').forEach(h1 => {
