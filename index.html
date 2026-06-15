@@ -224,7 +224,8 @@
   .records-table th.center { text-align: center; }
   .records-table td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #f0f2f6; vertical-align: middle; }
   .records-table tr:last-child td { border-bottom: none; }
-  .records-table tbody tr:hover td { background: #f6f8fd; }
+  .records-table tbody tr:nth-child(even) td { background: #f8f9fc; }
+  .records-table tbody tr:hover td { background: #eef2ff; }
   .col-event { color: var(--text-muted); font-size: 12px; white-space: nowrap; width: 130px; }
   .col-name { font-weight: 600; color: var(--text); }
   .col-mark { font-family: var(--font-d); font-size: 15px; font-weight: 700; text-align: center; white-space: nowrap; }
@@ -281,7 +282,8 @@
     border-bottom: 1px solid #f0f2f6; vertical-align: middle;
   }
   .top25-table tr:last-child td { border-bottom: none; }
-  .top25-table tbody tr:hover td { background: #f6f8fd; }
+  .top25-table tbody tr:nth-child(even) td { background: #f8f9fc; }
+  .top25-table tbody tr:hover td { background: #eef2ff; }
   .rank-cell { color: var(--text-dim); font-family: var(--font-d); font-size: 11px; width: 26px; text-align: center; }
   .rank-cell.top3 { color: #b8860b; font-weight: 700; font-size: 13px; }
   .mark-cell { font-family: var(--font-d); font-size: 14px; font-weight: 700; white-space: nowrap; text-align: right; }
@@ -482,11 +484,17 @@ function parseSchoolRecordsHtml(html) {
   const doc = parser.parseFromString(html, 'text/html');
   const schools = [];
 
-  // Extract text from a cell, preserving <br> and runs of 3+ spaces as delimiters
+  // Extract lines from a table cell. Google Docs published HTML wraps each
+  // entry in its own <p> tag inside the <td>. Some cells also use <br> tags
+  // or runs of 3+ spaces. We handle all three.
   function cellLines(cell) {
-    // Replace <br> tags with a pipe delimiter before getting text
+    // If the cell has <p> children, each <p> is one entry
+    const paras = cell.querySelectorAll('p');
+    if (paras.length > 1) {
+      return Array.from(paras).map(p => p.textContent.trim()).filter(Boolean);
+    }
+    // Otherwise fall back to <br> or 3+ spaces
     cell.querySelectorAll('br').forEach(br => br.replaceWith('|'));
-    // Also split on runs of 3+ spaces (the doc's convention for multiple entries in one cell)
     return cell.textContent.split(/\||[ ]{3,}/).map(s => s.trim()).filter(Boolean);
   }
 
