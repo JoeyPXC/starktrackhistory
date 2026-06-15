@@ -482,11 +482,12 @@ function parseSchoolRecordsHtml(html) {
   const doc = parser.parseFromString(html, 'text/html');
   const schools = [];
 
-  // Extract text from a cell, preserving <br> as a delimiter
+  // Extract text from a cell, preserving <br> and runs of 3+ spaces as delimiters
   function cellLines(cell) {
     // Replace <br> tags with a pipe delimiter before getting text
     cell.querySelectorAll('br').forEach(br => br.replaceWith('|'));
-    return cell.textContent.split('|').map(s => s.trim()).filter(Boolean);
+    // Also split on runs of 3+ spaces (the doc's convention for multiple entries in one cell)
+    return cell.textContent.split(/\||[ ]{3,}/).map(s => s.trim()).filter(Boolean);
   }
 
   doc.querySelectorAll('h1').forEach(h1 => {
@@ -499,7 +500,7 @@ function parseSchoolRecordsHtml(html) {
       const cells = row.querySelectorAll('td');
       if (cells.length < 4) return;
       const event = cells[0].textContent.trim();
-      if (!event) return;
+      if (!event || event.toLowerCase() === 'event') return;
 
       // Each cell may have multiple lines (shared records)
       const boysNames  = cellLines(cells[1]);
