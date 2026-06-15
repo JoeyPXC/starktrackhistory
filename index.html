@@ -231,8 +231,8 @@
   .col-mark.boys { color: var(--blue); }
   .col-mark.girls { color: var(--red); }
   .col-year { color: var(--text-dim); font-size: 12px; text-align: center; white-space: nowrap; }
-  .perry-row td { background: #fffbf0 !important; }
-  .perry-row td:first-child { border-left: 3px solid var(--red); }
+  .school-highlight td { background: #fffbf0 !important; }
+  .school-highlight td:first-child { border-left: 3px solid var(--red); }
 
   /* ── Closed school badge ── */
   .closed-badge {
@@ -289,8 +289,8 @@
   .mark-cell.girls { color: var(--red); }
   .school-cell { color: var(--text-muted); font-size: 11px; }
   .year-cell { color: var(--text-dim); font-size: 11px; text-align: right; white-space: nowrap; }
-  .perry-highlight td { background: #fffbf0 !important; }
-  .perry-highlight td:first-child { border-left: 3px solid var(--red); }
+  .school-highlight td { background: #fffbf0 !important; }
+  .school-highlight td:first-child { border-left: 3px solid var(--red); }
 
   /* Loading */
   .loading-msg { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
@@ -397,6 +397,7 @@ let schoolRecordsData = null;
 let filterGender  = 'ALL';
 let filterSchool  = 'ALL';
 let filterEvent   = 'ALL';
+let highlightSchool = 'NONE';
 let searchQuery   = '';
 
 // ── Page switching ─────────────────────────────────────────────
@@ -432,16 +433,29 @@ function renderFilterBar() {
         value="${searchQuery}" oninput="setSearch(this.value)">`;
   } else {
     const events = TOP25_EVENTS.map(e=>e.label);
+    // Collect all unique schools from TOP25_DATA for the highlight dropdown
+    const allSchools = [...new Set(
+      Object.values(TOP25_DATA).flatMap(ev =>
+        [...(ev.boys||[]), ...(ev.girls||[])].map(r => r.school)
+      )
+    )].sort();
+
     bar.innerHTML = `
       <span class="filter-label">Gender</span>
       <div class="filter-group">${genderBtns}</div>
       <div class="filter-divider"></div>
       <span class="filter-label">Event</span>
-      <div class="filter-group" style="overflow-x:auto;max-width:500px;flex-wrap:nowrap;">
+      <div class="filter-group" style="overflow-x:auto;max-width:340px;flex-wrap:nowrap;">
         <button class="filter-btn ${filterEvent==='ALL'?'active':''}" onclick="setEvent('ALL')">All</button>
         ${events.map(e=>`<button class="filter-btn ${filterEvent===e?'active':''}"
           onclick="setEvent(${JSON.stringify(e)})">${e}</button>`).join('')}
       </div>
+      <div class="filter-divider"></div>
+      <span class="filter-label">Highlight</span>
+      <select class="filter-search" style="width:160px;" onchange="setHighlight(this.value)">
+        <option value="NONE" ${highlightSchool==='NONE'?'selected':''}>No highlight</option>
+        ${allSchools.map(s=>`<option value="${s}" ${highlightSchool===s?'selected':''}>${s}</option>`).join('')}
+      </select>
       <div class="filter-divider"></div>
       <input class="filter-search" type="text" placeholder="Search athlete…"
         value="${searchQuery}" oninput="setSearch(this.value)">`;
@@ -451,6 +465,7 @@ function renderFilterBar() {
 function setGender(g) { filterGender=g; renderFilterBar(); renderContent(); }
 function setSchool(s) { filterSchool=s; renderFilterBar(); renderContent(); }
 function setEvent(e)  { filterEvent=e;  renderFilterBar(); renderContent(); }
+function setHighlight(s) { highlightSchool=s; renderFilterBar(); renderContent(); }
 function setSearch(v) { searchQuery=v.toLowerCase(); renderContent(); }
 
 // ── School records fetch ───────────────────────────────────────
@@ -553,7 +568,7 @@ function renderSchoolCard(school) {
       const mark = e[markKey];
       if (!mark || mark === '--') return '';
       const isPerry = e[nameKey].toLowerCase().includes(searchQuery) && searchQuery;
-      return `<tr class="${isPerry?'perry-row':''}">
+      return `<tr class="${isPerry?'school-highlight':''}">
         <td class="col-event">${e.event}</td>
         <td class="col-name">${e[nameKey]}</td>
         <td class="col-mark ${markClass}">${mark}</td>
@@ -602,9 +617,8 @@ function renderTop25(container) {
     const fG = q ? girlsData.filter(r=>r.name.toLowerCase().includes(q)||r.school.toLowerCase().includes(q)) : girlsData;
 
     const mkRow = (r, g) => {
-      const isPerry = r.school === 'Perry';
+      const isHL = highlightSchool !== 'NONE' && r.school === highlightSchool;
       const isRelay = evt.label.startsWith('4x');
-      // For relays, stack names 2-per-line for readability
       let nameHtml;
       if (isRelay) {
         const names = r.name.split(',').map(n => n.trim()).filter(Boolean);
@@ -614,11 +628,11 @@ function renderTop25(container) {
         }
         nameHtml = lines.map(l => `<span style="display:block;line-height:1.5;font-size:11.5px;">${l}</span>`).join('');
       } else {
-        nameHtml = `<span style="font-size:12.5px;font-weight:${isPerry?'700':'400'}">${r.name}</span>`;
+        nameHtml = `<span style="font-size:12.5px;font-weight:${isHL?'700':'400'}">${r.name}</span>`;
       }
-      return `<tr class="${isPerry?'perry-highlight':''}">
+      return `<tr class="${isHL?'school-highlight':''}">
         <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
-        <td style="font-weight:${isPerry?'700':'400'}">${nameHtml}</td>
+        <td style="font-weight:${isHL?'700':'400'}">${nameHtml}</td>
         <td class="school-cell">${r.school}</td>
         <td class="mark-cell ${g}">${r.mark}</td>
         <td class="year-cell">${r.year}</td>
