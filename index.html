@@ -435,7 +435,7 @@ function renderFilterBar() {
         value="${searchQuery}" oninput="setSearch(this.value)">`;
   } else {
     const events = TOP25_EVENTS.map(e=>e.label);
-    // Collect all unique schools from TOP25_DATA for the highlight dropdown
+    // Collect all unique normalized schools from TOP25_DATA
     const allSchools = [...new Set(
       Object.values(TOP25_DATA).flatMap(ev =>
         [...(ev.boys||[]), ...(ev.girls||[])].map(r => r.school)
@@ -447,11 +447,10 @@ function renderFilterBar() {
       <div class="filter-group">${genderBtns}</div>
       <div class="filter-divider"></div>
       <span class="filter-label">Event</span>
-      <div class="filter-group" style="overflow-x:auto;max-width:340px;flex-wrap:nowrap;">
-        <button class="filter-btn ${filterEvent==='ALL'?'active':''}" onclick="setEvent('ALL')">All</button>
-        ${events.map(e=>`<button class="filter-btn ${filterEvent===e?'active':''}"
-          onclick="setEvent(${JSON.stringify(e)})">${e}</button>`).join('')}
-      </div>
+      <select class="filter-search" style="width:140px;" onchange="setEvent(this.value)">
+        <option value="ALL" ${filterEvent==='ALL'?'selected':''}>All Events</option>
+        ${events.map(e=>`<option value="${e}" ${filterEvent===e?'selected':''}>${e}</option>`).join('')}
+      </select>
       <div class="filter-divider"></div>
       <span class="filter-label">Highlight</span>
       <select class="filter-search" style="width:160px;" onchange="setHighlight(this.value)">
@@ -650,7 +649,10 @@ function renderTop25(container) {
     const fG = q ? girlsData.filter(r=>r.name.toLowerCase().includes(q)||r.school.toLowerCase().includes(q)) : girlsData;
 
     const mkRow = (r, g) => {
-      const isHL = highlightSchool !== 'NONE' && r.school === highlightSchool;
+      // Normalize school name for highlight matching
+      let school = r.school;
+      if (/glenwood/i.test(school) || school === 'Glenoak') school = 'GlenOak';
+      const isHL = highlightSchool !== 'NONE' && school === highlightSchool;
       const isRelay = evt.label.startsWith('4x');
       let nameHtml;
       if (isRelay) {
@@ -666,7 +668,7 @@ function renderTop25(container) {
       return `<tr class="${isHL?'school-highlight':''}">
         <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
         <td style="font-weight:${isHL?'700':'400'}">${nameHtml}</td>
-        <td class="school-cell">${r.school}</td>
+        <td class="school-cell">${school}</td>
         <td class="mark-cell ${g}">${r.mark}</td>
         <td class="year-cell">${r.year}</td>
       </tr>`;
@@ -855,7 +857,7 @@ const TOP25_DATA = {
       {rank:14, name:"Pierlus Stewart", school:"GlenOak", mark:"48.73", year:2017},
       {rank:15, name:"Matt Shem", school:"Massillon Washington", mark:"48.76", year:2001},
       {rank:16, name:"Brandon Smith", school:"Perry", mark:"48.6 h", year:1998},
-      {rank:16, name:"Derrick Williams", school:"Glenoak", mark:"48.6 h", year:2001},
+      {rank:16, name:"Derrick Williams", school:"GlenOak", mark:"48.6 h", year:2001},
       {rank:18, name:"Colin Ruffin", school:"Canton McKinley", mark:"48.87", year:2022},
       {rank:19, name:"Joshua Watts", school:"Canton Timken", mark:"48.89", year:2010},
       {rank:20, name:"Marzett Hawkins", school:"Alliance", mark:"48.90", year:1985},
@@ -1237,7 +1239,7 @@ const TOP25_DATA = {
   "Shot Put": {
     boys: [
       {rank:1, name:"Dan Minocchi", school:"Cantral Catholic", mark:"61' 9.75\"", year:2000},
-      {rank:2, name:"Dan Dierdorf", school:"GlenOak (Glenwood)", mark:"60' 8\"", year:1967},
+      {rank:2, name:"Dan Dierdorf", school:"GlenOak", mark:"60' 8\"", year:1967},
       {rank:3, name:"Marc Anderson", school:"Alliance", mark:"59' 11.75\"", year:1990},
       {rank:4, name:"Homer Miller", school:"Alliance", mark:"59' 11\"", year:1976},
       {rank:5, name:"Rick Schlabach", school:"Lake", mark:"59' 2\"", year:1975},
@@ -1435,7 +1437,7 @@ const TOP25_DATA = {
       {rank:25, name:"Jason Calkins/*Luke Sommer", school:"Sandy Valley", mark:"6' 7\"", year:"95/14"},
       {rank:25, name:"Ben Bartolone/*Jimmy Huggett", school:"Central Catholic", mark:"6' 7\"", year:"96/05"},
       {rank:25, name:"Brian Hartline/Larry Gavin/JT Hampton", school:"GlenOak", mark:"6' 7\"", year:"03/04/16"},
-      {rank:25, name:"Zaybreyon Perry/Von McGuire", school:"McKinley/Massillon", mark:"6' 7\"", year:"15/05"},
+      {rank:25, name:"Zaybreyon Perry/Von McGuire", school:"Canton McKinley", mark:"6' 7\"", year:"15/05"},
       {rank:25, name:"Chris Hendrix", school:"Fairless", mark:"6' 7\"", year:1992},
     ],
     girls: [
@@ -1464,12 +1466,12 @@ const TOP25_DATA = {
       {rank:23, name:"Alanna Dreussi", school:"GlenOak", mark:"5' 5.5\"", year:2001},
       {rank:24, name:"DuAnn Beisel", school:"Louisville", mark:"5' 5\"", year:1979},
       {rank:24, name:"Rochelle Moser/Julie Worley", school:"Hoover", mark:"5' 5\"", year:"79/13"},
-      {rank:24, name:"Erica Loutzenhiser/Tiera Thomas", school:"Canton South/Alliance", mark:"5' 5\"", year:"80/93"},
+      {rank:24, name:"Erica Loutzenhiser/Tiera Thomas", school:"Canton South", mark:"5' 5\"", year:"80/93"},
       {rank:24, name:"Karen Freeman/Angie Bonner", school:"Canton Timken", mark:"5' 5\"", year:"84/86"},
       {rank:24, name:"Elaine Russell/*Katie Nixdorf", school:"Central Catholic", mark:"5' 5\"", year:"85/12"},
       {rank:24, name:"Felicia Prowell/Julie Schaller", school:"Massillon Washington", mark:"5' 5\"", year:"89/99"},
       {rank:24, name:"Carley Pavlick/Sarah Frank", school:"St. Thomas/Marlington", mark:"5' 5\"", year:"2023-04-04 00:00:00"},
-      {rank:24, name:"Richelle Teeling/Deleaun Dabney", school:"Northwest/Canton McKinley", mark:"5' 5\"", year:"05/23"},
+      {rank:24, name:"Richelle Teeling/Deleaun Dabney", school:"Northwest", mark:"5' 5\"", year:"05/23"},
     ],
   },
   "4x800": {
