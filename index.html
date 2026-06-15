@@ -1,1 +1,1285 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jim Craig Stark County Track & Field Championships</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131f;
+    --card: #1c1c2e;
+    --card-border: #2a2a3e;
+    --red: #d62828;
+    --red-dim: #8b1a1a;
+    --blue: #1a56db;
+    --blue-dim: #0f3282;
+    --white: #f0f0f0;
+    --muted: #888;
+    --dimmer: #555;
+    --gold: #c9a227;
+    --font-display: 'Oswald', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Scrollbar ─────────────────────────────────────────── */
+  html { scrollbar-color: #333 var(--bg); scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--red); }
+
+  /* ── Hero ──────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    background: #07070f;
+    border-bottom: 3px solid var(--red);
+    overflow: hidden;
+    padding: 28px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* Stark County outline — subtle background geography */
+  .hero-map {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0.04;
+  }
+  .hero-map svg { width: 420px; height: 420px; }
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 780px;
+  }
+
+  .hero-logo {
+    height: 110px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 18px rgba(214,40,40,0.35));
+  }
+
+  .hero-tagline {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 28px;
+    margin-top: 4px;
+  }
+  .hero-stat {
+    text-align: center;
+  }
+  .hero-stat-val {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--blue);
+    line-height: 1;
+  }
+  .hero-stat-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .hero-stat-divider {
+    width: 1px;
+    background: var(--card-border);
+    align-self: stretch;
+  }
+
+  /* ── Filter Bar ────────────────────────────────────────── */
+  .filter-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--surface);
+    border-bottom: 2px solid var(--card-border);
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: var(--blue); color: var(--white); }
+  .filter-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+  .filter-btn.active-red { background: var(--red); border-color: var(--red); color: white; }
+
+  .filter-divider { width: 1px; height: 28px; background: var(--card-border); }
+
+  .filter-search {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    outline: none;
+    width: 160px;
+    transition: border-color 0.15s;
+  }
+  .filter-search:focus { border-color: var(--blue); }
+  .filter-search::placeholder { color: var(--dimmer); }
+
+  /* ── Page Nav Tabs ─────────────────────────────────────── */
+  .page-tabs {
+    background: var(--surface);
+    border-bottom: 2px solid var(--card-border);
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .page-tabs::-webkit-scrollbar { display: none; }
+
+  .page-tab {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 12px 20px;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .page-tab:hover { color: var(--white); }
+  .page-tab.active { color: var(--white); border-bottom-color: var(--red); }
+
+  /* ── Main Content ──────────────────────────────────────── */
+  .content { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* ── Section Header ────────────────────────────────────── */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 20px;
+    margin-top: 32px;
+  }
+  .section-header:first-child { margin-top: 0; }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--white);
+  }
+  .section-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .section-rule {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--card-border), transparent);
+  }
+
+  /* ── School Card ───────────────────────────────────────── */
+  .school-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 28px;
+    transition: border-color 0.2s;
+  }
+  .school-card:hover { border-color: #3a3a55; }
+
+  .school-card-header {
+    padding: 14px 18px;
+    background: #16162a;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .school-color-bar {
+    width: 4px;
+    height: 28px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .school-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    flex: 1;
+  }
+
+  .school-mascot {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .school-chevron {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+  .school-card.collapsed .school-chevron { transform: rotate(-90deg); }
+  .school-card.collapsed .school-card-body { display: none; }
+
+  .school-card-body { overflow-x: auto; }
+
+  /* ── Records Table ─────────────────────────────────────── */
+  .records-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+  }
+  .records-table th {
+    background: #0f0f1e;
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 12px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+  }
+  .records-table th.center { text-align: center; }
+  .records-table td {
+    padding: 9px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid #1e1e30;
+    vertical-align: middle;
+  }
+  .records-table tr:last-child td { border-bottom: none; }
+  .records-table tbody tr:hover td { background: #20203a; }
+
+  .col-event { color: var(--muted); font-size: 12px; width: 130px; }
+  .col-name { font-weight: 600; }
+  .col-mark {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .col-mark.boys { color: var(--blue); }
+  .col-mark.girls { color: var(--red); }
+  .col-year {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    width: 54px;
+  }
+
+  .gender-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-width: 600px;
+  }
+  .gender-col { }
+  .gender-col:first-child { border-right: 1px solid var(--card-border); }
+
+  .gender-col-header {
+    padding: 8px 14px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .gender-col-header.boys { color: var(--blue); background: rgba(26,86,219,0.07); }
+  .gender-col-header.girls { color: var(--red); background: rgba(214,40,40,0.07); }
+
+  .gender-col-table { width: 100%; border-collapse: collapse; }
+  .gender-col-table th {
+    background: #0f0f1e;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    padding: 6px 10px;
+    text-align: left;
+  }
+  .gender-col-table td {
+    padding: 8px 10px;
+    font-size: 12.5px;
+    border-bottom: 1px solid #1a1a2e;
+    vertical-align: middle;
+  }
+  .gender-col-table tr:last-child td { border-bottom: none; }
+  .gender-col-table tbody tr:hover td { background: #1c1c30; }
+
+  /* ── Top 25 Layout ─────────────────────────────────────── */
+  .top25-event {
+    margin-bottom: 32px;
+  }
+  .top25-event-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .top25-event-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .top25-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--card-border);
+  }
+
+  .top25-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) {
+    .top25-split { grid-template-columns: 1fr; }
+    .gender-split { grid-template-columns: 1fr; min-width: unset; }
+    .gender-col:first-child { border-right: none; border-bottom: 1px solid var(--card-border); }
+  }
+
+  .top25-col {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .top25-col-header {
+    padding: 9px 14px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .top25-col-header.boys { color: var(--blue); background: rgba(26,86,219,0.1); border-bottom: 1px solid rgba(26,86,219,0.2); }
+  .top25-col-header.girls { color: var(--red); background: rgba(214,40,40,0.1); border-bottom: 1px solid rgba(214,40,40,0.2); }
+
+  .top25-table { width: 100%; border-collapse: collapse; }
+  .top25-table th {
+    background: #0f0f1e;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    padding: 6px 10px;
+    text-align: left;
+  }
+  .top25-table td {
+    padding: 7px 10px;
+    font-size: 12px;
+    border-bottom: 1px solid #1a1a2e;
+    vertical-align: middle;
+  }
+  .top25-table tr:last-child td { border-bottom: none; }
+  .top25-table tbody tr:hover td { background: #1c1c30; }
+
+  .rank-cell {
+    color: var(--dimmer);
+    font-size: 11px;
+    font-family: var(--font-display);
+    width: 28px;
+    text-align: center;
+  }
+  .rank-cell.top3 {
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .mark-cell {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    text-align: right;
+  }
+  .mark-cell.boys { color: var(--blue); }
+  .mark-cell.girls { color: var(--red); }
+  .school-cell {
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .year-cell {
+    color: var(--dimmer);
+    font-size: 11px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .d2-badge {
+    display: inline-block;
+    font-size: 8px;
+    background: rgba(201,162,39,0.15);
+    color: var(--gold);
+    border: 1px solid rgba(201,162,39,0.3);
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-left: 4px;
+    vertical-align: middle;
+    letter-spacing: 0.5px;
+    font-family: var(--font-display);
+  }
+  .perry-highlight td { background: rgba(26,86,219,0.06) !important; }
+  .perry-highlight td:first-child { border-left: 2px solid var(--blue); }
+
+  /* FAT tag */
+  .fat-tag {
+    font-size: 9px;
+    color: var(--dimmer);
+    margin-left: 3px;
+    letter-spacing: 0;
+    font-family: var(--font-body);
+    font-weight: 400;
+  }
+
+  /* ── Loading / Empty ───────────────────────────────────── */
+  .loading-msg {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--card-border);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Footer ────────────────────────────────────────────── */
+  .footer {
+    background: var(--surface);
+    border-top: 2px solid var(--card-border);
+    padding: 20px 20px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--dimmer);
+    line-height: 1.8;
+  }
+  .footer a { color: var(--muted); text-decoration: none; }
+  .footer a:hover { color: var(--white); }
+
+  /* ── Responsive ────────────────────────────────────────── */
+  @media (max-width: 700px) {
+    .filter-bar { gap: 8px; }
+    .filter-search { width: 120px; }
+    .hero-stats { gap: 16px; }
+    .hero-stat-val { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Hero ──────────────────────────────────────────────── -->
+<header class="hero">
+  <!-- Stark County outline (rough square with slightly irregular edges to evoke the real county shape) -->
+  <div class="hero-map">
+    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M28 22 L172 18 L175 88 L178 182 L24 178 L22 88 Z" stroke="white" stroke-width="3" fill="none"/>
+      <path d="M28 22 L60 20 L60 8 L95 8" stroke="white" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+    </svg>
+  </div>
+  <div class="hero-inner">
+    <img class="hero-logo" src="Stark_Logo_Transparent.png" alt="Jim Craig Stark County Championships" id="heroLogo">
+    <p class="hero-tagline">All-Time Records &amp; County Leaderboards</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-val" id="statSchools">18</div>
+        <div class="hero-stat-label">Schools</div>
+      </div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-val" id="statEvents">16</div>
+        <div class="hero-stat-label">Events</div>
+      </div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-val" id="statYears">60+</div>
+        <div class="hero-stat-label">Years of History</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Page Tabs ──────────────────────────────────────────── -->
+<nav class="page-tabs" id="pageTabs">
+  <button class="page-tab active" data-page="records" onclick="switchPage('records')">School Records</button>
+  <button class="page-tab" data-page="top25" onclick="switchPage('top25')">County Top 25</button>
+</nav>
+
+<!-- ── Filter Bar ─────────────────────────────────────────── -->
+<div class="filter-bar" id="filterBar">
+  <!-- populated by JS -->
+</div>
+
+<!-- ── Main Content ───────────────────────────────────────── -->
+<main class="content" id="mainContent">
+  <div class="loading-msg">
+    <div class="loading-spinner"></div>
+    Loading records…
+  </div>
+</main>
+
+<!-- ── Footer ─────────────────────────────────────────────── -->
+<footer class="footer">
+  Jim Craig Stark County Track &amp; Field Championships &nbsp;·&nbsp;
+  Data maintained by Perry Track &amp; Field &nbsp;·&nbsp;
+  School records updated automatically via Google Docs
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────────────────────
+const SCHOOL_RECORDS_URL = 'https://docs.google.com/document/d/e/2PACX-1vT03xCGvstQRo2rEnp9D6ovTPsEnzR-G3OwBc4AjYwZ5kaEvYQ37nSK45Nu57SS9qAogKEgdOY_aG1H/pub';
+
+// School colors for the accent bar
+const SCHOOL_COLORS = {
+  'Alliance':          '#003087',
+  'Canton South':      '#cc0000',
+  'Central Catholic':  '#8B0000',
+  'East Canton':       '#ff6600',
+  'Fairless':          '#006400',
+  'GlenOak':           '#FFD700',
+  'Hoover':            '#990000',
+  'Jackson':           '#003399',
+  'Lake':              '#003087',
+  'Lake Center Christian': '#006400',
+  'Louisville':        '#8B0000',
+  'Marlington':        '#660000',
+  'Massillon':         '#ff6600',
+  'McKinley':          '#cc0000',
+  'Minerva':           '#cc7700',
+  'Northwest':         '#cc0000',
+  'Perry':             '#000000',
+  'Sandy Valley':      '#cc0000',
+  'St. Thomas Aquinas':'#003087',
+  'Tuslaw':            '#003087',
+  'Timken':            '#cc0000',
+  'Lehman':            '#003087',
+  'Lincoln':           '#cc0000',
+};
+
+const SCHOOL_MASCOTS = {
+  'Alliance': 'Aviators', 'Canton South': 'Wildcats', 'Central Catholic': 'Crusaders',
+  'East Canton': 'Hornets', 'Fairless': 'Falcons', 'GlenOak': 'Golden Eagles',
+  'Hoover': 'Vikings', 'Jackson': 'Polar Bears', 'Lake': 'Blue Streaks',
+  'Lake Center Christian': 'Tigers', 'Louisville': 'Leopards', 'Marlington': 'Dukes',
+  'Massillon': 'Tigers', 'McKinley': 'Bulldogs', 'Minerva': 'Lions',
+  'Northwest': 'Indians', 'Perry': 'Panthers', 'Sandy Valley': 'Cardinals',
+  'St. Thomas Aquinas': 'Knights', 'Tuslaw': 'Mustangs', 'Timken': 'Trojans',
+  'Lehman': 'Polar Bears', 'Lincoln': 'Lions',
+};
+
+// ─────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────
+let currentPage = 'records';
+let schoolRecordsData = null;   // { schools: [{name, events:[{event,boys,girls}]}] }
+let top25Data = null;            // loaded from the xlsx (hardcoded for now)
+let filterGender = 'ALL';        // 'ALL' | 'M' | 'F'
+let filterSchool = 'ALL';        // school name or 'ALL'
+let filterEvent  = 'ALL';        // event name or 'ALL'
+let searchQuery  = '';
+
+// ─────────────────────────────────────────────────────────────
+//  PAGE SWITCHING
+// ─────────────────────────────────────────────────────────────
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.page === page);
+  });
+  renderFilterBar();
+  renderContent();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  FILTER BAR
+// ─────────────────────────────────────────────────────────────
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+
+  if (currentPage === 'records') {
+    // Gender + school filter + search
+    const schools = schoolRecordsData
+      ? schoolRecordsData.map(s => s.name).sort()
+      : [];
+
+    bar.innerHTML = `
+      <span class="filter-label">Gender</span>
+      <div class="filter-group">
+        ${['ALL','M','F'].map(g => `
+          <button class="filter-btn ${filterGender===g ? 'active':''}"
+            onclick="setGender('${g}')">${g==='ALL'?'All':g==='M'?'Boys':'Girls'}</button>
+        `).join('')}
+      </div>
+      <div class="filter-divider"></div>
+      <span class="filter-label">School</span>
+      <div class="filter-group" id="schoolBtns">
+        <button class="filter-btn ${filterSchool==='ALL'?'active':''}" onclick="setSchool('ALL')">All</button>
+        ${schools.map(s => `
+          <button class="filter-btn ${filterSchool===s?'active':''}" onclick="setSchool('${s.replace(/'/g,"\\'")}')">
+            ${s.replace('Canton ','').replace('Lake Center Christian','LCC')}
+          </button>
+        `).join('')}
+      </div>
+      <div class="filter-divider"></div>
+      <input class="filter-search" type="text" placeholder="Search athlete…"
+        value="${searchQuery}" oninput="setSearch(this.value)">
+    `;
+  } else {
+    // Top 25: gender + event
+    const events = TOP25_EVENTS.map(e => e.label);
+    bar.innerHTML = `
+      <span class="filter-label">Gender</span>
+      <div class="filter-group">
+        ${['ALL','M','F'].map(g => `
+          <button class="filter-btn ${filterGender===g?'active':''}"
+            onclick="setGender('${g}')">${g==='ALL'?'All':g==='M'?'Boys':'Girls'}</button>
+        `).join('')}
+      </div>
+      <div class="filter-divider"></div>
+      <span class="filter-label">Event</span>
+      <div class="filter-group" style="overflow-x:auto;max-width:560px;flex-wrap:nowrap;">
+        <button class="filter-btn ${filterEvent==='ALL'?'active':''}" onclick="setEvent('ALL')">All</button>
+        ${events.map(e => `
+          <button class="filter-btn ${filterEvent===e?'active':''}" onclick="setEvent('${e.replace(/'/g,"\\'")}')">
+            ${e}
+          </button>
+        `).join('')}
+      </div>
+      <div class="filter-divider"></div>
+      <input class="filter-search" type="text" placeholder="Search athlete…"
+        value="${searchQuery}" oninput="setSearch(this.value)">
+    `;
+  }
+}
+
+function setGender(g)  { filterGender = g; renderFilterBar(); renderContent(); }
+function setSchool(s)  { filterSchool = s; renderFilterBar(); renderContent(); }
+function setEvent(e)   { filterEvent  = e; renderFilterBar(); renderContent(); }
+function setSearch(v)  { searchQuery = v.toLowerCase(); renderContent(); }
+
+// ─────────────────────────────────────────────────────────────
+//  SCHOOL RECORDS — FETCH + PARSE
+// ─────────────────────────────────────────────────────────────
+async function loadSchoolRecords() {
+  try {
+    const res = await fetch(SCHOOL_RECORDS_URL);
+    const html = await res.text();
+    return parseSchoolRecordsHtml(html);
+  } catch(e) {
+    console.error('Failed to load school records:', e);
+    return null;
+  }
+}
+
+function parseSchoolRecordsHtml(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const schools = [];
+
+  // Each school is an <h1> followed by a <table>
+  const h1s = doc.querySelectorAll('h1');
+  h1s.forEach(h1 => {
+    // School name is the text content
+    let name = h1.textContent.trim();
+    // Remove suffixes like "Aviators", "Polar Bears" etc — but we keep the full name
+    // and look up the mascot separately
+
+    // Find the next table sibling
+    let el = h1.nextElementSibling;
+    while (el && el.tagName !== 'TABLE' && el.tagName !== 'H1') {
+      el = el.nextElementSibling;
+    }
+    if (!el || el.tagName !== 'TABLE') return;
+
+    const events = [];
+    const rows = el.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length < 4) return;
+      const event = cells[0].textContent.trim();
+      if (!event) return;
+
+      const boysName  = cells[1].textContent.replace(/\n+/g,' ').trim();
+      const boysMark  = cells[2].textContent.trim();
+      const boysYear  = cells[3].textContent.trim();
+      const girlsName = cells.length > 4 ? cells[4].textContent.replace(/\n+/g,' ').trim() : '';
+      const girlsMark = cells.length > 5 ? cells[5].textContent.trim() : '';
+      const girlsYear = cells.length > 6 ? cells[6].textContent.trim() : '';
+
+      events.push({ event, boysName, boysMark, boysYear, girlsName, girlsMark, girlsYear });
+    });
+
+    if (events.length) {
+      schools.push({ name, events });
+    }
+  });
+
+  return schools;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  TOP 25 DATA (hardcoded from the xlsx for Phase 1)
+// ─────────────────────────────────────────────────────────────
+const TOP25_EVENTS = [
+  { label: '100m', boysKey: '100 METER DASH - BOYS TOP 25', girlsKey: '100 METER DASH - GIRLS TOP 25' },
+  { label: '200m', boysKey: '200 METER DASH  - BOYS TOP 25', girlsKey: '200 METER DASH - GIRLS TOP 25' },
+  { label: '400m', boysKey: '400 METER DASH - BOYS TOP 25', girlsKey: '400 METER DASH - GIRLS TOP 25' },
+  { label: '800m', boysKey: '800 METERS - BOYS TOP 25', girlsKey: '800 METERS - GIRLS TOP 25' },
+  { label: '1600m', boysKey: '1600 METERS - BOYS TOP 25', girlsKey: '1600 METERS - GIRLS TOP 25' },
+  { label: '3200m', boysKey: '3200 METERS - BOYS TOP 25', girlsKey: '3200 METERS - GIRLS TOP 25' },
+  { label: '110/100 Hurdles', boysKey: '110 METER HIGH HURDLES - BOYS TOP 25', girlsKey: '100 METER HURDLES - GIRLS TOP 25' },
+  { label: '4x100', boysKey: '4 X 100 METER RELAY - BOYS TOP 15', girlsKey: '4 X 100 METER RELAY - GIRLS TOP 15' },
+  { label: '4x200', boysKey: '4 X 200 METER RELAY - BOYS TOP 15', girlsKey: '4 X 200 METER RELAY - GIRLS TOP 15' },
+  { label: '4x400', boysKey: '4 X 400 METER RELAY - BOYS TOP 15', girlsKey: '4 X 400 METER RELAY - GIRLS TOP 15' },
+  { label: '4x800', boysKey: '4 X 800 METER RELAY - BOYS TOP 15', girlsKey: '4 X 800 METER RELAY - GIRLS TOP 15' },
+];
+
+// Parsed directly from the xlsx extract — boys and girls for each event
+const TOP25_DATA = {
+  '100m': {
+    boys: [
+      {rank:1, name:'Devin Smith', school:'Massillon Washington', mark:'10.56 FAT', year:2011},
+      {rank:2, name:'Dan Bailey', school:'Lake', mark:'10.57 FAT', year:2002},
+      {rank:3, name:'Carlin Isles', school:'Jackson', mark:'10.58 FAT', year:2008},
+      {rank:4, name:'Deionne Harper', school:'Massillon Washington', mark:'10.59 FAT', year:2015},
+      {rank:4, name:'Freddie Lenix', school:'Massillon Washington', mark:'10.59 FAT', year:2022},
+      {rank:6, name:'Jim Luther', school:'Lake', mark:'10.61 FAT', year:2010},
+      {rank:6, name:'Jeff Richardson', school:'Canton McKinley', mark:'10.61 FAT', year:2013},
+      {rank:8, name:'Josh Lever', school:'GlenOak', mark:'10.62 FAT', year:2013},
+      {rank:9, name:'Ryder Greenwood', school:'GlenOak', mark:'10.65 FAT', year:2024},
+      {rank:10, name:'Craig Johnson', school:'Massillon Washington', mark:'10.66 FAT', year:1984},
+      {rank:10, name:'Kristian Satterfield', school:'Jackson', mark:'10.66 FAT', year:2025},
+      {rank:12, name:'Tyree Broyles', school:'Massillon Washington', mark:'10.67 FAT', year:2018},
+      {rank:12, name:'Owen DiMarzio', school:'Louisville', mark:'10.67 FAT', year:2024},
+      {rank:14, name:'Caleb Ruffin', school:'Canton McKinley', mark:'10.68 FAT', year:2022},
+      {rank:15, name:'*John Colangelo', school:'Central Catholic', mark:'10.70 FAT', year:2015, d2:true},
+      {rank:16, name:'Jacques Edwards', school:'Massillon Washington', mark:'10.72 FAT', year:2012},
+      {rank:17, name:'*Kendall Davis', school:'Alliance', mark:'10.75 FAT', year:2005, d2:true},
+      {rank:17, name:'*Eric Thompkins', school:'Canton South', mark:'10.75 FAT', year:2011, d2:true},
+      {rank:19, name:'Colin Ruffin', school:'Canton McKinley', mark:'10.76 FAT', year:2022},
+      {rank:20, name:'Jayden Ballard', school:'Massillon Washington', mark:'10.77 FAT', year:2019},
+      {rank:21, name:'Ardell Banks', school:'Massillon Washington', mark:'10.78 FAT', year:2022},
+      {rank:22, name:'Curtis Leuenberger', school:'Louisville', mark:'10.79 FAT', year:2006},
+      {rank:23, name:'Joe Morgan', school:'Canton McKinley', mark:'10.80 FAT', year:2006},
+      {rank:24, name:'Vaughn White', school:'Canton Timken', mark:'10.82 FAT', year:1991},
+      {rank:25, name:'Sid Lewis', school:'Canton McKinley', mark:'10.83 FAT', year:1981},
+      {rank:25, name:'Dustin Fox', school:'GlenOak', mark:'10.83 FAT', year:2001},
+    ],
+    girls: [
+      {rank:1, name:'Kandace Thomas', school:'GlenOak', mark:'11.71 FAT', year:2010},
+      {rank:2, name:'Destanie Morgan', school:'Canton McKinley', mark:'11.81 FAT', year:2004},
+      {rank:3, name:'Amahrie Harsh', school:'Hoover', mark:'11.84 FAT', year:2024},
+      {rank:4, name:'Nina Grambling', school:'GlenOak', mark:'11.93 FAT', year:2011},
+      {rank:4, name:'Sydney Stepanovich', school:'GlenOak', mark:'11.93 FAT', year:2025},
+      {rank:6, name:'Emerson Karrenbauer', school:'Perry', mark:'11.96 FAT', year:2026},
+      {rank:7, name:'Jericha Mann', school:'GlenOak', mark:'11.99 FAT', year:2005},
+      {rank:8, name:'Karli Oprian', school:'Lake', mark:'12.01 FAT', year:2012},
+      {rank:9, name:'Hannah Luke', school:'Perry', mark:'12.04 FAT', year:2013},
+      {rank:10, name:'Daziah Green', school:'Canton McKinley', mark:'12.07 FAT', year:2013},
+      {rank:11, name:'Savannah Tindell', school:'Hoover', mark:'12.09 FAT', year:2025},
+      {rank:12, name:'Latrese Taylor', school:'Canton McKinley', mark:'12.10 FAT', year:1995},
+      {rank:12, name:'*Rachael Adams', school:'St. Thomas Aquinas', mark:'12.10 FAT', year:2015, d2:true},
+      {rank:14, name:'Taylor Anthony', school:'Perry', mark:'12.14 FAT', year:2019},
+      {rank:15, name:'Malia Turley', school:'Massillon Washington', mark:'12.19 FAT', year:2015},
+      {rank:16, name:'Lexi Wims', school:'Hoover', mark:'12.21 FAT', year:2025},
+      {rank:17, name:'Nancie Green', school:'GlenOak', mark:'12.22 FAT', year:1981},
+      {rank:17, name:'Shanice Smith', school:'Hoover', mark:'12.22 FAT', year:2011},
+      {rank:17, name:'Tayah Wilson', school:'Jackson', mark:'12.22 FAT', year:2025},
+      {rank:20, name:'Kendal Fisher', school:'Perry', mark:'12.23 FAT', year:2022},
+      {rank:21, name:'Meghan Frazier', school:'Alliance', mark:'12.24 FAT', year:2021},
+      {rank:22, name:'*Taylor Thompkins', school:'Canton South', mark:'12.25 FAT', year:2013, d2:true},
+      {rank:23, name:'Alexys Sterling', school:'Canton McKinley', mark:'12.26 FAT', year:2025},
+      {rank:24, name:'*Stephanie Hunt', school:'St. Thomas Aquinas', mark:'12.27 FAT', year:2003, d2:true},
+      {rank:24, name:'Laila Strickland', school:'Perry', mark:'12.27 FAT', year:2017},
+      {rank:24, name:'*Ke\'Aijhan Strong', school:'Tuslaw', mark:'12.27 FAT', year:2019, d2:true},
+    ]
+  },
+  '800m': {
+    boys: [
+      {rank:1, name:'*Colin Cernansky', school:'Marlington', mark:'1:50.96 FAT', year:2024, d2:true},
+      {rank:2, name:'Brandon Smith', school:'Perry', mark:'1:52.19 FAT', year:1997},
+      {rank:3, name:'*Brody Pumneo', school:'Fairless', mark:'1:53.03 FAT', year:2023, d2:true},
+      {rank:4, name:'*Josh Conrad', school:'East Canton', mark:'1:53.22 FAT', year:2018, d2:true},
+      {rank:5, name:'Brandon Rauguth', school:'Hoover', mark:'1:53.24 FAT', year:2001},
+      {rank:6, name:'Cael Ball', school:'Jackson', mark:'1:53.27 FAT', year:2024},
+      {rank:7, name:'Noah Johnson', school:'Hoover', mark:'1:53.35 FAT', year:2023},
+      {rank:8, name:'Tristan Williams', school:'Perry', mark:'1:53.70 FAT', year:2014},
+      {rank:9, name:'Alex Ramsey', school:'Hoover', mark:'1:53.84 FAT', year:2004},
+      {rank:10, name:'Derrick Iannamorelli', school:'GlenOak', mark:'1:53.96 FAT', year:2001},
+      {rank:11, name:'Brian Baum', school:'Marlington', mark:'1:53.99 FAT', year:2011},
+      {rank:12, name:'*Matt Hartman', school:'Central Catholic', mark:'1:54.00 FAT', year:1997, d2:true},
+      {rank:13, name:'Wesley Marsden', school:'GlenOak', mark:'1:54.03 FAT', year:2024},
+      {rank:14, name:'Bradlee Keehn', school:'Fairless', mark:'1:54.06 FAT', year:2026},
+      {rank:15, name:'*Max Grillo', school:'Central Catholic', mark:'1:54.12 FAT', year:2022, d2:true},
+      {rank:16, name:'*Steve Gilmore', school:'Canton Lehman', mark:'1:54.9 h', year:1970, d2:true},
+      {rank:17, name:'Destin Heasley', school:'Massillon Washington', mark:'1:54.43 FAT', year:2007},
+      {rank:18, name:'John Hollon', school:'Hoover', mark:'1:54.63 FAT', year:2021},
+      {rank:19, name:'*Matt Dougherty', school:'St. Thomas Aquinas', mark:'1:54.66 FAT', year:2010, d2:true},
+      {rank:20, name:'*Colt Hemphill', school:'East Canton', mark:'1:54.71 FAT', year:2019, d2:true},
+      {rank:21, name:'Zach Goulet', school:'Hoover', mark:'1:55.15 FAT', year:2009},
+      {rank:22, name:'Alex Nupp', school:'GlenOak', mark:'1:55.19 FAT', year:2016},
+      {rank:23, name:'Spencer Smith', school:'Perry', mark:'1:55.20 FAT', year:1998},
+      {rank:24, name:'Mark Harroff', school:'Lake', mark:'1:55.0 h', year:1988},
+      {rank:25, name:'Matt Hendrix', school:'Jackson', mark:'1:55.35 FAT', year:2011},
+    ],
+    girls: [
+      {rank:1, name:'*Malena Cybak', school:'Tuslaw', mark:'2:09.55 FAT', year:2022, d2:true},
+      {rank:2, name:'*Kalee Soehnlen', school:'St. Thomas Aquinas', mark:'2:10.29 FAT', year:2016, d2:true},
+      {rank:3, name:'Allison Peare', school:'Hoover', mark:'2:10.70 FAT', year:2010},
+      {rank:4, name:'Lisa Breiding', school:'Marlington', mark:'2:11.07 FAT', year:1984},
+      {rank:5, name:'Tiffany Smith', school:'Perry', mark:'2:11.48 FAT', year:1997},
+      {rank:6, name:'*Kaele Lightfoot', school:'Minerva', mark:'2:12.25 FAT', year:2011, d2:true},
+      {rank:7, name:'*Gianna Ritchie', school:'Lake Center Christian', mark:'2:12.79 FAT', year:2025, d2:true},
+      {rank:8, name:'*Maria Jusseaume', school:'Central Catholic', mark:'2:13.64 FAT', year:1999, d2:true},
+      {rank:9, name:'*Andra Lehotay', school:'Sandy Valley', mark:'2:13.76 FAT', year:2015, d2:true},
+      {rank:10, name:'Emily Mazzaferri', school:'GlenOak', mark:'2:13.93 FAT', year:2007},
+      {rank:11, name:'Erin O\'Reilly', school:'GlenOak', mark:'2:14.66 FAT', year:1988},
+      {rank:12, name:'*Tateum Richard', school:'Minerva', mark:'2:14.68 FAT', year:2025, d2:true},
+      {rank:13, name:'Mattie Rankin', school:'Louisville', mark:'2:14.84 FAT', year:2009},
+      {rank:14, name:'*Molly Pusateri', school:'St. Thomas Aquinas', mark:'2:14.96 FAT', year:2014, d2:true},
+      {rank:15, name:'Lori Grey', school:'Jackson', mark:'2:14.8 h', year:1983},
+      {rank:15, name:'*Julia Pusateri', school:'St. Thomas Aquinas', mark:'2:15.16 FAT', year:2011, d2:true},
+      {rank:17, name:'Taylor Cropper', school:'Hoover', mark:'2:15.16 FAT', year:2013},
+      {rank:18, name:'*Kacee Soehnlen', school:'St. Thomas Aquinas', mark:'2:15.17 FAT', year:2017, d2:true},
+      {rank:19, name:'Kelsey Peare', school:'Hoover', mark:'2:15.28 FAT', year:2012},
+      {rank:20, name:'*Sophie Wentling', school:'Fairless', mark:'2:15.63 FAT', year:2017, d2:true},
+      {rank:21, name:'Daniela Scheffler', school:'Lake', mark:'2:15.84 FAT', year:2025},
+      {rank:22, name:'*Allison Buchanan', school:'St. Thomas Aquinas', mark:'2:15.88 FAT', year:2001, d2:true},
+      {rank:23, name:'Jackie Genetin', school:'Perry', mark:'2:16.12 FAT', year:2013},
+      {rank:24, name:'Stephanie Noussias', school:'GlenOak', mark:'2:16.22 FAT', year:2009},
+      {rank:25, name:'*Megan Soehnlen', school:'Central Catholic', mark:'2:16.26 FAT', year:2016, d2:true},
+    ]
+  },
+  '1600m': {
+    boys: [
+      {rank:1, name:'*Colin Cernansky', school:'Marlington', mark:'4:08.31 FAT', year:2024, d2:true},
+      {rank:2, name:'Josh Tormasi', school:'Perry', mark:'4:09.54 FAT', year:2009},
+      {rank:2, name:'Noah Johnson', school:'Hoover', mark:'4:09.54 FAT', year:2023},
+      {rank:4, name:'Kevin Sheward', school:'Canton McKinley', mark:'4:11.32 FAT', year:1985},
+      {rank:5, name:'Nathan Moore', school:'Lake', mark:'4:13.06 FAT', year:2021},
+      {rank:6, name:'*Cory Glines', school:'St. Thomas Aquinas', mark:'4:11.83 FAT', year:2013, d2:true},
+      {rank:7, name:'Shawn Norman', school:'Canton Timken', mark:'4:12.58 FAT', year:1989},
+      {rank:8, name:'Nick Chaplik', school:'Louisville', mark:'4:12.67 FAT', year:2017},
+      {rank:9, name:'Noah Chaplik', school:'Louisville', mark:'4:13.33 FAT', year:2017},
+      {rank:10, name:'*Brylan Holland', school:'East Canton', mark:'4:13.51 FAT', year:2023, d2:true},
+      {rank:11, name:'Eli Ilg', school:'Jackson', mark:'4:14.05 FAT', year:2024},
+      {rank:12, name:'Tommy Rice', school:'GlenOak', mark:'4:14.09 FAT', year:2023},
+      {rank:13, name:'*Brice Fuller', school:'Fairless', mark:'4:14.13 FAT', year:2026, d2:true},
+      {rank:14, name:'*Troy Tressel', school:'Fairless', mark:'4:14.1h', year:1981, d2:true},
+      {rank:14, name:'*Andrew Hearn', school:'Fairless', mark:'4:14.30 FAT', year:2025, d2:true},
+      {rank:16, name:'*Jacob Caniford', school:'St. Thomas Aquinas', mark:'4:14.34 FAT', year:2016, d2:true},
+      {rank:17, name:'Blaze Fichter', school:'Hoover', mark:'4:14.57 FAT', year:2022},
+      {rank:18, name:'Lowell Terrell', school:'Alliance', mark:'4:14.75 FAT', year:1984},
+      {rank:19, name:'Zavier Medina', school:'Hoover', mark:'4:15.42 FAT', year:2025},
+      {rank:20, name:'Glenn Collins', school:'Hoover', mark:'4:15.49 FAT', year:2003},
+      {rank:21, name:'*Aaron Melhorn', school:'Fairless', mark:'4:15.51 FAT', year:2007, d2:true},
+      {rank:22, name:'Sean McNulty', school:'Jackson', mark:'4:15.58 FAT', year:2024},
+      {rank:23, name:'Connor Reed', school:'Perry', mark:'4:15.70 FAT', year:2024},
+      {rank:24, name:'Derrick Iannamorelli', school:'GlenOak', mark:'4:15.78 FAT', year:2001},
+      {rank:25, name:'*Bradlee Kehn', school:'Fairless', mark:'4:15.93 FAT', year:2026, d2:true},
+    ],
+    girls: [
+      {rank:1, name:'Daniela Scheffler', school:'Lake', mark:'4:47.08 FAT', year:2025},
+      {rank:2, name:'*Athena Welsh', school:'St. Thomas Aquinas', mark:'4:49.06 FAT', year:2016, d2:true},
+      {rank:3, name:'Alexandria Bauer', school:'Lake', mark:'4:51.41 FAT', year:2021},
+      {rank:4, name:'Emily Halm', school:'Jackson', mark:'4:53.82 FAT', year:2000},
+      {rank:5, name:'*Andra Lehotay', school:'Sandy Valley', mark:'4:55.04 FAT', year:2014, d2:true},
+      {rank:6, name:'Emily Pritt', school:'Jackson', mark:'4:56.00 FAT', year:2007},
+      {rank:7, name:'*Kalee Soehnlen', school:'St. Thomas Aquinas', mark:'4:56.06 FAT', year:2017, d2:true},
+      {rank:8, name:'Sofia Istnick', school:'Jackson', mark:'4:58.60 FAT', year:2022},
+      {rank:9, name:'Samantha Norman', school:'Louisville', mark:'4:59.07 FAT', year:2009},
+      {rank:10, name:'Kylah Meyer', school:'Louisville', mark:'4:59.18 FAT', year:2025},
+      {rank:11, name:'*Bella Graham', school:'Marlington', mark:'5:00.62 FAT', year:2022, d2:true},
+      {rank:12, name:'*Audrey Wade', school:'East Canton', mark:'5:02.46 FAT', year:2024, d2:true},
+      {rank:13, name:'*Irelyn Johnson', school:'Marlington', mark:'5:03.10 FAT', year:2025, d2:true},
+      {rank:14, name:'*Rachel Reolfi', school:'Central Catholic', mark:'5:03.71 FAT', year:2016, d2:true},
+      {rank:15, name:'*Julia Pusateri', school:'St. Thomas Aquinas', mark:'5:03.84 FAT', year:2011, d2:true},
+      {rank:16, name:'*Tina Oprean', school:'Central Catholic', mark:'5:03.92 FAT', year:2009, d2:true},
+      {rank:17, name:'*Gianna Ritchie', school:'Lake Center Christian', mark:'5:04.50 FAT', year:2025, d2:true},
+      {rank:18, name:'*Caitlin Sharp', school:'East Canton', mark:'5:04.78 FAT', year:2007, d2:true},
+      {rank:19, name:'*Madelyn Begert', school:'Northwest', mark:'5:04.84 FAT', year:2023, d2:true},
+      {rank:20, name:'Sarah McCort', school:'Hoover', mark:'5:05.22 FAT', year:2004},
+      {rank:21, name:'Madelyn Bartolone', school:'Perry', mark:'5:06.01 FAT', year:2018},
+      {rank:22, name:'Christa Prusinowski', school:'GlenOak', mark:'5:06.5 h', year:1992},
+      {rank:23, name:'*Casey Russell', school:'Sandy Valley', mark:'5:06.85 FAT', year:2025, d2:true},
+      {rank:24, name:'Nisha Kurian', school:'Jackson', mark:'5:07.18 FAT', year:2002},
+      {rank:25, name:'Melissa Graham', school:'Marlington', mark:'5:07.0 h', year:1995},
+    ]
+  },
+  '3200m': {
+    boys: [
+      {rank:1, name:'*Brice Fuller', school:'Fairless', mark:'8:56.36 FAT', year:2026, d2:true},
+      {rank:2, name:'*Colin Cernansky', school:'Marlington', mark:'8:58.96 FAT', year:2024, d2:true},
+      {rank:3, name:'Nathan Moore', school:'Lake', mark:'9:00.88 FAT', year:2021},
+      {rank:4, name:'Tommy Rice', school:'GlenOak', mark:'9:05.46 FAT', year:2022},
+      {rank:5, name:'*Aaron Melhorn', school:'Fairless', mark:'9:06.4 h', year:2006, d2:true},
+      {rank:6, name:'Eli Ilg', school:'Jackson', mark:'9:08.44 FAT', year:2023},
+      {rank:7, name:'*Joel Marchand', school:'Fairless', mark:'9:13.4 h', year:1980, d2:true},
+      {rank:8, name:'*Brylan Holland', school:'East Canton', mark:'9:14.29 FAT', year:2023, d2:true},
+      {rank:9, name:'Zavier Medina', school:'Hoover', mark:'9:14.44 FAT', year:2025},
+      {rank:10, name:'Bobby Ganser', school:'Louisville', mark:'9:14.49 FAT', year:2022},
+      {rank:11, name:'Zach Fresenko', school:'Louisville', mark:'9:17.18 FAT', year:2017},
+      {rank:12, name:'Connor Reed', school:'Perry', mark:'9:17.43 FAT', year:2024},
+      {rank:13, name:'Noah Johnson', school:'Hoover', mark:'9:17.83 FAT', year:2023},
+      {rank:14, name:'*Cory Glines', school:'St. Thomas Aquinas', mark:'9:17.90 FAT', year:2013, d2:true},
+      {rank:15, name:'Glenn Collins', school:'Hoover', mark:'9:18.7 h', year:2003},
+      {rank:16, name:'Ryan Kienzle', school:'GlenOak', mark:'9:19.75 FAT', year:2004},
+      {rank:17, name:'Lowell Terrell', school:'Alliance', mark:'9:20.14 FAT', year:1983},
+      {rank:18, name:'Colby Adams', school:'Louisville', mark:'9:20.40 FAT', year:2022},
+      {rank:19, name:'Paul Knott', school:'GlenOak', mark:'9:24.8 2Mile', year:1978},
+      {rank:20, name:'*Noah Graham', school:'Marlington', mark:'9:21.96 FAT', year:2022, d2:true},
+      {rank:21, name:'Jacob Kernell', school:'Lake', mark:'9:22.32 FAT', year:2015},
+      {rank:22, name:'Nick Fresenko', school:'Louisville', mark:'9:22.60 FAT', year:2010},
+      {rank:23, name:'Noah Murray', school:'Louisville', mark:'9:22.99 FAT', year:2017},
+      {rank:24, name:'Curtis Hanle', school:'Louisville', mark:'9:23.04 FAT', year:2011},
+      {rank:25, name:'*Al McCallin', school:'Canton Lehman', mark:'9:27.4 2Mile', year:1975, d2:true},
+    ],
+    girls: [
+      {rank:1, name:'Daniela Scheffler', school:'Lake', mark:'10:12.59c', year:2025},
+      {rank:2, name:'*Kalee Soehnlen', school:'St. Thomas Aquinas', mark:'10:24.57 FAT', year:2017, d2:true},
+      {rank:3, name:'*Athena Welsh', school:'St. Thomas Aquinas', mark:'10:38.34 FAT', year:2016, d2:true},
+      {rank:4, name:'*Bella Graham', school:'Marlington', mark:'10:47.37 FAT', year:2021, d2:true},
+      {rank:5, name:'Kayla Chapman', school:'Jackson', mark:'10:49.18 FAT', year:2016},
+      {rank:6, name:'Alexandria Bauer', school:'Lake', mark:'10:49.75 FAT', year:2021},
+      {rank:7, name:'*Irelyn Johnson', school:'Marlington', mark:'10:50.28 FAT', year:2025, d2:true},
+      {rank:8, name:'Christina Prusinowski', school:'GlenOak', mark:'10:50.36 FAT', year:1992},
+      {rank:9, name:'Sofia Istnick', school:'Jackson', mark:'10:53.56 FAT', year:2019},
+      {rank:10, name:'Emily Halm', school:'Jackson', mark:'10:54.02 FAT', year:2000},
+      {rank:11, name:'Jen Wollam', school:'Alliance', mark:'10:54.48 FAT', year:1998},
+      {rank:12, name:'Kylah Meyer', school:'Louisville', mark:'10:58.55 FAT', year:2023},
+      {rank:13, name:'Melissa Graham', school:'Marlington', mark:'10:58.80 FAT', year:1995},
+      {rank:14, name:'Savannah Richards', school:'Lake', mark:'11:01.16 FAT', year:2019},
+      {rank:15, name:'Halle Busta', school:'Jackson', mark:'11:01.64 FAT', year:2007},
+      {rank:16, name:'*Audrey Wade', school:'East Canton', mark:'11:03.75 FAT', year:2024, d2:true},
+      {rank:17, name:'Chloe Dostal', school:'Perry', mark:'11:04.30 FAT', year:2024},
+      {rank:18, name:'Morgan Cole', school:'Louisville', mark:'11:05.85 FAT', year:2017},
+      {rank:19, name:'Kailey Zagst', school:'Jackson', mark:'11:06.14 FAT', year:2022},
+      {rank:20, name:'Madelyn Bartolone', school:'Perry', mark:'11:07.56 FAT', year:2016},
+      {rank:21, name:'*Hera Hoffee', school:'Minerva', mark:'11:08.70 FAT', year:2023, d2:true},
+      {rank:22, name:'Samantha Norman', school:'Louisville', mark:'11:09.26 FAT', year:2009},
+      {rank:23, name:'*Julia Pusateri', school:'St. Thomas Aquinas', mark:'11:10.2 h', year:2011, d2:true},
+      {rank:24, name:'Jillian Black', school:'GlenOak', mark:'11:11.06 FAT', year:2006},
+      {rank:25, name:'*Mackenzie Scott', school:'Minerva', mark:'11:11.96 FAT', year:2018, d2:true},
+    ]
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────────────────────
+function renderContent() {
+  const container = document.getElementById('mainContent');
+  if (currentPage === 'records') {
+    renderSchoolRecords(container);
+  } else {
+    renderTop25(container);
+  }
+}
+
+// ── School Records ────────────────────────────────────────────
+function renderSchoolRecords(container) {
+  if (!schoolRecordsData) {
+    container.innerHTML = `<div class="loading-msg"><div class="loading-spinner"></div>Loading school records…</div>`;
+    return;
+  }
+
+  let schools = schoolRecordsData;
+  if (filterSchool !== 'ALL') {
+    schools = schools.filter(s => s.name === filterSchool);
+  }
+  if (searchQuery) {
+    schools = schools.filter(s =>
+      s.name.toLowerCase().includes(searchQuery) ||
+      s.events.some(e =>
+        e.boysName.toLowerCase().includes(searchQuery) ||
+        e.girlsName.toLowerCase().includes(searchQuery)
+      )
+    );
+  }
+
+  if (!schools.length) {
+    container.innerHTML = `<div class="loading-msg">No results found.</div>`;
+    return;
+  }
+
+  container.innerHTML = schools.map(school => renderSchoolCard(school)).join('');
+
+  // Wire up collapse toggles
+  container.querySelectorAll('.school-card-header').forEach(h => {
+    h.addEventListener('click', () => {
+      h.closest('.school-card').classList.toggle('collapsed');
+    });
+  });
+}
+
+function renderSchoolCard(school) {
+  const color = SCHOOL_COLORS[school.name] || '#555';
+  const mascot = SCHOOL_MASCOTS[school.name] || '';
+
+  let events = school.events;
+  // Filter by gender display
+  const showBoys  = filterGender !== 'F';
+  const showGirls = filterGender !== 'M';
+
+  const rows = events.map(e => {
+    const boysHide  = !showBoys  || (e.boysMark  === '--' || !e.boysMark);
+    const girlsHide = !showGirls || (e.girlsMark === '--' || !e.girlsMark);
+    if (boysHide && girlsHide && filterGender !== 'ALL') return '';
+    if (filterGender === 'ALL' && !e.boysMark && !e.girlsMark) return '';
+
+    const boysHighlight = e.boysName.toLowerCase().includes(searchQuery) && searchQuery;
+    const girlsHighlight = e.girlsName.toLowerCase().includes(searchQuery) && searchQuery;
+
+    if (filterGender === 'M') {
+      if (!e.boysMark || e.boysMark === '--') return '';
+      return `<tr class="${boysHighlight?'perry-highlight':''}">
+        <td class="col-event">${e.event}</td>
+        <td class="col-name">${e.boysName}</td>
+        <td class="col-mark boys">${e.boysMark}</td>
+        <td class="col-year">${e.boysYear}</td>
+      </tr>`;
+    }
+    if (filterGender === 'F') {
+      if (!e.girlsMark || e.girlsMark === '--') return '';
+      return `<tr class="${girlsHighlight?'perry-highlight':''}">
+        <td class="col-event">${e.event}</td>
+        <td class="col-name">${e.girlsName}</td>
+        <td class="col-mark girls">${e.girlsMark}</td>
+        <td class="col-year">${e.girlsYear}</td>
+      </tr>`;
+    }
+
+    // ALL — side-by-side split
+    return `<tr>
+      <td class="col-event" style="border-right:1px solid #2a2a3e;">${e.event}</td>
+      <td class="col-name" style="color:#b0b8d8;font-size:12px;">${showBoys?e.boysName:''}</td>
+      <td class="col-mark boys">${showBoys&&e.boysMark!=='--'?e.boysMark:''}</td>
+      <td class="col-year" style="border-right:1px solid #2a2a3e;">${showBoys&&e.boysMark!=='--'?e.boysYear:''}</td>
+      <td class="col-name" style="color:#d8b0b8;font-size:12px;">${showGirls?e.girlsName:''}</td>
+      <td class="col-mark girls">${showGirls&&e.girlsMark!=='--'?e.girlsMark:''}</td>
+      <td class="col-year">${showGirls&&e.girlsMark!=='--'?e.girlsYear:''}</td>
+    </tr>`;
+  }).join('');
+
+  if (!rows.trim()) return '';
+
+  const headerCols = filterGender === 'ALL'
+    ? `<th>Event</th><th>Boys Holder</th><th class="center">Boys Mark</th><th class="center">Year</th>
+       <th>Girls Holder</th><th class="center">Girls Mark</th><th class="center">Year</th>`
+    : `<th>Event</th><th>Record Holder</th><th class="center">Mark</th><th class="center">Year</th>`;
+
+  return `
+    <div class="school-card" id="school-${school.name.replace(/\s+/g,'-')}">
+      <div class="school-card-header">
+        <div class="school-color-bar" style="background:${color}"></div>
+        <div>
+          <div class="school-name">${school.name}</div>
+          ${mascot ? `<div class="school-mascot">${mascot}</div>` : ''}
+        </div>
+        <span class="school-chevron">▼</span>
+      </div>
+      <div class="school-card-body">
+        <table class="records-table">
+          <thead><tr>${headerCols}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ── Top 25 ────────────────────────────────────────────────────
+function renderTop25(container) {
+  const events = filterEvent === 'ALL'
+    ? TOP25_EVENTS
+    : TOP25_EVENTS.filter(e => e.label === filterEvent);
+
+  const showBoys  = filterGender !== 'F';
+  const showGirls = filterGender !== 'M';
+
+  const html = events.map(evt => {
+    const boysData  = TOP25_DATA[evt.label]?.boys  || [];
+    const girlsData = TOP25_DATA[evt.label]?.girls || [];
+
+    const filterRows = (rows) => {
+      if (!searchQuery) return rows;
+      return rows.filter(r =>
+        r.name.toLowerCase().includes(searchQuery) ||
+        r.school.toLowerCase().includes(searchQuery)
+      );
+    };
+
+    const boysRows  = filterRows(boysData);
+    const girlsRows = filterRows(girlsData);
+
+    if (!boysRows.length && !girlsRows.length) return '';
+
+    const renderRows = (rows, gender) => rows.map(r => {
+      const isPerry = r.school === 'Perry' || r.school === 'Perry ';
+      const d2Html = r.d2 ? `<span class="d2-badge">D2</span>` : '';
+      const nameParts = r.name.replace(/^\*/,'');
+      const markParts = r.mark.replace(' FAT','');
+      const hasFAT = r.mark.includes('FAT');
+
+      return `<tr class="${isPerry?'perry-highlight':''}">
+        <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
+        <td>${nameParts}${d2Html}</td>
+        <td class="school-cell">${r.school}</td>
+        <td class="mark-cell ${gender}">${markParts}${hasFAT?'<span class="fat-tag">FAT</span>':''}</td>
+        <td class="year-cell">${r.year}</td>
+      </tr>`;
+    }).join('');
+
+    const boysTable = boysRows.length ? `
+      <div class="top25-col">
+        <div class="top25-col-header boys">♂ Boys Top ${boysData.length <= 15?'15':'25'}</div>
+        <table class="top25-table">
+          <thead><tr><th>#</th><th>Athlete</th><th>School</th><th>Mark</th><th>Year</th></tr></thead>
+          <tbody>${renderRows(boysRows,'boys')}</tbody>
+        </table>
+      </div>` : '';
+
+    const girlsTable = girlsRows.length ? `
+      <div class="top25-col">
+        <div class="top25-col-header girls">♀ Girls Top ${girlsData.length <= 15?'15':'25'}</div>
+        <table class="top25-table">
+          <thead><tr><th>#</th><th>Athlete</th><th>School</th><th>Mark</th><th>Year</th></tr></thead>
+          <tbody>${renderRows(girlsRows,'girls')}</tbody>
+        </table>
+      </div>` : '';
+
+    const cols = [showBoys?boysTable:'', showGirls?girlsTable:''].filter(Boolean).join('');
+    if (!cols) return '';
+
+    const dataNote = !TOP25_DATA[evt.label]
+      ? `<p style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">Data coming soon for this event.</p>`
+      : '';
+
+    return `
+      <div class="top25-event">
+        <div class="top25-event-header">
+          <div class="top25-event-name">${evt.label}</div>
+          <div class="top25-rule"></div>
+        </div>
+        ${dataNote}
+        <div class="top25-split">${cols}</div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = html || `<div class="loading-msg">No results found.</div>`;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────────────────
+async function init() {
+  renderFilterBar();
+
+  schoolRecordsData = await loadSchoolRecords();
+  if (schoolRecordsData) {
+    document.getElementById('statSchools').textContent = schoolRecordsData.length;
+    // count unique events
+    const evts = new Set(schoolRecordsData.flatMap(s => s.events.map(e => e.event)));
+    document.getElementById('statEvents').textContent = evts.size;
+    renderFilterBar(); // re-render with school list
+  }
+
+  renderContent();
+}
+
+init();
+</script>
+</body>
+</html>
