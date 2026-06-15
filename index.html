@@ -481,6 +481,14 @@ function parseSchoolRecordsHtml(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const schools = [];
+
+  // Extract text from a cell, preserving <br> as a delimiter
+  function cellLines(cell) {
+    // Replace <br> tags with a pipe delimiter before getting text
+    cell.querySelectorAll('br').forEach(br => br.replaceWith('|'));
+    return cell.textContent.split('|').map(s => s.trim()).filter(Boolean);
+  }
+
   doc.querySelectorAll('h1').forEach(h1 => {
     const name = h1.textContent.trim();
     let el = h1.nextElementSibling;
@@ -492,15 +500,31 @@ function parseSchoolRecordsHtml(html) {
       if (cells.length < 4) return;
       const event = cells[0].textContent.trim();
       if (!event) return;
-      events.push({
-        event,
-        boysName:  cells[1].textContent.replace(/\n+/g,' ').trim(),
-        boysMark:  cells[2].textContent.trim(),
-        boysYear:  cells[3].textContent.trim(),
-        girlsName: cells.length>4 ? cells[4].textContent.replace(/\n+/g,' ').trim() : '',
-        girlsMark: cells.length>5 ? cells[5].textContent.trim() : '',
-        girlsYear: cells.length>6 ? cells[6].textContent.trim() : '',
-      });
+
+      // Each cell may have multiple lines (shared records)
+      const boysNames  = cellLines(cells[1]);
+      const boysMarks  = cellLines(cells[2]);
+      const boysYears  = cellLines(cells[3]);
+      const girlsNames = cells.length > 4 ? cellLines(cells[4]) : [];
+      const girlsMarks = cells.length > 5 ? cellLines(cells[5]) : [];
+      const girlsYears = cells.length > 6 ? cellLines(cells[6]) : [];
+
+      // Zip into sub-rows; if marks/years are shared (only 1 value) repeat them
+      const bCount = Math.max(boysNames.length, 1);
+      const gCount = Math.max(girlsNames.length, 1);
+      const count  = Math.max(bCount, gCount);
+
+      for (let i = 0; i < count; i++) {
+        events.push({
+          event: i === 0 ? event : '',  // only show event label on first row
+          boysName:  boysNames[i]  || '',
+          boysMark:  boysMarks[i]  || boysMarks[0]  || '',
+          boysYear:  boysYears[i]  || boysYears[0]  || '',
+          girlsName: girlsNames[i] || '',
+          girlsMark: girlsMarks[i] || girlsMarks[0] || '',
+          girlsYear: girlsYears[i] || girlsYears[0] || '',
+        });
+      }
     });
     if (events.length) schools.push({ name, events });
   });
@@ -1455,7 +1479,7 @@ const TOP25_DATA = {
       {rank:12, name:"Tommy Rice, Tesfaye Young, Braedon Paolini, Wesley Marsden", school:"GlenOak", mark:"7:49.92", year:2023},
       {rank:13, name:"Corwin Swint, J.D. Horton, Josh Tomasi, Ty Griffin", school:"Perry", mark:"7:49.94", year:2007},
       {rank:14, name:"Ron Maksim, Matt Dougherty, Jordan McKelley, Maurice Kirksey", school:"St. Thomas Aquinas", mark:"7:50.08", year:2010},
-      {rank:15, name:"Carson Morris, Ian Dennis, Zach Renner, Jack Streb, * implies D2/D3 - (1) is top D2/D3 mark", school:"Hoover", mark:"7:50.30", year:2026},
+      {rank:15, name:"Carson Morris, Ian Dennis, Zach Renner, Jack Streb", school:"Hoover", mark:"7:50.30", year:2026},
     ],
     girls: [
       {rank:1, name:"Athena Welsh, Hannah Soehnlen, Kacee Soehnlen, Kalee Soehnlen", school:"St. Thomas Aquinas", mark:"9:05.84", year:2016},
@@ -1563,7 +1587,7 @@ const TOP25_DATA = {
       {rank:12, name:"Ryan Terry, Jory Lombardi, Matt Dougherty, Maurice Kirksey", school:"St. Thomas Aquinas", mark:"3:19.81", year:2010},
       {rank:13, name:"Jessie Scott, Joe Shimek, Spencer Smith, Brandon Smith", school:"Perry", mark:"3:19.89", year:1998},
       {rank:14, name:"Austin Wydra, Gage Feola, Dean Sarris, Pierlus Stewart", school:"GlenOak", mark:"3:20.25", year:2017},
-      {rank:15, name:"Donte Pocock, Evan Spurell, Parker Offineer, Jayden Wilson, * implies D2/D3 - (1) is top D2/D3 mark, y indicates distance was 1 mile, # indicates time was converted from 1 mile to 1600m", school:"Perry", mark:"3:20.30", year:2026},
+      {rank:15, name:"Donte Pocock, Evan Spurell, Parker Offineer, Jayden Wilson", school:"Perry", mark:"3:20.30", year:2026},
     ],
     girls: [
       {rank:1, name:"Faith Strickland, Jackie Genetin, Mikayla Dearing, Hannah Luke", school:"Perry", mark:"3:48.59", year:2013},
