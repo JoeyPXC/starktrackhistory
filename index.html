@@ -1898,59 +1898,85 @@ function renderCountyRecordsTable(rows, title, subtitle) {
   const showBoys  = filterGender !== 'F';
   const showGirls = filterGender !== 'M';
 
-  const isRelay = r => r.event.startsWith('4×') || r.event.startsWith('4x');
+  const fmtRelay = name => name.split(',').map(n => n.trim()).filter(Boolean)
+    .map(n => `<span class="relay-line">${n}</span>`).join('');
 
-  const formatNames = (name) => {
-    if (!name || name === '—') return name;
+  const isRelayEvent = event => /4[×x]/i.test(event);
+
+  const fmtName = (name) => {
+    if (!name || name === '—') return name || '—';
     const parts = name.split(',').map(n => n.trim()).filter(Boolean);
-    if (parts.length <= 1) return `<span style="white-space:nowrap;">${name}</span>`;
-    return parts.map(n => `<span class="relay-line">${n}</span>`).join('');
+    if (parts.length > 1) return fmtRelay(name);
+    return `<span style="white-space:nowrap;">${name}</span>`;
   };
 
-  const headerCols = filterGender === 'ALL'
-    ? `<th>Event</th><th>Boys Holder</th><th>School</th><th class="center">Mark</th><th class="center">Year</th><th>Girls Holder</th><th>School</th><th class="center">Mark</th><th class="center">Year</th>`
-    : `<th>Event</th><th>Record Holder</th><th>School</th><th class="center">Mark</th><th class="center">Year</th>`;
-
-  const bodyRows = rows.map((r, i) => {
-    const even = i % 2 === 0;
-    const bg = even ? '' : 'background:#f8f9fc;';
-
-    if (filterGender === 'ALL') {
-      return `<tr style="${bg}">
-        <td class="col-event" style="font-weight:600;">${r.event}</td>
-        ${showBoys ? `<td>${formatNames(r.boysName)}</td><td class="school-cell">${displaySchool(r.boysSchool)}</td><td class="col-mark boys">${r.boysMark}</td><td class="col-year">${r.boysYear}</td>` : ''}
-        ${showGirls ? `<td>${formatNames(r.girlsName)}</td><td class="school-cell">${displaySchool(r.girlsSchool)}</td><td class="col-mark girls">${r.girlsMark}</td><td class="col-year">${r.girlsYear}</td>` : ''}
-      </tr>`;
-    }
-    const name   = showBoys ? r.boysName   : r.girlsName;
-    const school = showBoys ? r.boysSchool : r.girlsSchool;
-    const mark   = showBoys ? r.boysMark   : r.girlsMark;
-    const year   = showBoys ? r.boysYear   : r.girlsYear;
-    const cls    = showBoys ? 'boys' : 'girls';
-    return `<tr style="${bg}">
-      <td class="col-event" style="font-weight:600;">${r.event}</td>
-      <td>${formatNames(name)}</td>
-      <td class="school-cell">${displaySchool(school)}</td>
-      <td class="col-mark ${cls}">${mark}</td>
-      <td class="col-year">${year}</td>
-    </tr>`;
-  }).join('');
-
-  return `
-    <div style="margin-bottom:32px;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-        <div style="font-family:var(--font-d);font-size:18px;font-weight:700;text-align:center;flex:1;">${title}</div>
-        ${subtitle ? `<div style="font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;">${subtitle}</div>` : ''}
+  // Build one gender panel as flex rows
+  const makePanel = (nameKey, schoolKey, markKey, yearKey, markClass, label, hdrColor) => {
+    const panelRows = rows.map((r, i) => {
+      const name   = r[nameKey];
+      const school = displaySchool(r[schoolKey] || '');
+      const mark   = r[markKey];
+      const year   = r[yearKey];
+      if (!mark) return '';
+      const relay  = isRelayEvent(r.event);
+      const nameHtml = relay
+        ? `<span class="rec-name relay-names">${fmtRelay(name)}</span>`
+        : `<span class="rec-name">${fmtName(name)}</span>`;
+      const bg = i % 2 === 0 ? '' : 'background:#f8f9fc;';
+      return `<div class="rec-row" style="${bg}">
+        <span class="rec-event" style="font-weight:600;">${r.event}</span>
+        ${nameHtml}
+        <span class="rec-mark ${markClass}">${mark}</span>
+        <span class="rec-year">${year}</span>
+      </div>`;
+    }).join('');
+    return `<div style="flex:1;min-width:240px;border-right:1px solid var(--card-border);">
+      <div style="padding:5px 14px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;
+        text-transform:uppercase;color:${hdrColor};background:${hdrColor}14;border-bottom:1px solid ${hdrColor}33;">
+        ${label}
       </div>
-      <div class="school-card" style="overflow:hidden;">
-        <div class="table-scroll">
-          <table class="records-table">
-            <thead><tr>${headerCols}</tr></thead>
-            <tbody>${bodyRows}</tbody>
-          </table>
-        </div>
-      </div>
+      <div class="rec-list">${panelRows}</div>
     </div>`;
+  };
+
+  let body;
+  if (filterGender === 'ALL') {
+    const boysP  = showBoys  ? makePanel('boysName','boysSchool','boysMark','boysYear','boys','♂ Boys','var(--blue)') : '';
+    const girlsP = showGirls ? makePanel('girlsName','girlsSchool','girlsMark','girlsYear','girls','♀ Girls','var(--red)') : '';
+    body = `<div style="display:flex;flex-wrap:wrap;">${boysP}${girlsP}</div>`;
+  } else {
+    const nameKey   = showBoys ? 'boysName'   : 'girlsName';
+    const schoolKey = showBoys ? 'boysSchool' : 'girlsSchool';
+    const markKey   = showBoys ? 'boysMark'   : 'girlsMark';
+    const yearKey   = showBoys ? 'boysYear'   : 'girlsYear';
+    const markClass = showBoys ? 'boys' : 'girls';
+    const panelRows = rows.map((r, i) => {
+      const name   = r[nameKey];
+      const school = displaySchool(r[schoolKey] || '');
+      const mark   = r[markKey];
+      const year   = r[yearKey];
+      if (!mark) return '';
+      const relay  = isRelayEvent(r.event);
+      const nameHtml = relay
+        ? `<span class="rec-name relay-names">${fmtRelay(name)}</span>`
+        : `<span class="rec-name">${name}</span>`;
+      const bg = i % 2 === 0 ? '' : 'background:#f8f9fc;';
+      return `<div class="rec-row" style="${bg}">
+        <span class="rec-event" style="font-weight:600;">${r.event}</span>
+        ${nameHtml}
+        <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">${school}</span>
+        <span class="rec-mark ${markClass}">${mark}</span>
+        <span class="rec-year">${year}</span>
+      </div>`;
+    }).join('');
+    body = `<div class="rec-list">${panelRows}</div>`;
+  }
+
+  return `<div style="margin-bottom:28px;">
+    <div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">${title}</div>
+    ${subtitle ? `<div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">${subtitle}</div>` : ''}
+    <div class="school-card" style="overflow:hidden;">${body}</div>
+  </div>`;
 }
 
 function renderCountyRecords(container) {
@@ -1992,57 +2018,54 @@ function renderChamps(container) {
   const showBoys  = filterGender !== 'F';
   const showGirls = filterGender !== 'M';
 
-  const school1Cls = 'font-weight:700;font-size:13px;color:var(--text);';
-  const school2Cls = 'font-size:12.5px;color:var(--text-muted);';
+  const badge = (text, gold) =>
+    `<span style="display:inline-block;background:${gold?'var(--gold)':'#e2e8f0'};color:${gold?'white':'var(--text-muted)'};font-size:9px;font-family:var(--font-d);letter-spacing:0.5px;padding:1px 5px;border-radius:3px;margin-right:5px;">${gold?'1ST':'2ND'}</span>`;
 
-  const champBadge  = (name, gold) => `<span style="display:inline-block;background:${gold?'var(--gold)':'#e2e8f0'};color:${gold?'white':'var(--text-muted)'};font-size:9px;font-family:var(--font-d);letter-spacing:0.5px;padding:1px 5px;border-radius:3px;margin-right:5px;">${gold?'1ST':'2ND'}</span>`;
+  const makeEntry = (school1, school2, small1, small2, smallLabel) => {
+    if (!school1) return '';
+    return `<div>
+      <div style="font-weight:700;font-size:13px;">${badge('',true)}${school1}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${badge('',false)}${school2}</div>
+      ${small1 ? `<div style="margin-top:5px;padding-top:5px;border-top:1px dashed #e2e8f0;">
+        <div style="font-size:9px;font-family:var(--font-d);letter-spacing:0.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:2px;">${smallLabel}</div>
+        <div style="font-size:11.5px;color:var(--text-muted);">${badge('',true)}${small1}</div>
+        ${small2 ? `<div style="font-size:11.5px;color:var(--text-muted);">${badge('',false)}${small2}</div>` : ''}
+      </div>` : ''}
+    </div>`;
+  };
 
   const rows = CHAMPS_DATA.map((d, i) => {
-    const even = i % 2 === 0;
-    const bg = even ? '' : 'background:#f8f9fc;';
+    const bg = i % 2 === 0 ? '' : 'background:#f8f9fc;';
+    const boysHtml  = showBoys  ? makeEntry(d.boys1, d.boys2, d.boysSmall1, d.boysSmall2, d.smallLabel) : '';
+    const girlsHtml = showGirls ? makeEntry(d.girls1, d.girls2, d.girlsSmall1, d.girlsSmall2, d.smallLabel) : '';
 
-    const boysCell = showBoys ? `<td style="${bg}vertical-align:middle;">
-      <div style="${school1Cls}">${champBadge(d.boys1,true)}${d.boys1}</div>
-      <div style="${school2Cls}margin-top:2px;">${champBadge(d.boys2,false)}${d.boys2}</div>
-      ${d.boysSmall1 ? `<div style="margin-top:6px;padding-top:5px;border-top:1px dashed #e2e8f0;font-size:10px;color:var(--text-dim);">
-        <span style="font-family:var(--font-d);letter-spacing:0.5px;">${d.smallLabel}</span>
-        <div style="margin-top:2px;font-size:11.5px;color:var(--text-muted);">${champBadge(d.boysSmall1,true)}${d.boysSmall1}</div>
-        ${d.boysSmall2 ? `<div style="font-size:11.5px;color:var(--text-muted);">${champBadge(d.boysSmall2,false)}${d.boysSmall2}</div>` : ''}
-      </div>` : ''}
-    </td>` : '';
+    const cols = [];
+    if (showBoys)  cols.push(`<div style="flex:1;min-width:0;padding:10px 12px;border-right:1px solid var(--card-border);${bg}">${boysHtml}</div>`);
+    if (showGirls) cols.push(`<div style="flex:1;min-width:0;padding:10px 12px;${bg}">${girlsHtml}</div>`);
 
-    const girlsCell = showGirls ? `<td style="${bg}vertical-align:middle;">
-      <div style="${school1Cls}">${champBadge(d.girls1,true)}${d.girls1}</div>
-      <div style="${school2Cls}margin-top:2px;">${champBadge(d.girls2,false)}${d.girls2}</div>
-      ${d.girlsSmall1 ? `<div style="margin-top:6px;padding-top:5px;border-top:1px dashed #e2e8f0;font-size:10px;color:var(--text-dim);">
-        <span style="font-family:var(--font-d);letter-spacing:0.5px;">${d.smallLabel}</span>
-        <div style="margin-top:2px;font-size:11.5px;color:var(--text-muted);">${champBadge(d.girlsSmall1,true)}${d.girlsSmall1}</div>
-        ${d.girlsSmall2 ? `<div style="font-size:11.5px;color:var(--text-muted);">${champBadge(d.girlsSmall2,false)}${d.girlsSmall2}</div>` : ''}
-      </div>` : ''}
-    </td>` : '';
-
-    return `<tr>
-      <td style="${bg}font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--blue);vertical-align:top;padding-top:14px;white-space:nowrap;">${d.year}</td>
-      ${boysCell}${girlsCell}
-    </tr>`;
+    return `<div style="border-bottom:1px solid #f0f2f6;">
+      <div style="display:flex;align-items:center;gap:0;">
+        <div style="flex:0 0 44px;text-align:center;font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--blue);padding:10px 4px;${bg}border-right:1px solid var(--card-border);">${d.year}</div>
+        ${cols.join('')}
+      </div>
+    </div>`;
   }).join('');
 
-  const headers = `<th style="width:60px;">Year</th>${showBoys?'<th>Boys</th>':''}${showGirls?'<th>Girls</th>':''}`;
+  // Header
+  const hdrCols = [];
+  if (showBoys)  hdrCols.push(`<div style="flex:1;padding:6px 12px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);background:#eff4ff;border-bottom:2px solid var(--blue);border-right:1px solid var(--card-border);">♂ Boys</div>`);
+  if (showGirls) hdrCols.push(`<div style="flex:1;padding:6px 12px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);background:#fff0f3;border-bottom:2px solid var(--red);">♀ Girls</div>`);
 
   container.innerHTML = `
     <div style="margin-bottom:8px;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-        <div style="font-family:var(--font-d);font-size:18px;font-weight:700;">🥇 Team Champions &amp; Runner-Ups</div>
-        <div style="flex:1;height:1px;background:var(--card-border);"></div>
-        <div style="font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;">Since 2003</div>
-      </div>
+      <div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">🥇 Team Champions &amp; Runner-Ups</div>
+      <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Since 2003</div>
       <div class="school-card" style="overflow:hidden;">
-        <div class="table-scroll">
-          <table class="records-table">
-            <thead><tr>${headers}</tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
+        <div style="display:flex;border-bottom:1px solid var(--card-border);">
+          <div style="flex:0 0 44px;border-right:1px solid var(--card-border);"></div>
+          ${hdrCols.join('')}
         </div>
+        ${rows}
       </div>
     </div>`;
 }
