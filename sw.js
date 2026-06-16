@@ -1,4 +1,4 @@
-const CACHE = 'stark-county-v1';
+const CACHE = 'stark-county-v2';
 const ASSETS = [
   '/starktrackhistory/',
   '/starktrackhistory/index.html',
