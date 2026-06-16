@@ -337,7 +337,7 @@
   .rec-row.hl { background: #fffbf0 !important; border-left: 3px solid var(--red); padding-left: 11px; }
   .rec-event {
     font-size: 11px; color: var(--text-muted);
-    white-space: nowrap; flex: 0 0 80px;
+    white-space: normal; flex: 0 0 76px; line-height: 1.3;
   }
   .rec-name {
     font-size: 13px; font-weight: 600; color: var(--text);
@@ -825,8 +825,8 @@ function renderSchoolCard(school) {
 
   let body = '';
   if (filterGender === 'ALL') {
-    const boysP  = makePanel('boysName','boysMark','boysYear','boys','♂ Boys','var(--blue)');
-    const girlsP = makePanel('girlsName','girlsMark','girlsYear','girls','♀ Girls','var(--red)');
+    const boysP  = makePanel('boysName','boysMark','boysYear','boys','Boys','var(--blue)');
+    const girlsP = makePanel('girlsName','girlsMark','girlsYear','girls','Girls','var(--red)');
     if (!boysP && !girlsP) return '';
     body = `<div style="display:flex;flex-wrap:wrap;">${boysP}${girlsP}</div>`;
   } else {
@@ -1821,7 +1821,7 @@ function renderTop25(container) {
     const isRelay = evt.label.startsWith('4x');
     const count = isRelay ? 15 : 25;
     const bTable = showBoys && fB.length ? `<div class="top25-col">
-      <div class="top25-col-header boys">♂ Boys Top ${count}</div>
+      <div class="top25-col-header boys">Boys Top ${count}</div>
       <div class="table-scroll"><table class="top25-table">
         <colgroup><col style="width:24px"><col><col style="width:64px"><col style="width:58px"><col style="width:34px"></colgroup>
         <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
@@ -1829,7 +1829,7 @@ function renderTop25(container) {
       </table></div></div>` : '';
 
     const gTable = showGirls && fG.length ? `<div class="top25-col">
-      <div class="top25-col-header girls">♀ Girls Top ${count}</div>
+      <div class="top25-col-header girls">Girls Top ${count}</div>
       <div class="table-scroll"><table class="top25-table">
         <colgroup><col style="width:24px"><col><col style="width:64px"><col style="width:58px"><col style="width:34px"></colgroup>
         <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
@@ -1939,8 +1939,8 @@ function renderCountyRecordsTable(rows, title, subtitle) {
 
   let body;
   if (filterGender === 'ALL') {
-    const boysP  = showBoys  ? makePanel('boysName','boysSchool','boysMark','boysYear','boys','♂ Boys','var(--blue)') : '';
-    const girlsP = showGirls ? makePanel('girlsName','girlsSchool','girlsMark','girlsYear','girls','♀ Girls','var(--red)') : '';
+    const boysP  = showBoys  ? makePanel('boysName','boysSchool','boysMark','boysYear','boys','Boys','var(--blue)') : '';
+    const girlsP = showGirls ? makePanel('girlsName','girlsSchool','girlsMark','girlsYear','girls','Girls','var(--red)') : '';
     body = `<div style="display:flex;flex-wrap:wrap;">${boysP}${girlsP}</div>`;
   } else {
     const nameKey   = showBoys ? 'boysName'   : 'girlsName';
@@ -2051,8 +2051,8 @@ function renderChamps(container) {
 
   // Header
   const hdrCols = [];
-  if (showBoys)  hdrCols.push(`<div style="flex:1;padding:6px 12px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);background:#eff4ff;border-bottom:2px solid var(--blue);border-right:1px solid var(--card-border);">♂ Boys</div>`);
-  if (showGirls) hdrCols.push(`<div style="flex:1;padding:6px 12px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);background:#fff0f3;border-bottom:2px solid var(--red);">♀ Girls</div>`);
+  if (showBoys)  hdrCols.push(`<div style="flex:1;padding:6px 12px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);background:#eff4ff;border-bottom:2px solid var(--blue);border-right:1px solid var(--card-border);">Boys</div>`);
+  if (showGirls) hdrCols.push(`<div style="flex:1;padding:6px 12px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);background:#fff0f3;border-bottom:2px solid var(--red);">Girls</div>`);
 
   container.innerHTML = `
     <div style="margin-bottom:8px;">
