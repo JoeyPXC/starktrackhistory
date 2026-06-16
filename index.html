@@ -450,41 +450,56 @@ const SCHOOL_COLORS = {
   'Alliance':                '#003087',
   'Canton South':            '#cc0000',
   'Central Catholic':        '#8B0000',
+  'Central':                 '#8B0000',
   'East Canton':             '#ff6600',
   'Fairless':                '#2d6a4f',
   'GlenOak':                 '#b8860b',
+  'Glenwood':                '#b8860b',
   'Hoover':                  '#990000',
   'Jackson':                 '#003399',
   'Lake':                    '#003087',
   'Lake Center Christian':   '#2d6a4f',
+  'Lake Center':             '#2d6a4f',
   'Louisville':              '#8B0000',
   'Marlington':              '#8B0000',
   'Massillon Washington':    '#cc7700',
+  'Massillon':               '#cc7700',
   'Canton McKinley':         '#003087',
+  'McKinley':                '#003087',
   'Minerva':                 '#cc0000',
   'Northwest':               '#cc0000',
   'Perry':                   '#c9a227',
   'Sandy Valley':            '#cc0000',
   'St. Thomas Aquinas':      '#003087',
+  'St. Thomas':              '#003087',
   'Tuslaw':                  '#003087',
   // Historical schools (closed)
   'Canton Timken':           '#cc0000',
+  'Timken':                  '#cc0000',
   'Canton Lehman':           '#003087',
+  'Lehman':                  '#003087',
   'Canton Lincoln':          '#003087',
+  'Lincoln':                 '#003087',
 };
 
-const HISTORICAL_SCHOOLS = new Set(['Canton Timken','Canton Lehman','Canton Lincoln']);
+const HISTORICAL_SCHOOLS = new Set(['Canton Timken','Timken','Canton Lehman','Lehman','Canton Lincoln','Lincoln','Glenwood','Oakwood']);
 
 const SCHOOL_MASCOTS = {
   'Alliance': 'Aviators', 'Canton South': 'Wildcats', 'Central Catholic': 'Crusaders',
+  'Central': 'Crusaders',
   'East Canton': 'Hornets', 'Fairless': 'Falcons', 'GlenOak': 'Golden Eagles',
+  'Glenwood': 'Big Red', 'Oakwood': 'Arrows',
   'Hoover': 'Vikings', 'Jackson': 'Polar Bears', 'Lake': 'Blue Streaks',
-  'Lake Center Christian': 'Tigers', 'Louisville': 'Leopards', 'Marlington': 'Dukes',
-  'Massillon Washington': 'Tigers', 'Canton McKinley': 'Bulldogs', 'Minerva': 'Lions',
-  'Northwest': 'Indians', 'Perry': 'Panthers', 'Sandy Valley': 'Cardinals',
-  'St. Thomas Aquinas': 'Knights', 'Tuslaw': 'Mustangs',
-  'Canton Timken': 'Trojans · Closed 2015', 'Canton Lehman': 'Polar Bears · Closed 1975',
-  'Canton Lincoln': 'Lions · Closed 1975',
+  'Lake Center Christian': 'Tigers', 'Lake Center': 'Tigers',
+  'Louisville': 'Leopards', 'Marlington': 'Dukes',
+  'Massillon Washington': 'Tigers', 'Massillon': 'Tigers',
+  'Canton McKinley': 'Bulldogs', 'McKinley': 'Bulldogs',
+  'Minerva': 'Lions', 'Northwest': 'Indians', 'Perry': 'Panthers',
+  'Sandy Valley': 'Cardinals', 'St. Thomas Aquinas': 'Knights', 'St. Thomas': 'Knights',
+  'Tuslaw': 'Mustangs',
+  'Canton Timken': 'Trojans · Closed 2015', 'Timken': 'Trojans · Closed 2015',
+  'Canton Lehman': 'Polar Bears · Closed 1975', 'Lehman': 'Polar Bears · Closed 1975',
+  'Canton Lincoln': 'Lions · Closed 1975', 'Lincoln': 'Lions · Closed 1975',
 };
 
 // ── State ──────────────────────────────────────────────────────
@@ -638,8 +653,18 @@ function parseSchoolRecordsHtml(html) {
     return parts.length > 0 ? parts : [text.trim()].filter(Boolean);
   }
 
+  const RELAY_EVENTS = /4\s*[xX×]\s*\d+|relay/i;
+
+  // Normalize school names that might appear differently in the doc
+  function normalizeName(n) {
+    n = n.trim();
+    // Only fix Lake Center which may appear without "Christian"
+    if (/lake\s*center/i.test(n) && !/christian/i.test(n)) return 'Lake Center Christian';
+    return n;
+  }
+
   doc.querySelectorAll('h1').forEach(h1 => {
-    const name = h1.textContent.trim();
+    const name = normalizeName(h1.textContent.trim());
     let el = h1.nextElementSibling;
     while (el && el.tagName !== 'TABLE' && el.tagName !== 'H1') el = el.nextElementSibling;
     if (!el || el.tagName !== 'TABLE') return;
@@ -650,7 +675,8 @@ function parseSchoolRecordsHtml(html) {
       const event = cells[0].textContent.trim();
       if (!event || event.toLowerCase() === 'event') return;
 
-      // Each cell may have multiple lines (shared records)
+      const isRelay = RELAY_EVENTS.test(event);
+
       const boysNames  = cellLines(cells[1]);
       const boysMarks  = cellLines(cells[2]);
       const boysYears  = cellLines(cells[3]);
@@ -658,21 +684,33 @@ function parseSchoolRecordsHtml(html) {
       const girlsMarks = cells.length > 5 ? cellLines(cells[5]) : [];
       const girlsYears = cells.length > 6 ? cellLines(cells[6]) : [];
 
-      // Zip into sub-rows; if marks/years are shared (only 1 value) repeat them
-      const bCount = Math.max(boysNames.length, 1);
-      const gCount = Math.max(girlsNames.length, 1);
-      const count  = Math.max(bCount, gCount);
-
-      for (let i = 0; i < count; i++) {
+      if (isRelay) {
+        // Relay: all names join into one row, mark shown once
         events.push({
-          event: i === 0 ? event : '',  // only show event label on first row
-          boysName:  boysNames[i]  || '',
-          boysMark:  boysMarks[i]  || boysMarks[0]  || '',
-          boysYear:  boysYears[i]  || boysYears[0]  || '',
-          girlsName: girlsNames[i] || '',
-          girlsMark: girlsMarks[i] || girlsMarks[0] || '',
-          girlsYear: girlsYears[i] || girlsYears[0] || '',
+          event,
+          boysName:  boysNames.join(', '),
+          boysMark:  boysMarks[0] || '',
+          boysYear:  boysYears[0] || '',
+          girlsName: girlsNames.join(', '),
+          girlsMark: girlsMarks[0] || '',
+          girlsYear: girlsYears[0] || '',
         });
+      } else {
+        // Non-relay: split into sub-rows for shared records
+        const bCount = Math.max(boysNames.length, 1);
+        const gCount = Math.max(girlsNames.length, 1);
+        const count  = Math.max(bCount, gCount);
+        for (let i = 0; i < count; i++) {
+          events.push({
+            event: i === 0 ? event : '',
+            boysName:  boysNames[i]  || '',
+            boysMark:  boysMarks[i]  || boysMarks[0]  || '',
+            boysYear:  boysYears[i]  || boysYears[0]  || '',
+            girlsName: girlsNames[i] || '',
+            girlsMark: girlsMarks[i] || girlsMarks[0] || '',
+            girlsYear: girlsYears[i] || girlsYears[0] || '',
+          });
+        }
       }
     });
     if (events.length) schools.push({ name, events });
@@ -825,9 +863,7 @@ function renderTop25(container) {
     const fG = q ? girlsData.filter(r=>r.name.toLowerCase().includes(q)||r.school.toLowerCase().includes(q)) : girlsData;
 
     const mkRow = (r, g) => {
-      // Normalize school name for highlight matching
-      let school = r.school;
-      if (/glenwood/i.test(school) || school === 'Glenoak') school = 'GlenOak';
+      const school = r.school;
       const isHL = highlightSchool !== 'NONE' && school === highlightSchool;
       const isRelay = evt.label.startsWith('4x');
       let nameHtml;
@@ -840,7 +876,7 @@ function renderTop25(container) {
       return `<tr class="${isHL?'school-highlight':''}">
         <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
         <td style="font-weight:${isHL?'700':'400'}">${nameHtml}</td>
-        <td class="school-cell">${school}</td>
+        <td class="school-cell">${displaySchool(school)}</td>
         <td class="mark-cell ${g}">${r.mark}</td>
         <td class="year-cell">${r.year}</td>
       </tr>`;
@@ -1410,7 +1446,7 @@ const TOP25_DATA = {
   },
   "Shot Put": {
     boys: [
-      {rank:1, name:"Dan Minocchi", school:"Cantral Catholic", mark:"61' 9.75\"", year:2000},
+      {rank:1, name:"Dan Minocchi", school:"Central Catholic", mark:"61' 9.75\"", year:2000},
       {rank:2, name:"Dan Dierdorf", school:"GlenOak", mark:"60' 8\"", year:1967},
       {rank:3, name:"Marc Anderson", school:"Alliance", mark:"59' 11.75\"", year:1990},
       {rank:4, name:"Homer Miller", school:"Alliance", mark:"59' 11\"", year:1976},
@@ -1695,7 +1731,7 @@ const TOP25_DATA = {
       {rank:9, name:"Eric Magnacca, Zach Yob, Darrell Parker, Jeff Tallman", school:"Perry", mark:"1:27.46", year:2005},
       {rank:10, name:"Malik Kimbrough, Jeff Richardson, Christian Thompson, Jermaine Edmondson", school:"Canton McKinley", mark:"1:27:59", year:2012},
       {rank:11, name:"Tyler Lancaster, Ryan Walker, Josh Lever, Andrew Flocker", school:"GlenOak", mark:"1:27.73", year:2012},
-      {rank:12, name:"Jeff Koch, Austin Jasinski, Justice Kemp, Deionne Harper", school:"Masslillon Washington", mark:"1:27.79", year:2015},
+      {rank:12, name:"Jeff Koch, Austin Jasinski, Justice Kemp, Deionne Harper", school:"Massillon Washington", mark:"1:27.79", year:2015},
       {rank:13, name:"Joe Morgan, Kellen Showes, Jamie Minor, Brian Williams", school:"Canton McKinley", mark:"1:27.82", year:2005},
       {rank:14, name:"Damere McClellan, Christiopher Crook, Dedrick Britt, Kamar Lucius", school:"Canton McKinley", mark:"1:27.93", year:2026},
       {rank:15, name:"Ryan Hood, Robert Partridge, Justin Olack, Devin Smith", school:"Massillon Washington", mark:"1:27.94", year:2010},
@@ -1857,8 +1893,8 @@ function renderCountyRecordsTable(rows, title, subtitle) {
     if (filterGender === 'ALL') {
       return `<tr style="${bg}">
         <td class="col-event" style="font-weight:600;">${r.event}</td>
-        ${showBoys ? `<td>${formatNames(r.boysName)}</td><td class="school-cell">${r.boysSchool}</td><td class="col-mark boys">${r.boysMark}</td><td class="col-year">${r.boysYear}</td>` : ''}
-        ${showGirls ? `<td>${formatNames(r.girlsName)}</td><td class="school-cell">${r.girlsSchool}</td><td class="col-mark girls">${r.girlsMark}</td><td class="col-year">${r.girlsYear}</td>` : ''}
+        ${showBoys ? `<td>${formatNames(r.boysName)}</td><td class="school-cell">${displaySchool(r.boysSchool)}</td><td class="col-mark boys">${r.boysMark}</td><td class="col-year">${r.boysYear}</td>` : ''}
+        ${showGirls ? `<td>${formatNames(r.girlsName)}</td><td class="school-cell">${displaySchool(r.girlsSchool)}</td><td class="col-mark girls">${r.girlsMark}</td><td class="col-year">${r.girlsYear}</td>` : ''}
       </tr>`;
     }
     const name   = showBoys ? r.boysName   : r.girlsName;
@@ -1869,7 +1905,7 @@ function renderCountyRecordsTable(rows, title, subtitle) {
     return `<tr style="${bg}">
       <td class="col-event" style="font-weight:600;">${r.event}</td>
       <td>${formatNames(name)}</td>
-      <td class="school-cell">${school}</td>
+      <td class="school-cell">${displaySchool(school)}</td>
       <td class="col-mark ${cls}">${mark}</td>
       <td class="col-year">${year}</td>
     </tr>`;
