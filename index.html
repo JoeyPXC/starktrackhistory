@@ -652,7 +652,8 @@ function setSearch(v) { searchQuery=v.toLowerCase(); renderContent(); }
 // ── School records fetch ───────────────────────────────────────
 async function loadSchoolRecords() {
   try {
-    const res = await fetch(SCHOOL_RECORDS_URL);
+    const bust = `?t=${Math.floor(Date.now()/60000)}`; // changes every minute
+    const res = await fetch(SCHOOL_RECORDS_URL + bust);
     const html = await res.text();
     return parseSchoolRecordsHtml(html);
   } catch(e) { console.error(e); return null; }
