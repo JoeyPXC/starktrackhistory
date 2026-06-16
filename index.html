@@ -659,16 +659,15 @@ function parseSchoolRecordsHtml(html) {
   function cellLines(cell, eventName) {
     const clone = cell.cloneNode(true);
 
-    // Log relay cells so we can see exactly what format they're in
-    if (eventName && /4\s*[xX×]\s*\d+|relay/i.test(eventName)) {
-      console.log(`RELAY CELL [${eventName}]:`, JSON.stringify(clone.innerHTML));
-    }
-
     // If multiple <p> children, each is one entry
     const paras = Array.from(clone.querySelectorAll('p'));
     if (paras.length > 1) {
       const lines = paras.map(p => p.textContent.replace(/\u00a0/g, ' ').trim()).filter(Boolean);
-      if (lines.length > 1) return lines;
+      if (lines.length > 1) {
+        if (eventName && /4\s*[xX×]\s*\d+|relay/i.test(eventName))
+          console.log(`RELAY [${eventName}] split into ${lines.length} lines:`, lines);
+        return lines;
+      }
     }
 
     // Replace <br> with pipe
@@ -679,6 +678,10 @@ function parseSchoolRecordsHtml(html) {
 
     // Split on pipe (from <br>), or on 2+ spaces
     const parts = text.split(/\||[ ]{2,}/).map(s => s.trim()).filter(Boolean);
+
+    if (eventName && /4\s*[xX×]\s*\d+|relay/i.test(eventName))
+      console.log(`RELAY [${eventName}] fallback split into ${parts.length}:`, parts, '| raw:', JSON.stringify(clone.innerHTML));
+
     return parts.length > 0 ? parts : [text.trim()].filter(Boolean);
   }
 
