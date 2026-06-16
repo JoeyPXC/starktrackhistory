@@ -670,8 +670,14 @@ function parseSchoolRecordsHtml(html) {
   // 3. Multiple regular spaces or &nbsp; chains between entries (print-layout trick)
   // 4. Unicode non-breaking spaces (\u00a0) between entries
   function cellLines(cell) {
-    // Clone so we don't mutate the DOM
     const clone = cell.cloneNode(true);
+
+    // Log raw innerHTML for relay name cells (first 3 multi-word cells only)
+    if (typeof window._diagCount === 'undefined') window._diagCount = 0;
+    if (window._diagCount < 6 && clone.textContent.trim().includes(' ')) {
+      console.log('CELL HTML:', JSON.stringify(clone.innerHTML));
+      window._diagCount++;
+    }
 
     // If multiple <p> children, each is one entry
     const paras = Array.from(clone.querySelectorAll('p'));
