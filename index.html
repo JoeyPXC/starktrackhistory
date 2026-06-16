@@ -482,40 +482,82 @@
 const SCHOOL_RECORDS_URL = 'https://docs.google.com/document/d/e/2PACX-1vT03xCGvstQRo2rEnp9D6ovTPsEnzR-G3OwBc4AjYwZ5kaEvYQ37nSK45Nu57SS9qAogKEgdOY_aG1H/pub';
 
 const SCHOOL_COLORS = {
-  'Alliance':                '#003087',
-  'Canton South':            '#cc0000',
-  'Central Catholic':        '#8B0000',
-  'Central':                 '#8B0000',
-  'East Canton':             '#ff6600',
-  'Fairless':                '#2d6a4f',
-  'GlenOak':                 '#b8860b',
-  'Glenwood':                '#b8860b',
-  'Hoover':                  '#990000',
-  'Jackson':                 '#003399',
-  'Lake':                    '#003087',
-  'Lake Center Christian':   '#2d6a4f',
-  'Lake Center':             '#2d6a4f',
-  'Louisville':              '#8B0000',
-  'Marlington':              '#8B0000',
-  'Massillon Washington':    '#cc7700',
-  'Massillon':               '#cc7700',
-  'Canton McKinley':         '#003087',
-  'McKinley':                '#003087',
-  'Minerva':                 '#cc0000',
-  'Northwest':               '#cc0000',
-  'Perry':                   '#c9a227',
-  'Sandy Valley':            '#cc0000',
-  'St. Thomas Aquinas':      '#003087',
-  'St. Thomas':              '#003087',
-  'Tuslaw':                  '#003087',
-  // Historical schools (closed)
-  'Canton Timken':           '#cc0000',
-  'Timken':                  '#cc0000',
-  'Canton Lehman':           '#003087',
-  'Lehman':                  '#003087',
-  'Canton Lincoln':          '#003087',
-  'Lincoln':                 '#003087',
+  'Alliance':                '#60a0e0',  // light blue + red
+  'Canton South':            '#c00000',  // red/grey
+  'Central Catholic':        '#006400',  // green
+  'Central':                 '#006400',
+  'East Canton':             '#e0a020',  // gold (Hornets - blue/gold)
+  'Fairless':                '#002040',  // navy blue
+  'GlenOak':                 '#1a5c1a',  // forest green
+  'Glenwood':                '#1a5c1a',
+  'Hoover':                  '#e04000',  // burnt orange
+  'Jackson':                 '#402080',  // purple
+  'Lake':                    '#2020a0',  // royal blue
+  'Lake Center Christian':   '#0040a0',  // royal blue
+  'Lake Center':             '#0040a0',
+  'Louisville':              '#4080a0',  // steel blue
+  'Marlington':              '#e08000',  // orange
+  'Massillon Washington':    '#e06000',  // bright orange
+  'Massillon':               '#e06000',
+  'Canton McKinley':         '#a00000',  // red
+  'McKinley':                '#a00000',
+  'Minerva':                 '#c02000',  // red
+  'Northwest':               '#802020',  // dark red
+  'Perry':                   '#c9a227',  // gold
+  'Sandy Valley':            '#802020',  // cardinal red
+  'St. Thomas Aquinas':      '#a08020',  // old gold
+  'St. Thomas':              '#a08020',
+  'Tuslaw':                  '#2080c0',  // medium blue
+  // Historical
+  'Canton Timken':           '#5060c0',  // blue/gold
+  'Timken':                  '#5060c0',
+  'Canton Lehman':           '#cc0000',  // scarlet & grey (Polar Bears)
+  'Lehman':                  '#cc0000',
+  'Canton Lincoln':          '#703050',  // maroon/gold
+  'Lincoln':                 '#703050',
 };
+
+// Logo filenames — upload these to a /logos/ folder in your GitHub repo
+const SCHOOL_LOGOS = {
+  'Alliance':              'Alliance.png',
+  'Central Catholic':      'Canton_C_C_.png',
+  'Central':               'Canton_C_C_.png',
+  'East Canton':           'East_Canton.png',
+  'Fairless':              'Fairless.png',
+  'GlenOak':               'GlenOak.png',
+  'Hoover':                'Hoover.png',
+  'Lake Center Christian': 'Lake_Center_Chr_.png',
+  'Lake Center':           'Lake_Center_Chr_.png',
+  'Louisville':            'Louisville.png',
+  'Marlington':            'Marlington.png',
+  'Massillon Washington':  'Mass__Washington.png',
+  'Massillon':             'Mass__Washington.png',
+  'Canton McKinley':       'Canton_McKinley_Bulldogs.png',
+  'McKinley':              'Canton_McKinley_Bulldogs.png',
+  'Minerva':               'Minerva.png',
+  'Northwest':             'CF_Northwest.png',
+  'Perry':                 'Mass__Perry.png',
+  'Sandy Valley':          'Sandy_Valley.png',
+  'St. Thomas Aquinas':    'St__Thomas_Aquinas.png',
+  'St. Thomas':            'St__Thomas_Aquinas.png',
+  'Tuslaw':                'Tuslaw_Blue_Horse.png',
+  'Canton South':          'Canton_South.png',
+  'Jackson':               'Mass__Jackson.png',
+  'Lake':                  'Uniont__Lake.png',
+  'Canton Timken':         'timken_logo.png',
+  'Timken':                'timken_logo.png',
+  'Canton Lincoln':        'CLHS_Logo.png',
+  'Lincoln':               'CLHS_Logo.png',
+  'Canton Lehman':         'Lehman.png',
+  'Lehman':                'Lehman.png',
+};
+
+const LOGO_BASE = 'logos/';
+
+function schoolLogo(name) {
+  const file = SCHOOL_LOGOS[name];
+  return file ? LOGO_BASE + file : null;
+}
 
 const HISTORICAL_SCHOOLS = new Set(['Canton Timken','Timken','Canton Lehman','Lehman','Canton Lincoln','Lincoln','Glenwood','Oakwood']);
 
@@ -801,6 +843,10 @@ function renderSchoolCard(school) {
   const mascot   = SCHOOL_MASCOTS[school.name] || '';
   const isClosed = HISTORICAL_SCHOOLS.has(school.name);
   const badge    = isClosed ? `<span class="closed-badge">CLOSED</span>` : '';
+  const logoSrc  = schoolLogo(school.name);
+  const logoHtml = logoSrc
+    ? `<img src="${logoSrc}" style="width:36px;height:36px;object-fit:contain;flex-shrink:0;" alt="">`
+    : `<div class="school-color-bar" style="background:${color}"></div>`;
   const showBoys  = filterGender !== 'F';
   const showGirls = filterGender !== 'M';
 
@@ -860,7 +906,7 @@ function renderSchoolCard(school) {
 
   return `<div class="school-card">
     <div class="school-card-header">
-      <div class="school-color-bar" style="background:${color}"></div>
+      ${logoHtml}
       <div style="flex:1;">
         <div class="school-name">${school.name}</div>
         ${mascot?`<div class="school-mascot">${mascot}</div>`:''}
@@ -2052,9 +2098,14 @@ function renderChamps(container) {
 
   const makeEntry = (school1, school2, small1, small2, smallLabel) => {
     if (!school1) return '';
+    const logo1 = schoolLogo(school1);
+    const logo2 = schoolLogo(school2);
+    const logoImg = (s, logo) => logo
+      ? `<img src="${logo}" style="width:20px;height:20px;object-fit:contain;margin-right:6px;vertical-align:middle;" alt="">`
+      : `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SCHOOL_COLORS[s]||'#888'};margin-right:6px;vertical-align:middle;"></span>`;
     return `<div>
-      <div style="font-weight:700;font-size:13px;">${badge('',true)}${school1}</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${badge('',false)}${school2}</div>
+      <div style="font-weight:700;font-size:13px;">${badge('',true)}${logoImg(school1,logo1)}${school1}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${badge('',false)}${logoImg(school2,logo2)}${school2}</div>
       ${small1 ? `<div style="margin-top:5px;padding-top:5px;border-top:1px dashed #e2e8f0;">
         <div style="font-size:9px;font-family:var(--font-d);letter-spacing:0.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:2px;">${smallLabel}</div>
         <div style="font-size:11.5px;color:var(--text-muted);">${badge('',true)}${small1}</div>
