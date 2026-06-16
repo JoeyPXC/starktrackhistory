@@ -719,13 +719,20 @@ function parseSchoolRecordsHtml(html) {
       const girlsYears = cells.length > 6 ? cellLines(cells[6], event) : [];
 
       if (isRelay) {
-        // Relay: all names join into one row, mark shown once
+        const boysJoined = boysNames.join(', ');
+        const girlsJoined = girlsNames.join(', ');
+        // Log specifically for known-broken relays
+        const watch = ['Lake','Marlington','Timken'];
+        if (watch.some(s => name.includes(s))) {
+          console.log(`[${name}] ${event} — boysNames(${boysNames.length}):`, boysNames, '→', boysJoined);
+          console.log(`[${name}] ${event} — girlsNames(${girlsNames.length}):`, girlsNames, '→', girlsJoined);
+        }
         events.push({
           event,
-          boysName:  boysNames.join(', '),
+          boysName:  boysJoined,
           boysMark:  boysMarks[0] || '',
           boysYear:  boysYears[0] || '',
-          girlsName: girlsNames.join(', '),
+          girlsName: girlsJoined,
           girlsMark: girlsMarks[0] || '',
           girlsYear: girlsYears[0] || '',
         });
