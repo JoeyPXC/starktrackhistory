@@ -335,6 +335,7 @@
   <button class="page-tab active" data-page="records" onclick="switchPage('records')">🏫 School Records</button>
   <button class="page-tab" data-page="top25" onclick="switchPage('top25')">🏆 County Top 25</button>
   <button class="page-tab" data-page="countyrecords" onclick="switchPage('countyrecords')">🎯 County Records</button>
+  <button class="page-tab" data-page="champs" onclick="switchPage('champs')">🥇 Team Champions</button>
 </nav>
 
 <!-- Filter Bar -->
@@ -421,6 +422,13 @@ function renderFilterBar() {
     </button>`).join('');
 
   if (currentPage === 'countyrecords') {
+    bar.innerHTML = `
+      <span class="filter-label">Gender</span>
+      <div class="filter-group">${genderBtns}</div>`;
+    return;
+  }
+
+  if (currentPage === 'champs') {
     bar.innerHTML = `
       <span class="filter-label">Gender</span>
       <div class="filter-group">${genderBtns}</div>`;
@@ -565,6 +573,7 @@ function renderContent() {
   const c = document.getElementById('mainContent');
   if (currentPage === 'records') renderSchoolRecords(c);
   else if (currentPage === 'countyrecords') renderCountyRecords(c);
+  else if (currentPage === 'champs') renderChamps(c);
   else renderTop25(c);
 }
 
@@ -1731,9 +1740,8 @@ function renderCountyRecordsTable(rows, title, subtitle) {
   return `
     <div style="margin-bottom:32px;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-        <div style="font-family:var(--font-d);font-size:18px;font-weight:700;">${title}</div>
-        <div style="flex:1;height:1px;background:var(--card-border);"></div>
-        ${subtitle ? `<div style="font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;">${subtitle}</div>` : ''}
+        <div style="font-family:var(--font-d);font-size:18px;font-weight:700;text-align:center;flex:1;">${title}</div>
+        ${subtitle ? `<div style="font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;">${subtitle}</div>` : ''}
       </div>
       <div class="school-card" style="overflow:hidden;">
         <div class="table-scroll">
@@ -1750,6 +1758,94 @@ function renderCountyRecords(container) {
   const overall = renderCountyRecordsTable(getOverallRecords(), '🏅 All-Time County Records', 'All venues, all years');
   const meet    = renderCountyRecordsTable(MEET_RECORDS, '🎽 Jim Craig Meet Records', 'Best marks set at the Championship');
   container.innerHTML = overall + meet;
+}
+
+// ── Team Champions Data ────────────────────────────────────────
+// Each entry: { year, boys1, boys2, girls1, girls2, boysSmall1, boysSmall2, girlsSmall1, girlsSmall2, smallLabel }
+// boysSmall/girlsSmall = D2/D3 (or D3-D5 in 2026) champion/runner-up
+const CHAMPS_DATA = [
+  {year:2026, boys1:'Perry',      boys2:'Fairless',    girls1:'Perry',       girls2:'Hoover',       boysSmall1:'Northwest',  boysSmall2:'Fairless',    girlsSmall1:'Marlington', girlsSmall2:'Canton South', smallLabel:'Div. 3–5'},
+  {year:2025, boys1:'Perry',      boys2:'GlenOak',     girls1:'Jackson',     girls2:'Perry',        boysSmall1:'Northwest',  boysSmall2:'Fairless',    girlsSmall1:'Marlington', girlsSmall2:'Minerva',      smallLabel:'Div. 2/3'},
+  {year:2024, boys1:'Perry',      boys2:'Jackson',     girls1:'GlenOak',     girls2:'Jackson',      boysSmall1:'Marlington', boysSmall2:'Northwest',   girlsSmall1:'Minerva',    girlsSmall2:'Sandy Valley', smallLabel:'Div. 2/3'},
+  {year:2023, boys1:'Perry',      boys2:'GlenOak',     girls1:'Jackson',     girls2:'GlenOak',      boysSmall1:'Marlington', boysSmall2:'Fairless',    girlsSmall1:'Northwest',  girlsSmall2:'Marlington',   smallLabel:'Div. 2/3'},
+  {year:2022, boys1:'Hoover',     boys2:'Louisville',  girls1:'Jackson',     girls2:'Perry',        boysSmall1:'Fairless',   boysSmall2:'East Canton', girlsSmall1:'Marlington', girlsSmall2:'Minerva',      smallLabel:'Div. 2/3'},
+  {year:2021, boys1:'Jackson',    boys2:'Hoover',      girls1:'Jackson',     girls2:'Marlington',   boysSmall1:'Marlington', boysSmall2:'Fairless',    girlsSmall1:'Marlington', girlsSmall2:'Tuslaw',       smallLabel:'Div. 2/3'},
+  {year:2019, boys1:'Massillon',  boys2:'GlenOak',     girls1:'GlenOak',     girls2:'Marlington',   boysSmall1:'East Canton',boysSmall2:'Northwest',   girlsSmall1:'Marlington', girlsSmall2:'Tuslaw',       smallLabel:'Div. 2/3'},
+  {year:2018, boys1:'East Canton',boys2:'GlenOak',     girls1:'Perry',       girls2:'GlenOak',      boysSmall1:'East Canton',boysSmall2:'Northwest',   girlsSmall1:'Marlington', girlsSmall2:'Minerva',      smallLabel:'Div. 2/3'},
+  {year:2017, boys1:'McKinley',   boys2:'GlenOak',     girls1:'Perry',       girls2:'GlenOak',      boysSmall1:'East Canton',boysSmall2:'Tuslaw',      girlsSmall1:'St. Thomas', girlsSmall2:'Minerva',      smallLabel:'Div. 2/3'},
+  {year:2016, boys1:'GlenOak',    boys2:'Louisville',  girls1:'Perry',       girls2:'McKinley',     boysSmall1:'St. Thomas', boysSmall2:'East Canton', girlsSmall1:'St. Thomas', girlsSmall2:'Minerva',      smallLabel:'Div. 2/3'},
+  {year:2015, boys1:'GlenOak',    boys2:'Massillon',   girls1:'GlenOak',     girls2:'St. Thomas',   boysSmall1:'Marlington', boysSmall2:'Tuslaw',      girlsSmall1:'St. Thomas', girlsSmall2:'Minerva',      smallLabel:'Div. 2/3'},
+  {year:2014, boys1:'GlenOak',    boys2:'McKinley',    girls1:'GlenOak',     girls2:'Hoover',       boysSmall1:'Fairless',   boysSmall2:'Marlington',  girlsSmall1:'St. Thomas', girlsSmall2:'Central',      smallLabel:'Div. 2/3'},
+  {year:2013, boys1:'GlenOak',    boys2:'Jackson/McKinley', girls1:'GlenOak',girls2:'Perry',        boysSmall1:'Northwest',  boysSmall2:'St. Thomas',  girlsSmall1:'Canton South',girlsSmall2:'Marlington',  smallLabel:'Div. 2/3'},
+  {year:2012, boys1:'McKinley',   boys2:'Jackson',     girls1:'Perry',       girls2:'Jackson',      boysSmall1:'Tie: Minerva & Tuslaw', boysSmall2:'', girlsSmall1:'Central',   girlsSmall2:'St. Thomas',   smallLabel:'Div. 2/3'},
+  {year:2011, boys1:'Massillon',  boys2:'Perry',       girls1:'Hoover',      girls2:'Perry',        boysSmall1:'St. Thomas', boysSmall2:'Canton South',girlsSmall1:'Canton South',girlsSmall2:'St. Thomas',  smallLabel:'Div. 2/3'},
+  {year:2010, boys1:'Perry',      boys2:'Massillon',   girls1:'Hoover',      girls2:'GlenOak',      boysSmall1:'St. Thomas', boysSmall2:'Sandy Valley',girlsSmall1:'Minerva',    girlsSmall2:'Canton South', smallLabel:'Div. 2/3'},
+  {year:2009, boys1:'McKinley',   boys2:'Hoover',      girls1:'GlenOak',     girls2:'Hoover',       boysSmall1:'St. Thomas', boysSmall2:'Marlington',  girlsSmall1:'Minerva',    girlsSmall2:'Central',      smallLabel:'Div. 2/3'},
+  {year:2008, boys1:'GlenOak',    boys2:'McKinley',    girls1:'Jackson',     girls2:'Hoover',       boysSmall1:'Marlington', boysSmall2:'Marlington',  girlsSmall1:'Minerva',    girlsSmall2:'Northwest',    smallLabel:'Div. 2/3'},
+  {year:2007, boys1:'Perry',      boys2:'McKinley',    girls1:'Jackson',     girls2:'Perry',        boysSmall1:'St. Thomas', boysSmall2:'Fairless',    girlsSmall1:'Tie: Central & East Canton', girlsSmall2:'', smallLabel:'Div. 2/3'},
+  {year:2006, boys1:'Perry',      boys2:'GlenOak',     girls1:'GlenOak',     girls2:'Jackson',      boysSmall1:'Central',    boysSmall2:'Canton South',girlsSmall1:'Canton South',girlsSmall2:'Minerva',     smallLabel:'Div. 2/3'},
+  {year:2005, boys1:'GlenOak',    boys2:'Perry',       girls1:'Jackson',     girls2:'Hoover',       boysSmall1:null,         boysSmall2:null,          girlsSmall1:null,         girlsSmall2:null,           smallLabel:null},
+  {year:2004, boys1:'GlenOak',    boys2:'Hoover',      girls1:'Jackson',     girls2:'GlenOak',      boysSmall1:null,         boysSmall2:null,          girlsSmall1:null,         girlsSmall2:null,           smallLabel:null},
+  {year:2003, boys1:'GlenOak',    boys2:'Hoover',      girls1:'GlenOak',     girls2:'Jackson',      boysSmall1:null,         boysSmall2:null,          girlsSmall1:null,         girlsSmall2:null,           smallLabel:null},
+];
+
+function renderChamps(container) {
+  const showBoys  = filterGender !== 'F';
+  const showGirls = filterGender !== 'M';
+
+  const school1Cls = 'font-weight:700;font-size:13px;color:var(--text);';
+  const school2Cls = 'font-size:12.5px;color:var(--text-muted);';
+
+  const champBadge  = (name, gold) => `<span style="display:inline-block;background:${gold?'var(--gold)':'#e2e8f0'};color:${gold?'white':'var(--text-muted)'};font-size:9px;font-family:var(--font-d);letter-spacing:0.5px;padding:1px 5px;border-radius:3px;margin-right:5px;">${gold?'1ST':'2ND'}</span>`;
+
+  const rows = CHAMPS_DATA.map((d, i) => {
+    const even = i % 2 === 0;
+    const bg = even ? '' : 'background:#f8f9fc;';
+
+    const boysCell = showBoys ? `<td style="${bg}vertical-align:middle;">
+      <div style="${school1Cls}">${champBadge(d.boys1,true)}${d.boys1}</div>
+      <div style="${school2Cls}margin-top:2px;">${champBadge(d.boys2,false)}${d.boys2}</div>
+      ${d.boysSmall1 ? `<div style="margin-top:6px;padding-top:5px;border-top:1px dashed #e2e8f0;font-size:10px;color:var(--text-dim);">
+        <span style="font-family:var(--font-d);letter-spacing:0.5px;">${d.smallLabel}</span>
+        <div style="margin-top:2px;font-size:11.5px;color:var(--text-muted);">${champBadge(d.boysSmall1,true)}${d.boysSmall1}</div>
+        ${d.boysSmall2 ? `<div style="font-size:11.5px;color:var(--text-muted);">${champBadge(d.boysSmall2,false)}${d.boysSmall2}</div>` : ''}
+      </div>` : ''}
+    </td>` : '';
+
+    const girlsCell = showGirls ? `<td style="${bg}vertical-align:middle;">
+      <div style="${school1Cls}">${champBadge(d.girls1,true)}${d.girls1}</div>
+      <div style="${school2Cls}margin-top:2px;">${champBadge(d.girls2,false)}${d.girls2}</div>
+      ${d.girlsSmall1 ? `<div style="margin-top:6px;padding-top:5px;border-top:1px dashed #e2e8f0;font-size:10px;color:var(--text-dim);">
+        <span style="font-family:var(--font-d);letter-spacing:0.5px;">${d.smallLabel}</span>
+        <div style="margin-top:2px;font-size:11.5px;color:var(--text-muted);">${champBadge(d.girlsSmall1,true)}${d.girlsSmall1}</div>
+        ${d.girlsSmall2 ? `<div style="font-size:11.5px;color:var(--text-muted);">${champBadge(d.girlsSmall2,false)}${d.girlsSmall2}</div>` : ''}
+      </div>` : ''}
+    </td>` : '';
+
+    return `<tr>
+      <td style="${bg}font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--blue);vertical-align:top;padding-top:14px;white-space:nowrap;">${d.year}</td>
+      ${boysCell}${girlsCell}
+    </tr>`;
+  }).join('');
+
+  const headers = `<th style="width:60px;">Year</th>${showBoys?'<th>Boys</th>':''}${showGirls?'<th>Girls</th>':''}`;
+
+  container.innerHTML = `
+    <div style="margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="font-family:var(--font-d);font-size:18px;font-weight:700;">🥇 Team Champions &amp; Runner-Ups</div>
+        <div style="flex:1;height:1px;background:var(--card-border);"></div>
+        <div style="font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;">Since 2003</div>
+      </div>
+      <div class="school-card" style="overflow:hidden;">
+        <div class="table-scroll">
+          <table class="records-table">
+            <thead><tr>${headers}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
 }
 
 // ── Init ───────────────────────────────────────────────────────
