@@ -858,70 +858,6 @@ function renderSchoolCard(school) {
   </div>`;
 }
 
-// ── Top 25 render ──────────────────────────────────────────────
-function renderTop25(container) {
-  const events = filterEvent === 'ALL' ? TOP25_EVENTS : TOP25_EVENTS.filter(e=>e.label===filterEvent);
-  const showBoys  = filterGender !== 'F';
-  const showGirls = filterGender !== 'M';
-
-  const html = events.map(evt => {
-    const boysData  = (TOP25_DATA[evt.label]||{}).boys  || [];
-    const girlsData = (TOP25_DATA[evt.label]||{}).girls || [];
-    const q = searchQuery;
-    const fB = q ? boysData.filter(r=>r.name.toLowerCase().includes(q)||r.school.toLowerCase().includes(q)) : boysData;
-    const fG = q ? girlsData.filter(r=>r.name.toLowerCase().includes(q)||r.school.toLowerCase().includes(q)) : girlsData;
-
-    const mkRow = (r, g) => {
-      const school = r.school;
-      const isHL = highlightSchool !== 'NONE' && school === highlightSchool;
-      const isRelay = evt.label.startsWith('4x');
-      let nameHtml;
-      if (isRelay) {
-        const names = r.name.split(',').map(n => n.trim()).filter(Boolean);
-        nameHtml = names.map(n => `<span class="relay-line">${n}</span>`).join('');
-      } else {
-        nameHtml = `<span style="font-size:12.5px;font-weight:${isHL?'700':'400'}">${r.name}</span>`;
-      }
-      return `<tr class="${isHL?'school-highlight':''}">
-        <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
-        <td style="font-weight:${isHL?'700':'400'}">${nameHtml}</td>
-        <td class="school-cell">${displaySchool(school)}</td>
-        <td class="mark-cell ${g}">${r.mark}</td>
-        <td class="year-cell">${r.year}</td>
-      </tr>`;
-    };
-
-    const isRelay = evt.label.startsWith('4x');
-    const count = isRelay ? 15 : 25;
-    const bTable = showBoys && fB.length ? `<div class="top25-col">
-      <div class="top25-col-header boys">♂ Boys Top ${count}</div>
-      <div class="table-scroll"><table class="top25-table">
-        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th>Mark</th><th>Year</th></tr></thead>
-        <tbody>${fB.map(r=>mkRow(r,'boys')).join('')}</tbody>
-      </table></div></div>` : '';
-
-    const gTable = showGirls && fG.length ? `<div class="top25-col">
-      <div class="top25-col-header girls">♀ Girls Top ${count}</div>
-      <div class="table-scroll"><table class="top25-table">
-        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th>Mark</th><th>Year</th></tr></thead>
-        <tbody>${fG.map(r=>mkRow(r,'girls')).join('')}</tbody>
-      </table></div></div>` : '';
-
-    const cols = [bTable, gTable].filter(Boolean).join('');
-    if (!cols) return '';
-
-    return `<div class="top25-event">
-      <div class="top25-event-header">
-        <div class="top25-event-name">${evt.label}</div>
-        <div class="top25-rule"></div>
-      </div>
-      <div class="top25-split">${cols}</div>
-    </div>`;
-  }).join('');
-
-  container.innerHTML = html || `<div class="loading-msg">No results found.</div>`;
-}
-
 // ── Data ───────────────────────────────────────────────────────
 const TOP25_EVENTS = [
   { label: '100m' },
@@ -1836,6 +1772,87 @@ const TOP25_DATA = {
     ],
   },
 };
+
+
+// ── Data ───────────────────────────────────────────────────────
+// (defined here so render functions below can reference it)
+
+// Shorten school names for compact display
+function displaySchool(s) {
+  if (!s) return '';
+  return s
+    .replace('Canton McKinley',      'McKinley')
+    .replace('Canton Timken',        'Timken')
+    .replace('Canton Lehman',        'Lehman')
+    .replace('Canton Lincoln',       'Lincoln')
+    .replace('Massillon Washington', 'Massillon')
+    .replace('Lake Center Christian','Lake Center')
+    .replace('St. Thomas Aquinas',   'St. Thomas');
+}
+
+// ── Top 25 render ──────────────────────────────────────────────
+function renderTop25(container) {
+  const events = filterEvent === 'ALL' ? TOP25_EVENTS : TOP25_EVENTS.filter(e=>e.label===filterEvent);
+  const showBoys  = filterGender !== 'F';
+  const showGirls = filterGender !== 'M';
+
+  const html = events.map(evt => {
+    const boysData  = (TOP25_DATA[evt.label]||{}).boys  || [];
+    const girlsData = (TOP25_DATA[evt.label]||{}).girls || [];
+    const q = searchQuery;
+    const fB = q ? boysData.filter(r=>r.name.toLowerCase().includes(q)||r.school.toLowerCase().includes(q)) : boysData;
+    const fG = q ? girlsData.filter(r=>r.name.toLowerCase().includes(q)||r.school.toLowerCase().includes(q)) : girlsData;
+
+    const mkRow = (r, g) => {
+      const school = r.school;
+      const isHL = highlightSchool !== 'NONE' && school === highlightSchool;
+      const isRelay = evt.label.startsWith('4x');
+      let nameHtml;
+      if (isRelay) {
+        const names = r.name.split(',').map(n => n.trim()).filter(Boolean);
+        nameHtml = names.map(n => `<span class="relay-line">${n}</span>`).join('');
+      } else {
+        nameHtml = `<span style="font-size:12.5px;font-weight:${isHL?'700':'400'}">${r.name}</span>`;
+      }
+      return `<tr class="${isHL?'school-highlight':''}">
+        <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
+        <td style="font-weight:${isHL?'700':'400'}">${nameHtml}</td>
+        <td class="school-cell">${displaySchool(school)}</td>
+        <td class="mark-cell ${g}">${r.mark}</td>
+        <td class="year-cell">${r.year}</td>
+      </tr>`;
+    };
+
+    const isRelay = evt.label.startsWith('4x');
+    const count = isRelay ? 15 : 25;
+    const bTable = showBoys && fB.length ? `<div class="top25-col">
+      <div class="top25-col-header boys">♂ Boys Top ${count}</div>
+      <div class="table-scroll"><table class="top25-table">
+        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th>Mark</th><th>Year</th></tr></thead>
+        <tbody>${fB.map(r=>mkRow(r,'boys')).join('')}</tbody>
+      </table></div></div>` : '';
+
+    const gTable = showGirls && fG.length ? `<div class="top25-col">
+      <div class="top25-col-header girls">♀ Girls Top ${count}</div>
+      <div class="table-scroll"><table class="top25-table">
+        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th>Mark</th><th>Year</th></tr></thead>
+        <tbody>${fG.map(r=>mkRow(r,'girls')).join('')}</tbody>
+      </table></div></div>` : '';
+
+    const cols = [bTable, gTable].filter(Boolean).join('');
+    if (!cols) return '';
+
+    return `<div class="top25-event">
+      <div class="top25-event-header">
+        <div class="top25-event-name">${evt.label}</div>
+        <div class="top25-rule"></div>
+      </div>
+      <div class="top25-split">${cols}</div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = html || `<div class="loading-msg">No results found.</div>`;
+}
 
 // ── County Records Data ────────────────────────────────────────
 // Meet Records = best marks set AT the Jim Craig Championships specifically
