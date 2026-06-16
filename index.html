@@ -91,7 +91,7 @@
     background: rgba(255,255,255,0.12);
   }
 
-  /* ── Page Tabs ── */
+  /* ── Nav ── */
   .page-tabs {
     position: sticky;
     top: 0;
@@ -99,7 +99,6 @@
     background: var(--header-bg);
     border-bottom: 3px solid var(--red);
     display: flex;
-    overflow-x: auto;
     scrollbar-width: none;
   }
   .page-tabs::-webkit-scrollbar { display: none; }
@@ -121,6 +120,80 @@
   }
   .page-tab:hover { color: rgba(255,255,255,0.85); }
   .page-tab.active { color: white; border-bottom-color: var(--red); }
+
+  /* Hamburger nav — hidden on desktop */
+  .nav-mobile {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--header-bg);
+    border-bottom: 3px solid var(--red);
+  }
+  .nav-mobile-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 46px;
+  }
+  .nav-current-page {
+    font-family: var(--font-d);
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: white;
+  }
+  .hamburger-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .hamburger-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: white;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+  .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .nav-dropdown {
+    display: none;
+    background: var(--header-bg);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 6px 0 10px;
+  }
+  .nav-dropdown.open { display: block; }
+  .nav-dropdown-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-d);
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 12px 20px;
+    border: none;
+    background: none;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .nav-dropdown-item:hover { color: white; background: rgba(255,255,255,0.05); }
+  .nav-dropdown-item.active { color: white; border-left: 3px solid var(--red); padding-left: 17px; }
+
+  @media (max-width: 600px) {
+    .page-tabs  { display: none; }
+    .nav-mobile { display: block; }
+  }
 
   /* ── Filter Bar ── */
   .filter-bar {
@@ -333,11 +406,28 @@
 </header>
 
 <!-- Tabs -->
+<!-- Desktop tab nav -->
 <nav class="page-tabs" id="pageTabs">
   <button class="page-tab active" data-page="records" onclick="switchPage('records')">🏫 School Records</button>
   <button class="page-tab" data-page="top25" onclick="switchPage('top25')">🏆 County Top 25</button>
   <button class="page-tab" data-page="countyrecords" onclick="switchPage('countyrecords')">🎯 County Records</button>
   <button class="page-tab" data-page="champs" onclick="switchPage('champs')">🥇 Team Champions</button>
+</nav>
+
+<!-- Mobile hamburger nav -->
+<nav class="nav-mobile" id="navMobile">
+  <div class="nav-mobile-bar">
+    <span class="nav-current-page" id="navCurrentPage">🏫 School Records</span>
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-dropdown" id="navDropdown">
+    <button class="nav-dropdown-item active" data-page="records" onclick="switchPage('records');toggleMenu()">🏫 School Records</button>
+    <button class="nav-dropdown-item" data-page="top25" onclick="switchPage('top25');toggleMenu()">🏆 County Top 25</button>
+    <button class="nav-dropdown-item" data-page="countyrecords" onclick="switchPage('countyrecords');toggleMenu()">🎯 County Records</button>
+    <button class="nav-dropdown-item" data-page="champs" onclick="switchPage('champs');toggleMenu()">🥇 Team Champions</button>
+  </div>
 </nav>
 
 <!-- Filter Bar -->
@@ -407,10 +497,30 @@ let highlightSchool = 'NONE';
 let searchQuery   = '';
 
 // ── Page switching ─────────────────────────────────────────────
+const PAGE_LABELS = {
+  records: '🏫 School Records',
+  top25: '🏆 County Top 25',
+  countyrecords: '🎯 County Records',
+  champs: '🥇 Team Champions',
+};
+
+function toggleMenu() {
+  const btn = document.getElementById('hamburgerBtn');
+  const dropdown = document.getElementById('navDropdown');
+  btn.classList.toggle('open');
+  dropdown.classList.toggle('open');
+}
+
 function switchPage(page) {
   currentPage = page;
+  // Desktop tabs
   document.querySelectorAll('.page-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.page === page));
+  // Mobile nav
+  document.querySelectorAll('.nav-dropdown-item').forEach(t =>
+    t.classList.toggle('active', t.dataset.page === page));
+  const label = document.getElementById('navCurrentPage');
+  if (label) label.textContent = PAGE_LABELS[page] || page;
   renderFilterBar();
   renderContent();
 }
