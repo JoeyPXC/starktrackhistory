@@ -841,7 +841,7 @@ function renderSchoolCard(school) {
   const badge    = isClosed ? `<span class="closed-badge">CLOSED</span>` : '';
   const logoSrc  = schoolLogo(school.name);
   const logoHtml = logoSrc
-    ? `<img src="${logoSrc}" style="width:52px;height:52px;object-fit:contain;flex-shrink:0;mix-blend-mode:multiply;" alt="">`
+    ? `<img src="${logoSrc}" style="width:52px;height:52px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">`
     : ``;
   const showBoys  = filterGender !== 'F';
   const showGirls = filterGender !== 'M';
@@ -2097,7 +2097,7 @@ function renderChamps(container) {
     const logo1 = schoolLogo(school1);
     const logo2 = schoolLogo(school2);
     const logoImg = (s, logo) => logo
-      ? `<img src="${logo}" style="width:20px;height:20px;object-fit:contain;margin-right:6px;vertical-align:middle;mix-blend-mode:multiply;" alt="">`
+      ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:white;border-radius:3px;margin-right:6px;vertical-align:middle;flex-shrink:0;"><img src="${logo}" style="width:18px;height:18px;object-fit:contain;mix-blend-mode:multiply;" alt=""></span>`
       : `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SCHOOL_COLORS[s]||'#888'};margin-right:6px;vertical-align:middle;"></span>`;
     return `<div>
       <div style="font-weight:700;font-size:13px;">${badge('',true)}${logoImg(school1,logo1)}${school1}</div>
