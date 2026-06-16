@@ -311,12 +311,13 @@
   .school-highlight td { background: #fffbf0 !important; }
   .school-highlight td:first-child { border-left: 3px solid var(--red); }
 
-  /* Flex record row — used for single-gender school records view */
+  /* Flex record row — school records page */
   .rec-list { padding: 0; }
   .rec-row {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 4px 8px;
     padding: 7px 14px;
     border-bottom: 1px solid #f0f2f6;
     min-width: 0;
@@ -327,14 +328,14 @@
   .rec-row.hl { background: #fffbf0 !important; border-left: 3px solid var(--red); padding-left: 11px; }
   .rec-event {
     font-size: 11px; color: var(--text-muted);
-    white-space: nowrap; flex: 0 0 108px;
+    white-space: nowrap; flex: 0 0 80px;
   }
   .rec-name {
     font-size: 13px; font-weight: 600; color: var(--text);
-    flex: 1; min-width: 0;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 1; min-width: 100px;
+    word-break: break-word; white-space: normal;
   }
-  .rec-name.relay-names { white-space: normal; overflow: visible; text-overflow: clip; }
+  .rec-name.relay-names { white-space: normal; }
   .rec-mark {
     font-family: var(--font-d); font-size: 14px; font-weight: 700;
     white-space: nowrap; flex: 0 0 auto;
@@ -347,65 +348,51 @@
   }
   .hl-name { color: var(--blue); font-weight: 700; }
 
-  /* ── Closed school badge ── */
-  .closed-badge {
-    font-size: 9px; font-family: var(--font-d); letter-spacing: 0.5px;
-    background: #fff8e1; color: var(--gold); border: 1px solid #f0d070;
-    border-radius: 3px; padding: 2px 6px;
-  }
-
   /* ── Top 25 ── */
   .top25-event { margin-bottom: 28px; }
-  .top25-event-header {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
-  }
+  .top25-event-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .top25-event-name { font-family: var(--font-d); font-size: 18px; font-weight: 700; color: var(--text); }
   .top25-rule { flex: 1; height: 1px; background: var(--card-border); }
   .top25-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 580px) { .top25-split { grid-template-columns: 1fr; } }
-
   .top25-col {
-    background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: var(--shadow);
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); min-width: 0;
   }
   .top25-col-header {
-    padding: 8px 14px;
-    font-family: var(--font-d);
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; font-family: var(--font-d); font-size: 11px;
+    letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 6px;
   }
   .top25-col-header.boys { color: var(--blue); background: #eff4ff; border-bottom: 2px solid var(--blue); }
   .top25-col-header.girls { color: var(--red); background: #fff0f3; border-bottom: 2px solid var(--red); }
-
-  .top25-table { width: 100%; border-collapse: collapse; }
+  /* Fixed-layout table keeps columns aligned regardless of content */
+  .top25-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   .top25-table th {
-    background: var(--header-bg);
-    color: rgba(255,255,255,0.6);
-    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-    padding: 5px 10px; text-align: left;
+    background: var(--header-bg); color: rgba(255,255,255,0.6);
+    font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 5px 5px; text-align: left; overflow: hidden; white-space: nowrap;
   }
+  .top25-table th:nth-child(1) { width: 24px; }   /* rank */
+  .top25-table th:nth-child(2) { width: auto; }    /* name */
+  .top25-table th:nth-child(3) { width: 64px; }    /* school */
+  .top25-table th:nth-child(4) { width: 58px; }    /* mark */
+  .top25-table th:nth-child(5) { width: 34px; }    /* year */
   .top25-table td {
-    padding: 7px 10px; font-size: 12.5px;
-    border-bottom: 1px solid #f0f2f6; vertical-align: middle;
+    padding: 6px 5px; font-size: 12px;
+    border-bottom: 1px solid #f0f2f6; vertical-align: middle; overflow: hidden;
   }
   .top25-table tr:last-child td { border-bottom: none; }
   .top25-table tbody tr:nth-child(even) td { background: #f8f9fc; }
   .top25-table tbody tr:hover td { background: #eef2ff; }
-  .rank-cell { color: var(--text-dim); font-family: var(--font-d); font-size: 11px; width: 26px; text-align: center; }
+  .rank-cell { color: var(--text-dim); font-family: var(--font-d); font-size: 11px; text-align: center; white-space: nowrap; }
   .rank-cell.top3 { color: #b8860b; font-weight: 700; font-size: 13px; }
-  .mark-cell { font-family: var(--font-d); font-size: 14px; font-weight: 700; white-space: nowrap; text-align: right; }
+  .mark-cell { font-family: var(--font-d); font-size: 13px; font-weight: 700; white-space: nowrap; text-align: right; }
   .mark-cell.boys { color: var(--blue); }
   .mark-cell.girls { color: var(--red); }
-  .school-cell { color: var(--text-muted); font-size: 11px; }
-  .year-cell { color: var(--text-dim); font-size: 11px; text-align: right; white-space: nowrap; }
+  .school-cell { color: var(--text-muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .year-cell { color: var(--text-dim); font-size: 10px; text-align: right; white-space: nowrap; }
   .school-highlight td { background: #fffbf0 !important; }
   .school-highlight td:first-child { border-left: 3px solid var(--red); }
-
   /* Loading */
   .loading-msg { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
   .loading-spinner {
@@ -1833,14 +1820,16 @@ function renderTop25(container) {
     const bTable = showBoys && fB.length ? `<div class="top25-col">
       <div class="top25-col-header boys">♂ Boys Top ${count}</div>
       <div class="table-scroll"><table class="top25-table">
-        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th>Mark</th><th>Year</th></tr></thead>
+        <colgroup><col style="width:24px"><col><col style="width:64px"><col style="width:58px"><col style="width:34px"></colgroup>
+        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
         <tbody>${fB.map(r=>mkRow(r,'boys')).join('')}</tbody>
       </table></div></div>` : '';
 
     const gTable = showGirls && fG.length ? `<div class="top25-col">
       <div class="top25-col-header girls">♀ Girls Top ${count}</div>
       <div class="table-scroll"><table class="top25-table">
-        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th>Mark</th><th>Year</th></tr></thead>
+        <colgroup><col style="width:24px"><col><col style="width:64px"><col style="width:58px"><col style="width:34px"></colgroup>
+        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
         <tbody>${fG.map(r=>mkRow(r,'girls')).join('')}</tbody>
       </table></div></div>` : '';
 
