@@ -2,9 +2,10 @@
   "name": "Jim Craig Stark County Track & Field Championships",
   "short_name": "Stark County T&F",
   "description": "All-time records, county top 25, and team champions history",
-  "start_url": "./stark_county.html",
+  "start_url": "/starktrackhistory/",
+  "scope": "/starktrackhistory/",
   "display": "standalone",
-  "background_color": "#0d1b2a",
+  "background_color": "#ffffff",
   "theme_color": "#0d1b2a",
   "orientation": "portrait-primary",
   "icons": [
