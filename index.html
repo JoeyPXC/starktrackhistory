@@ -548,11 +548,26 @@ const SCHOOL_LOGOS = {
   'Lehman':                'Lehman.png',
 };
 
-const LOGO_BASE = '';
-
 function schoolLogo(name) {
-  const file = SCHOOL_LOGOS[name];
-  return file ? LOGO_BASE + file : null;
+  if (!name) return null;
+  // Direct match
+  if (SCHOOL_LOGOS[name]) return SCHOOL_LOGOS[name];
+  // Case-insensitive match
+  const lower = name.trim().toLowerCase();
+  for (const key of Object.keys(SCHOOL_LOGOS)) {
+    if (key.toLowerCase() === lower) return SCHOOL_LOGOS[key];
+  }
+  // Try stripping common prefixes (e.g. "Canton McKinley" -> "McKinley")
+  const stripped = name.replace(/^canton\s+/i, '').trim();
+  if (SCHOOL_LOGOS[stripped]) return SCHOOL_LOGOS[stripped];
+  for (const key of Object.keys(SCHOOL_LOGOS)) {
+    if (key.toLowerCase() === stripped.toLowerCase()) return SCHOOL_LOGOS[key];
+  }
+  // Partial/contains match as last resort
+  for (const key of Object.keys(SCHOOL_LOGOS)) {
+    if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) return SCHOOL_LOGOS[key];
+  }
+  return null;
 }
 
 const HISTORICAL_SCHOOLS = new Set(['Canton Timken','Timken','Canton Lehman','Lehman','Canton Lincoln','Lincoln','Glenwood','Oakwood']);
@@ -739,8 +754,19 @@ function parseSchoolRecordsHtml(html) {
   // Normalize school names that might appear differently in the doc
   function normalizeName(n) {
     n = n.trim();
-    // Only fix Lake Center which may appear without "Christian"
     if (/lake\s*center/i.test(n) && !/christian/i.test(n)) return 'Lake Center Christian';
+    if (/glen\s*oak/i.test(n)) return 'GlenOak';
+    if (/massillon/i.test(n) && /washington/i.test(n)) return 'Massillon Washington';
+    if (/massillon/i.test(n)) return 'Massillon';
+    if (/mckinley/i.test(n)) return 'Canton McKinley';
+    if (/st\.?\s*thomas/i.test(n)) return 'St. Thomas Aquinas';
+    if (/sandy\s*valley/i.test(n)) return 'Sandy Valley';
+    if (/east\s*canton/i.test(n)) return 'East Canton';
+    if (/canton\s*south/i.test(n)) return 'Canton South';
+    if (/canton\s*timken/i.test(n)) return 'Canton Timken';
+    if (/canton\s*lincoln/i.test(n)) return 'Canton Lincoln';
+    if (/canton\s*lehman/i.test(n)) return 'Canton Lehman';
+    if (/central\s*catholic/i.test(n)) return 'Central Catholic';
     return n;
   }
 
