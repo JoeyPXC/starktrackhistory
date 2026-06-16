@@ -445,6 +445,7 @@
   <button class="page-tab" data-page="top25" onclick="switchPage('top25')">🏆 County Top 25</button>
   <button class="page-tab" data-page="countyrecords" onclick="switchPage('countyrecords')">🎯 County Records</button>
   <button class="page-tab" data-page="champs" onclick="switchPage('champs')">🥇 Team Champions</button>
+  <button class="page-tab" data-page="state" onclick="switchPage('state')">🏅 State Champions</button>
 </nav>
 
 <!-- Mobile hamburger nav -->
@@ -460,6 +461,7 @@
     <button class="nav-dropdown-item" data-page="top25" onclick="switchPage('top25');toggleMenu()">🏆 County Top 25</button>
     <button class="nav-dropdown-item" data-page="countyrecords" onclick="switchPage('countyrecords');toggleMenu()">🎯 County Records</button>
     <button class="nav-dropdown-item" data-page="champs" onclick="switchPage('champs');toggleMenu()">🥇 Team Champions</button>
+    <button class="nav-dropdown-item" data-page="state" onclick="switchPage('state');toggleMenu()">🏅 State Champions</button>
   </div>
 </nav>
 
@@ -550,6 +552,7 @@ const PAGE_LABELS = {
   top25: '🏆 County Top 25',
   countyrecords: '🎯 County Records',
   champs: '🥇 Team Champions',
+  state: '🏅 State Champions',
 };
 
 function toggleMenu() {
@@ -592,6 +595,13 @@ function renderFilterBar() {
     bar.innerHTML = `
       <span class="filter-label">Gender</span>
       <div class="filter-group">${genderBtns}</div>`;
+    return;
+  }
+
+  if (currentPage === 'state') {
+    bar.innerHTML = `
+      <input class="filter-search" type="text" placeholder="Search athlete or school…"
+        value="${searchQuery}" oninput="setSearch(this.value)" style="width:220px;">`;
     return;
   }
 
@@ -756,6 +766,7 @@ function renderContent() {
   if (currentPage === 'records') renderSchoolRecords(c);
   else if (currentPage === 'countyrecords') renderCountyRecords(c);
   else if (currentPage === 'champs') renderChamps(c);
+  else if (currentPage === 'state') renderState(c);
   else renderTop25(c);
 }
 
@@ -2086,6 +2097,192 @@ function renderChamps(container) {
         ${rows}
       </div>
     </div>`;
+}
+
+// ── State Champions Data ───────────────────────────────────────
+const STATE_CHAMPIONS = [
+  {name:"Lawrence Snyder",school:"Canton Central",year:1914,facts:["1914 state champion — boys high jump — 5' 6.75\"","Canton Central was Canton City's HS before Canton McKinley opened in 1918"]},
+  {name:"Rowland Harrold",school:"Massillon",year:1916,facts:["2× state champion — boys 440 yard dash — 1916 (52.0) and 1917 (53.4)"]},
+  {name:"William Langacher",school:"Alliance",year:1916,facts:["1916 state champion — boys 880 yard run — 2:04.1"]},
+  {name:"Walter Bischoff",school:"Massillon",year:1917,facts:["1917 state champion — boys 120 yard high hurdles — 19.4"]},
+  {name:"Bob McFarren",school:"Canton McKinley",year:1924,facts:["1924 Class A state champion — boys 100 yard dash — 10.7"]},
+  {name:"Allen Rudy",school:"Canton McKinley",year:1928,facts:["2× Class A state champion — boys 880 yard run — 1928 (1:59.4) and 1929 (2:00.1)"]},
+  {name:"Canton McKinley Boys 1 Mile Relay",school:"Canton McKinley",year:1929,facts:["Team: Frank Barbour, Roscoe Mason, Dean McCormick, Allen Rudy","1929 Class A state champion — 3:32.1"]},
+  {name:"Warren Smith",school:"Louisville",year:1929,facts:["1929 Class B state champion — boys javelin — 161' 6\""]},
+  {name:"Canton McKinley Boys 1 Mile Relay",school:"Canton McKinley",year:1930,facts:["Team: Earl Schreiber, Earl Miller, Dean McCormick, Roscoe Mason","1930 Class A state champion — 3:36.0"]},
+  {name:'Tillman "Tut" Allen',school:"Canton McKinley",year:1935,facts:["1935 Class A state champion — boys discus — 134' 5\""]},
+  {name:"Paul Quinn",school:"Canton McKinley",year:1936,facts:["1936 Class A state champion — boys 880 yard run — 2:01.7"]},
+  {name:"Ernie Parks",school:"Canton McKinley",year:1943,facts:["1943 Class A state champion — boys 100 yard dash (10.1) and 220 yard dash (21.6)"]},
+  {name:"Steve Orfanedes",school:"Canton McKinley",year:1945,facts:["1945 Class A state champion — boys 880 yard run — 1:56.9"]},
+  {name:"J.V. Clifford",school:"Canton McKinley",year:1947,facts:["1947 Class A state champion — boys 100 yard dash (10.1) and 220 yard dash (21.6)"]},
+  {name:"Canton Lehman Boys 880 Yard Relay",school:"Canton Lehman",year:1947,facts:["Team: Les Boydelatour, Dick Dickes, Bob Osmundsen, Dick Raebel","1947 Class A state champion — 1:32.7","Lehman was a Canton City high school until 1976"]},
+  {name:"Ray Hamilton",school:"Canton McKinley",year:1948,facts:["1948 Class A state champion — boys 120 yard high hurdles — 15.0"]},
+  {name:"Canton McKinley Boys 880 Yard Relay",school:"Canton McKinley",year:1948,facts:["Team: Don Winn, Harry Prophet, Ray Hamilton, J.V. Clifford","1948 Class A state champion — 1:31.5"]},
+  {name:"John Traylor",school:"Massillon",year:1954,facts:["1954 Class A state champion — boys 440 yard dash — 50.2"]},
+  {name:"Les Traver",school:"Alliance",year:1958,facts:["1958 Class AA state champion — boys 120 yard high hurdles — 14.6"]},
+  {name:"Homer Haines",school:"Lake",year:1963,facts:["1963 Class A state champion — boys 120 yard high hurdles (14.5) and 180 yard low hurdles (20.1)"]},
+  {name:"Ed Rowland",school:"Marlington",year:1968,facts:["1968 Class AA state champion — boys high jump — 6' 5.25\""]},
+  {name:"Dave Wottle",school:"Canton Lincoln",year:1968,facts:["1968 Class AA state champion — boys 1 mile run — 4:20.2","Tied the 800m world record at the 1972 Olympic Trials (1:44) and won the Olympic gold medal","Canton Lincoln was a Canton City high school until 1976"]},
+  {name:"Rick Schlabach",school:"Lake",year:1975,facts:["1975 Class AA state champion — boys shot put — 58' 6.5\""]},
+  {name:"Ron Shekels",school:"Marlington",year:1976,facts:["1976 Class AAA state champion — boys discus — 170' 10\", career best 173' 11\""]},
+  {name:'Anthony "Antone" Blair',school:"Alliance",year:1974,facts:["3× Class AAA state champion — boys 440 yard dash — 1974 (48.4), 1976 (47.3), and 1977 (48.4)"]},
+  {name:"Steve Fink",school:"Perry",year:1979,facts:["1979 Class AAA state champion — boys long jump — 23' 1.75\", career best 23' 8\"","Won four field events at the 1979 Class AAA sectional meet (shot put, discus, high jump, long jump)"]},
+  {name:"Joel Marchand",school:"Fairless",year:1979,facts:["2× Class AA state champion — boys 3200m — 1979 (9:22.2) and 1980 (9:13.4)","1980 Class AA state champion — boys 1600m — 4:16.7"]},
+  {name:"Margaret Peters",school:"Central Catholic",year:1979,facts:["1979 Class AAA state champion — girls long jump — 17' 9.25\", career best 18' 0\""]},
+  {name:"Kevin Louis",school:"Alliance",year:1980,facts:["1980 Class AAA state champion — boys long jump — 23' 3.75\""]},
+  {name:"Joe Bradley",school:"East Canton",year:1981,facts:["1981 Class A state champion — boys 100 (10.89), 200 (21.79), and 400 meter dashes (47.94)","Set Class A state meet records in both the 200m and 400m dashes"]},
+  {name:"Sidney Lewis",school:"Canton McKinley",year:1981,facts:["1981 Class AAA state champion — boys 100 meter dash — 10.83"]},
+  {name:"Janet Baughman",school:"Hoover",year:1982,facts:["1982 Class AAA state champion — girls 400 meter dash — 55.68"]},
+  {name:"Charles Calhoun",school:"Massillon",year:1983,facts:["1983 Class AAA state champion — boys shot put — 56' 10.25\""]},
+  {name:"Dennis Hill",school:"Canton South",year:1984,facts:["1984 Class AAA state champion — boys high jump — 6' 7\", career best 6' 10\""]},
+  {name:"Craig Johnson",school:"Massillon",year:1984,facts:["1984 Class AAA state champion — boys 100m (10.66) and 200m (21.50)"]},
+  {name:"Marzett Hawkins",school:"Alliance",year:1984,facts:["2× Class AAA state champion — boys long jump — 1984 (24' 0.5\") and 1985 (24' 0.5\")"]},
+  {name:"Lisa Breiding",school:"Marlington",year:1984,facts:["2× Class AAA state champion — girls 800m — 1984 (2:11.07) and 1985 (2:12.45)"]},
+  {name:"Lowell Terrell",school:"Alliance",year:1984,facts:["1984 Class AAA state champion — boys 3200m — 9:22.32"]},
+  {name:"Kevin Sheward",school:"Canton McKinley",year:1985,facts:["1985 Class AAA state champion — boys 1600m — 4:11.32"]},
+  {name:"Jenny Woodward",school:"Jackson",year:1987,facts:["1987 Class AAA state champion — girls high jump — 5' 6\""]},
+  {name:"Kelly Bodiford",school:"Massillon",year:1987,facts:["1987 Class AAA state champion — girls shot put — 42' 2\""]},
+  {name:"GlenOak Girls 4×800 Relay",school:"GlenOak",year:1987,facts:["Team: Erin O'Reilly, Louidajean Holloway, Ashley Edwards, Cheri Triner","2× Class AAA state champion — 1987 (9:23.34) and 1989 (9:13.96)"]},
+  {name:"Shawn Norman",school:"Canton Timken",year:1989,facts:["1989 Class AAA state champion — boys 1600m — 4:12.58"]},
+  {name:"Crissy Diamond",school:"St. Thomas Aquinas",year:1989,facts:["1989 Class A state champion — girls 100m — 12.39"]},
+  {name:"Shelly Allen",school:"East Canton",year:1989,facts:["1989 Class A state champion — girls high jump — 5' 6\""]},
+  {name:"Shawn Watson",school:"Alliance",year:1993,facts:["1993 Division I state champion — boys long jump — 23' 1\""]},
+  {name:"Central Catholic Boys 4×400 Relay",school:"Central Catholic",year:1993,facts:["Team: Jason Manse, Mark Sullivan, Nate Falvo, Nick Zuchegno","1993 Division II state champion — 3:25.27"]},
+  {name:"Danielle Jones",school:"Alliance",year:1993,facts:["2× Division I state champion — girls high jump — 1993 (5' 6\") and 1994 (5' 6\")"]},
+  {name:"Melissa Graham",school:"Marlington",year:1993,facts:["1993 Division II state champion — girls 3200m — 11:07.99","1996 Division II state champion — girls 1600m — 5:09.15"]},
+  {name:"Kelle Saxen",school:"Central Catholic",year:1994,facts:["1994 Division II state champion — girls high jump — 5' 7\""]},
+  {name:"Joe Crallie",school:"Sandy Valley",year:1994,facts:["1994 Division II state champion — boys long jump — 24' 3.5\"","1995 Division III state champion — boys long jump — 24' 1.25\"","Set a Division III state record in the boys long jump which stood until 2011"]},
+  {name:"Jason Calkins",school:"Sandy Valley",year:1995,facts:["1995 Division III state champion — boys high jump — 6' 6\""]},
+  {name:"Kevin Wilson",school:"Hoover",year:1995,facts:["1995 Division I state champion — boys long jump — 24' 1.25\""]},
+  {name:"Chane Cline",school:"East Canton",year:1996,facts:["1996 Division III state champion — boys shot put — 54' 11.75\", career best 57' 3.75\""]},
+  {name:"Rod Howell",school:"Alliance",year:1996,facts:["1996 Division I state champion — boys discus — 170' 4\""]},
+  {name:"Brandon Smith",school:"Perry",year:1997,facts:["2× Division I state champion — boys 800m — 1997 (1:52.55) and 1998 (1:52.49)"]},
+  {name:"Dan Minocchi",school:"Central Catholic",year:2000,facts:["2000 Division II state champion — boys shot put — 61' 9.75\" (Stark County record)"]},
+  {name:"Jak Taylor",school:"Canton McKinley",year:2000,facts:["2000 Division I state champion — boys 400m — 48.17"]},
+  {name:"Brandon Rauguth",school:"Hoover",year:2000,facts:["2000 Division I state champion — boys 800m — 1:53.32"]},
+  {name:"Emily Halm",school:"Jackson",year:2000,facts:["2000 Division I state champion — girls 1600m — 4:53.82"]},
+  {name:"Zakiya Harris",school:"Perry",year:2000,facts:["2000 Division I state champion — girls long jump — 19' 3.25\""]},
+  {name:"Lisa Evanich",school:"Marlington",year:2001,facts:["2001 Division II state champion — girls discus — 131' 4\""]},
+  {name:"Derrick Williams",school:"GlenOak",year:2000,facts:["2× Division I state champion — boys 300m hurdles — 2000 (36.66) and 2001 (37.86)","Set a Division I state record in the 300H which stood until 2012"]},
+  {name:"Hoover Boys 4×800 Relay",school:"Hoover",year:2003,facts:["Team: Glenn Collins, David Blend, Tommy Noyes, Alex Ramsey","2003 Division I state champion — 7:41.74 (state record)","Ran the fastest HS boys 4×800 relay time in the country for the 2003 season"]},
+  {name:"Canton McKinley Girls 4×200 Relay",school:"Canton McKinley",year:2003,facts:["Team: Cherrelle Montgomery, Sybil McLeod, Destanie Morgan, Corine Gavin-Hall","2003 Division I state champion — 1:38.88"]},
+  {name:"Michael Coates",school:"Sandy Valley",year:2004,facts:["2004 Division II state champion — boys 1600m — 4:20.27"]},
+  {name:"Kendall Davis",school:"Alliance",year:2004,facts:["2× Division II state champion — boys 100m — 2004 (10.87) and 2005 (10.93)","2× Division II state champion — boys 200m — 2004 (21.76) and 2005 (21.67)"]},
+  {name:"Ashley Muffet",school:"Hoover",year:2004,facts:["2× Division I state champion — girls shot put — 2004 (45' 5\") and 2005 (50' 6.5\")","2005 Division I state champion — girls discus — 154' 7\"","Set a Division I state record in the girls shot put which stood until 2013"]},
+  {name:"Destanie Morgan",school:"Canton McKinley",year:2005,facts:["2005 Division I state champion — girls 100m — 12.13, career best 11.81","2005 Division I state champion — girls long jump — 18' 11\""]},
+  {name:"Brian Hartline",school:"GlenOak",year:2005,facts:["2005 Division I state champion — boys 110m hurdles (14.09) and 300m hurdles (36.69)"]},
+  {name:"Marcus Hunter",school:"Canton Timken",year:2005,facts:["2005 Division I state champion — boys long jump — 23' 10\", career best 24' 4\""]},
+  {name:"Joe Morgan",school:"Canton McKinley",year:2006,facts:["2006 Division I state champion — boys long jump — 24' 6\""]},
+  {name:"Tony Ash",school:"Canton South",year:2006,facts:["2006 Division II state champion — boys long jump — 22' 8.5\""]},
+  {name:"Aaron Melhorn",school:"Fairless",year:2006,facts:["2006 Division II state champion — boys 3200m — 9:22.85, career best 9:06.4"]},
+  {name:"Jarrod Eick",school:"Marlington",year:2009,facts:["2009 Division II state champion — boys 1600m — 4:16.43"]},
+  {name:"Cody Marshall",school:"East Canton",year:2010,facts:["2010 Division III state champion — boys pole vault — 15' 7\""]},
+  {name:"Kandace Thomas",school:"GlenOak",year:2009,facts:["2× Division I state champion — girls 100m — 2009 (12.04) and 2010 (11.74)"]},
+  {name:"Devin Smith",school:"Massillon",year:2010,facts:["2× Division I state champion — boys long jump — 2010 (23' 4.5\") and 2011 (24' 7\")","2011 Division I state champion — boys 100m — 10.74"]},
+  {name:"Hoover Girls 4×800 Relay",school:"Hoover",year:2010,facts:["Team: Erin Garfield, Kelsey Peare, Hannah Christ, Allison Peare","2010 Division I state champion — 9:09.45"]},
+  {name:"St. Thomas Aquinas Boys 4×800 Relay",school:"St. Thomas Aquinas",year:2010,facts:["Team: Matt Dougherty, Maurice Kirksey, Ron Maksim, Jordan McKelley","2010 Division III state champion — 7:50.08"]},
+  {name:"Julia Pusateri",school:"St. Thomas Aquinas",year:2011,facts:["2011 Division III state champion — girls 1600m — 5:03.84"]},
+  {name:"Kaele Lightfoot",school:"Minerva",year:2011,facts:["2011 Division II state champion — girls 800m — 2:12.25"]},
+  {name:"Cody Jones",school:"GlenOak",year:2012,facts:["2012 Division I state champion — boys high jump — 6' 7\", career best 6' 9\""]},
+  {name:"Maddie Morrow",school:"Hoover",year:2012,facts:["2012 Division I state champion — girls high jump — 5' 9\", career best 5' 11\""]},
+  {name:"Andrew Milhoan",school:"Sandy Valley",year:2012,facts:["2012 Division II state champion — boys long jump — 22' 0\""]},
+  {name:"Allison Lindic",school:"Northwest",year:2012,facts:["2012 Division II state champion — girls high jump — 5' 5\", career best 5' 6.5\""]},
+  {name:"Cory Glines",school:"St. Thomas Aquinas",year:2012,facts:["2012 Division III state champion — boys 1600m — 4:12.93"]},
+  {name:"Katie Mokros",school:"Central Catholic",year:2013,facts:["2013 Division III state champion — girls 100m (12.32) and 200m (25.25)"]},
+  {name:"Perry Girls 4×400 Relay",school:"Perry",year:2013,facts:["Team: Faith Strickland, Jackie Genetin, Mikayla Dearing, Hannah Luke","2013 Division I state champion — 3:48.59"]},
+  {name:"Allyson Simmons",school:"Fairless",year:2013,facts:["2× Division II state champion — girls pole vault — 2013 (12' 5.25\") and 2014 (13' 4.25\")"]},
+  {name:"Tyler Neff",school:"Fairless",year:2014,facts:["2014 Division II state champion — boys 400m — 47.88"]},
+  {name:"Lucas Kelley",school:"Perry",year:2014,facts:["2× Division I state champion — boys pole vault — 2014 (15' 10\") and 2016 (16' 4\"), career best 16' 9\""]},
+  {name:"Athena Welsh",school:"St. Thomas Aquinas",year:2014,facts:["3× Division III state champion — girls 1600m — 2014 (5:02.98), 2015 (4:58.87), 2016 (4:49.06)","2016 Division III state champion — girls 3200m — 10:56.80, career best 10:38.34"]},
+  {name:"St. Thomas Aquinas Girls 4×800 Relay",school:"St. Thomas Aquinas",year:2014,facts:["Team: Athena Welsh, Kalee Soehnlen, Kacee Soehnlen, Molly Pusateri","2014 Division III state champion — 9:11.66"]},
+  {name:"Indy Clark",school:"Massillon",year:2015,facts:["2015 Division I state champion — girls long jump — 18' 5.5\""]},
+  {name:"Andra Lehotay",school:"Sandy Valley",year:2015,facts:["2015 Division II state champion — girls 800m — 2:13.76"]},
+  {name:"Matt Peare",school:"Hoover",year:2015,facts:["2× Division I state champion — boys pole vault — 2015 (16' 4\") and 2017 (15' 8\")"]},
+  {name:"Kalee Soehnlen",school:"St. Thomas Aquinas",year:2015,facts:["2× Division III state champion — girls 800m — 2015 (2:16.07) and 2016 (2:10.67)"]},
+  {name:"St. Thomas Aquinas Girls 4×800 Relay",school:"St. Thomas Aquinas",year:2015,facts:["Team: Athena Welsh, Hannah Soehnlen, Kacee Soehnlen, Kalee Soehnlen","2× Division III state champion — 2015 (9:16.67) and 2016 (Division III state record 9:05.64)"]},
+  {name:"St. Thomas Aquinas Girls 4×200 Relay",school:"St. Thomas Aquinas",year:2015,facts:["Team: Kacee Soehnlen, Megan Hoffman, Kalee Soehnlen, Rachael Adams","2015 Division III state champion — 1:44.19"]},
+  {name:"St. Thomas Aquinas Girls 4×100 Relay",school:"St. Thomas Aquinas",year:2015,facts:["Team: Aubrey Dempsey, Megan Hoffman, Rosa Forchione, Rachael Adams","2015 Division III state champion — 50.20"]},
+  {name:"St. Thomas Aquinas Girls 4×200 Relay",school:"St. Thomas Aquinas",year:2016,facts:["Team: Kacee Soehnlen, Emma Pusateri, Kalee Soehnlen, Rachael Adams","2016 Division III state champion — 1:44.88"]},
+  {name:"Zion Clark",school:"Massillon",year:2016,facts:["2016 Seated Division state champion — boys 100m (17.82) and 400m (1:03.60)"]},
+  {name:"Jacob Caniford",school:"St. Thomas Aquinas",year:2016,facts:["2016 Division III state champion — boys 1600m — 4:14.34"]},
+  {name:"St. Thomas Aquinas Boys 4×800 Relay",school:"St. Thomas Aquinas",year:2016,facts:["Team: Edward Walsh, Jacob Paul, John Laubacher, Jacob Caniford","2016 Division III state champion — 7:56.57"]},
+  {name:"East Canton Boys 4×800 Relay",school:"East Canton",year:2017,facts:["Team: Colt Hemphill, Demetrius Snellenberger, James McCullough, Josh Conrad","2017 Division III state champion — 7:50.68"]},
+  {name:"East Canton Boys 4×400 Relay",school:"East Canton",year:2017,facts:["Team: Zach McClaskey, Nathanael Suntheimer, James McCullough, Josh Conrad","2017 Division III state champion — 3:21.53"]},
+  {name:"St. Thomas Aquinas Girls 4×800 Relay",school:"St. Thomas Aquinas",year:2017,facts:["Team: Kacee Soehnlen, Hannah Ohman, Hannah Soehnlen, Kalee Soehnlen","2017 Division III state champion — 9:11.32"]},
+  {name:"Andrew White",school:"GlenOak",year:2017,facts:["2× Division I state champion — boys discus — 2017 (182' 2\") and 2018 (194' 9\"), career best 204' 10\""]},
+  {name:"Josh Conrad",school:"East Canton",year:2018,facts:["2018 Division III state champion — boys 800m — 1:53.99"]},
+  {name:"East Canton Boys 4×400 Relay",school:"East Canton",year:2018,facts:["Team: Mitch Mitchell, Cody Vacco, Joel Berger, Josh Conrad","2018 Division III state champion — 3:20.90"]},
+  {name:"Ke'Aijhan Strong",school:"Tuslaw",year:2018,facts:["2018 Division II state champion — girls 400m — 55.78"]},
+  {name:"East Canton Boys 4×800 Relay",school:"East Canton",year:2019,facts:["Team: Colt Hemphill, Kyeem Newell-Owens, Nick Martino, Demetrius Snellenberger","2019 Division III state champion — 7:56.34"]},
+  {name:"Luke Laubacher",school:"Perry",year:2021,facts:["2021 Division I state champion — boys long jump — 24' 3.5\""]},
+  {name:"Nathan Moore",school:"Lake",year:2021,facts:["2021 Division I state champion — boys 3200m — 9:00.88"]},
+  {name:"Central Catholic Boys 4×800 Relay",school:"Central Catholic",year:2021,facts:["Team: Ian Paul, Barrett Scheatzle, Blake Abbott, Max Grillo","2021 Division III state champion — 7:58.39"]},
+  {name:"Marlington Boys 4×800 Relay",school:"Marlington",year:2022,facts:["Team: Liam Blake, Cohen Boyce, Noah Graham, Colin Cernansky","2022 Division II state champion — 7:49.66"]},
+  {name:"Elena Knowles",school:"GlenOak",year:2022,facts:["2022 Seated Division state champion — girls shot put — 16' 5\""]},
+  {name:"Colin Cernansky",school:"Marlington",year:2022,facts:["3× Division II state champion — boys 1600m — 2022 (4:14.18), 2023 (4:14.57), 2024 (4:07.53)","2024 Division II state champion — boys 3200m — 9:13.17"]},
+  {name:"Kendal Fisher",school:"Perry",year:2022,facts:["2022 Division I state champion — girls pole vault — 13' 2.25\""]},
+  {name:"Tommy Rice",school:"GlenOak",year:2022,facts:["2022 Division I state champion — boys 3200m — 9:05.46"]},
+  {name:"Marlington Boys 4×800 Relay",school:"Marlington",year:2023,facts:["Team: Luke Ryan, Cohen Boyce, Logan Citino, Colin Cernansky","2023 Division II state champion — 7:50.98"]},
+  {name:"Brylan Holland",school:"East Canton",year:2023,facts:["2023 Division III state champion — boys 1600m (4:13.51) and 3200m (9:24.75)"]},
+  {name:"Xavier Williams",school:"Canton South",year:2023,facts:["2023 Division II state champion — boys high jump — 6' 7\""]},
+  {name:"Ahsha DiPietro",school:"Perry",year:2023,facts:["2023 Seated Division state champion — girls 100m (22.50) and 400m (1:28.73)"]},
+  {name:"Brody Pumneo",school:"Fairless",year:2023,facts:["2023 Division II state champion — boys 800m — 1:53.03"]},
+  {name:"Lexi Tucci",school:"Sandy Valley",year:2024,facts:["2024 Division III state champion — girls high jump — 5' 6\""]},
+  {name:"Isaiah Barker",school:"Hoover",year:2024,facts:["2024 Division I state champion — boys long jump — 23' 7\"","2025 Division I state champion — boys long jump — 23' 10\""]},
+  {name:"Abigail LaPole",school:"Jackson",year:2024,facts:["2024 Division I state champion — girls seated shot put — 18' 6.75\"","2025 Division I state champion — girls seated shot put — 19' 11\""]},
+  {name:"Daniela Scheffler",school:"Lake",year:2025,facts:["2025 Division I state champion — girls 3200m — 10:21.82"]},
+  {name:"Gianna Ritchie",school:"Lake Center Christian",year:2025,facts:["2025 Division III state champion — girls 800m — 2:12.79"]},
+];
+
+function renderState(container) {
+  const q = searchQuery.toLowerCase();
+  let entries = STATE_CHAMPIONS;
+  if (q) {
+    entries = entries.filter(e =>
+      e.name.toLowerCase().includes(q) ||
+      e.school.toLowerCase().includes(q) ||
+      e.facts.some(f => f.toLowerCase().includes(q))
+    );
+  }
+
+  if (!entries.length) {
+    container.innerHTML = `<div class="loading-msg">No results found.</div>`;
+    return;
+  }
+
+  const isRelay = e => /relay/i.test(e.name);
+  const color = e => SCHOOL_COLORS[e.school] || SCHOOL_COLORS[e.school.replace('Canton ','')] || '#888';
+
+  const cards = entries.map(e => {
+    const relay = isRelay(e);
+    const col = color(e);
+    const factsHtml = e.facts.map((f, i) => {
+      // First fact is team members for relays — style differently
+      if (relay && i === 0 && f.startsWith('Team:')) {
+        return `<div style="font-size:11px;color:var(--text-muted);margin-bottom:5px;line-height:1.6;">
+          ${f.replace('Team: ','').split(', ').map(n => `<span style="display:inline-block;margin-right:12px;">${n}</span>`).join('')}
+        </div>`;
+      }
+      return `<div style="font-size:13px;color:var(--text);line-height:1.5;padding:2px 0;">${f}</div>`;
+    }).join('');
+
+    return `<div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);
+      overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow);border-left:4px solid ${col};">
+      <div style="padding:11px 14px 4px;">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+          <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--text);">${e.name}</div>
+          <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${displaySchool(e.school)}</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-left:auto;white-space:nowrap;">${e.year}</div>
+        </div>
+        <div style="padding-bottom:10px;">${factsHtml}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">🏅 State Champions of Stark County</div>
+    <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">1914 – Present</div>
+    ${cards}`;
 }
 
 // ── Init ───────────────────────────────────────────────────────
