@@ -334,6 +334,7 @@
 <nav class="page-tabs" id="pageTabs">
   <button class="page-tab active" data-page="records" onclick="switchPage('records')">🏫 School Records</button>
   <button class="page-tab" data-page="top25" onclick="switchPage('top25')">🏆 County Top 25</button>
+  <button class="page-tab" data-page="countyrecords" onclick="switchPage('countyrecords')">🎯 County Records</button>
 </nav>
 
 <!-- Filter Bar -->
@@ -418,6 +419,13 @@ function renderFilterBar() {
     <button class="filter-btn ${filterGender===g?'active':''}" onclick="setGender('${g}')">
       ${g==='ALL'?'All':g==='M'?'Boys':'Girls'}
     </button>`).join('');
+
+  if (currentPage === 'countyrecords') {
+    bar.innerHTML = `
+      <span class="filter-label">Gender</span>
+      <div class="filter-group">${genderBtns}</div>`;
+    return;
+  }
 
   if (currentPage === 'records') {
     const schools = schoolRecordsData ? schoolRecordsData.map(s=>s.name).sort() : [];
@@ -556,6 +564,7 @@ function parseSchoolRecordsHtml(html) {
 function renderContent() {
   const c = document.getElementById('mainContent');
   if (currentPage === 'records') renderSchoolRecords(c);
+  else if (currentPage === 'countyrecords') renderCountyRecords(c);
   else renderTop25(c);
 }
 
@@ -1632,6 +1641,116 @@ const TOP25_DATA = {
     ],
   },
 };
+
+// ── County Records Data ────────────────────────────────────────
+// Meet Records = best marks set AT the Jim Craig Championships specifically
+const MEET_RECORDS = [
+  {event:'Pole Vault',      boysName:'Lucas Kelley',       boysSchool:'Perry',       boysMark:"16'0″",    boysYear:2016, girlsName:'Kendal Fisher',      girlsSchool:'Perry',       girlsMark:"13'1\"",   girlsYear:2022},
+  {event:'Shot Put',        boysName:'Nathaniel Devers',   boysSchool:'Massillon',    boysMark:"55'2.75\"", boysYear:2013, girlsName:'Ashley Muffet',       girlsSchool:'Hoover',      girlsMark:"47'4\"",   girlsYear:2005},
+  {event:'Discus',          boysName:'Andrew White',       boysSchool:'GlenOak',      boysMark:"191'0\"",   boysYear:2018, girlsName:'Jenae Linville',      girlsSchool:'Lake Center', girlsMark:"137'10\"", girlsYear:2013},
+  {event:'High Jump',       boysName:'David Slife / Aaron Morrow / Jamil Dudley / Devin Smith', boysSchool:'Central / Hoover / Massillon / Massillon', boysMark:"6'8″", boysYear:'2004/10/10/11', girlsName:'Maddie Morrow', girlsSchool:'Hoover', girlsMark:"5'8″", girlsYear:2011},
+  {event:'Long Jump',       boysName:'Devin Smith',        boysSchool:'Massillon',    boysMark:"23'5.25″",  boysYear:2011, girlsName:'Destanie Morgan',     girlsSchool:'McKinley',    girlsMark:"18'9.5″",  girlsYear:2004},
+  {event:'100 Dash',        boysName:'Devin Smith',        boysSchool:'Massillon',    boysMark:'10.75',     boysYear:2011, girlsName:'Kandace Thomas',      girlsSchool:'GlenOak',     girlsMark:'11.98',    girlsYear:2009},
+  {event:'110/100 Hurdles', boysName:'Brian Hartline',     boysSchool:'GlenOak',      boysMark:'14.18',     boysYear:2005, girlsName:'Maria Welch',         girlsSchool:'Massillon',   girlsMark:'14.64',    girlsYear:2019},
+  {event:'200 Dash',        boysName:'Curtis Leuenberger', boysSchool:'Louisville',   boysMark:'21.91',     boysYear:2006, girlsName:'Hannah Luke',         girlsSchool:'Perry',       girlsMark:'25.05',    girlsYear:2013},
+  {event:'300 Hurdles',     boysName:'Brian Hartline',     boysSchool:'GlenOak',      boysMark:'38.06',     boysYear:2004, girlsName:'Erin Reese',          girlsSchool:'Lake',        girlsMark:'45.26',    girlsYear:2003},
+  {event:'400 Dash',        boysName:'Pierlus Stewart',    boysSchool:'GlenOak',      boysMark:'49.40',     boysYear:2017, girlsName:'Cathy Hardesty',      girlsSchool:'Jackson',     girlsMark:'56.57',    girlsYear:2004},
+  {event:'800 Run',         boysName:'John Hollon',        boysSchool:'Hoover',       boysMark:'1:55.96',   boysYear:2021, girlsName:'Kalee Soehnlen',      girlsSchool:'St. Thomas',  girlsMark:'2:14.34',  girlsYear:2016},
+  {event:'1600 Run',        boysName:'Colin Cernansky',    boysSchool:'Marlington',   boysMark:'4:13.84',   boysYear:2023, girlsName:'Athena Welsh',        girlsSchool:'St. Thomas',  girlsMark:'4:54.45',  girlsYear:2016},
+  {event:'3200 Run',        boysName:'Nathan Moore',       boysSchool:'Lake',         boysMark:'9:05.42',   boysYear:2021, girlsName:'Daniela Scheffler',   girlsSchool:'Lake',        girlsMark:'10:25.79', girlsYear:2025},
+  {event:'4×100 Relay',     boysName:"Ja'Meir Gamble, Deontay Malone, TaShaun Smith, Trayon Williams", boysSchool:'Massillon', boysMark:'42.54', boysYear:2024, girlsName:'Keshia Smith, Lindsey Walker, Kayla Redmon, Jericha Mann', girlsSchool:'GlenOak', girlsMark:'48.65', girlsYear:2003},
+  {event:'4×200 Relay',     boysName:"Ja'Meir Gamble, Jacques Carter, Trayon Williams, Deontay Malone", boysSchool:'Massillon', boysMark:'1:28.34', boysYear:2025, girlsName:'Morgan Giordano, Kaylee Lusk, Rory Parsons, Tayah Wilson', girlsSchool:'Jackson', girlsMark:'1:42.65', girlsYear:2025},
+  {event:'4×400 Relay',     boysName:'Darnell McLeod, Austin Mattox, Evan Spurrell, Jayden Wilson', boysSchool:'Perry', boysMark:'3:23.15', boysYear:2025, girlsName:'Ambrea Whitlock, Bethany McDearman, Liz Ramsey, Madison Woods', girlsSchool:'Hoover', girlsMark:'3:56.64', girlsYear:2004},
+  {event:'4×800 Relay',     boysName:'Owen Pukys, Stephen Ulrich, Colby Adams, Bobby Ganser', boysSchool:'Louisville', boysMark:'7:51.89', boysYear:2022, girlsName:'Athena Welsh, Hannah Soehnlen, Kacee Soehnlen, Kalee Soehnlen', girlsSchool:'St. Thomas', girlsMark:'9:24.18', girlsYear:2016},
+  {event:'100 Seated',      boysName:'Christopher Good',   boysSchool:'Perry',        boysMark:'18.57',     boysYear:2025, girlsName:'Ahsha DiPietro',      girlsSchool:'Perry',       girlsMark:'22.72',    girlsYear:2023},
+  {event:'400 Seated',      boysName:'Christopher Good',   boysSchool:'Perry',        boysMark:'1:09.69',   boysYear:2025, girlsName:'Ahsha DiPietro',      girlsSchool:'Perry',       girlsMark:'1:38.77',  girlsYear:2023},
+  {event:'800 Seated',      boysName:'Zion Clark',         boysSchool:'Massillon',    boysMark:'2:51.24',   boysYear:2016, girlsName:'Ahsha DiPietro',      girlsSchool:'Perry',       girlsMark:'3:33.29',  girlsYear:2023},
+  {event:'Shot Put Seated', boysName:'Christopher Good',   boysSchool:'Perry',        boysMark:"17'10\"",   boysYear:2025, girlsName:'Elena Knowles',       girlsSchool:'GlenOak',     girlsMark:"15'10.5\"",girlsYear:2024},
+];
+
+// Overall Records = derived live from Top 25 #1 entries, so stays current automatically
+function getOverallRecords() {
+  return TOP25_EVENTS.map(evt => {
+    const boys  = (TOP25_DATA[evt.label]?.boys  || []).find(r => r.rank === 1);
+    const girls = (TOP25_DATA[evt.label]?.girls || []).find(r => r.rank === 1);
+    return {
+      event: evt.label,
+      boysName:   boys?.name   || '—', boysSchool:  boys?.school  || '',
+      boysMark:   boys?.mark   || '—', boysYear:    boys?.year    || '',
+      girlsName:  girls?.name  || '—', girlsSchool: girls?.school || '',
+      girlsMark:  girls?.mark  || '—', girlsYear:   girls?.year   || '',
+    };
+  });
+}
+
+function renderCountyRecordsTable(rows, title, subtitle) {
+  const showBoys  = filterGender !== 'F';
+  const showGirls = filterGender !== 'M';
+
+  const isRelay = r => r.event.startsWith('4×') || r.event.startsWith('4x');
+
+  const formatNames = (name) => {
+    if (!name || name === '—') return name;
+    // Stack relay names 2-per-line
+    const parts = name.split(',').map(n => n.trim()).filter(Boolean);
+    if (parts.length <= 1) return name;
+    const lines = [];
+    for (let i = 0; i < parts.length; i += 2) lines.push(parts.slice(i, i+2).join(', '));
+    return lines.map(l => `<span style="display:block;line-height:1.6;font-size:12px;">${l}</span>`).join('');
+  };
+
+  const headerCols = filterGender === 'ALL'
+    ? `<th>Event</th><th>Boys Holder</th><th>School</th><th class="center">Mark</th><th class="center">Year</th><th>Girls Holder</th><th>School</th><th class="center">Mark</th><th class="center">Year</th>`
+    : `<th>Event</th><th>Record Holder</th><th>School</th><th class="center">Mark</th><th class="center">Year</th>`;
+
+  const bodyRows = rows.map((r, i) => {
+    const even = i % 2 === 0;
+    const bg = even ? '' : 'background:#f8f9fc;';
+
+    if (filterGender === 'ALL') {
+      return `<tr style="${bg}">
+        <td class="col-event" style="font-weight:600;">${r.event}</td>
+        ${showBoys ? `<td>${formatNames(r.boysName)}</td><td class="school-cell">${r.boysSchool}</td><td class="col-mark boys">${r.boysMark}</td><td class="col-year">${r.boysYear}</td>` : ''}
+        ${showGirls ? `<td>${formatNames(r.girlsName)}</td><td class="school-cell">${r.girlsSchool}</td><td class="col-mark girls">${r.girlsMark}</td><td class="col-year">${r.girlsYear}</td>` : ''}
+      </tr>`;
+    }
+    const name   = showBoys ? r.boysName   : r.girlsName;
+    const school = showBoys ? r.boysSchool : r.girlsSchool;
+    const mark   = showBoys ? r.boysMark   : r.girlsMark;
+    const year   = showBoys ? r.boysYear   : r.girlsYear;
+    const cls    = showBoys ? 'boys' : 'girls';
+    return `<tr style="${bg}">
+      <td class="col-event" style="font-weight:600;">${r.event}</td>
+      <td>${formatNames(name)}</td>
+      <td class="school-cell">${school}</td>
+      <td class="col-mark ${cls}">${mark}</td>
+      <td class="col-year">${year}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div style="margin-bottom:32px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="font-family:var(--font-d);font-size:18px;font-weight:700;">${title}</div>
+        <div style="flex:1;height:1px;background:var(--card-border);"></div>
+        ${subtitle ? `<div style="font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;">${subtitle}</div>` : ''}
+      </div>
+      <div class="school-card" style="overflow:hidden;">
+        <div class="table-scroll">
+          <table class="records-table">
+            <thead><tr>${headerCols}</tr></thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCountyRecords(container) {
+  const overall = renderCountyRecordsTable(getOverallRecords(), '🏅 All-Time County Records', 'All venues, all years');
+  const meet    = renderCountyRecordsTable(MEET_RECORDS, '🎽 Jim Craig Meet Records', 'Best marks set at the Championship');
+  container.innerHTML = overall + meet;
+}
 
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
