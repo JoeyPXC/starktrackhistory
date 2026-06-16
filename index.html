@@ -5,6 +5,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jim Craig Stark County Championships — Track &amp; Field Records</title>
+<meta name="theme-color" content="#0d1b2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stark County T&F">
+<meta name="description" content="Jim Craig Stark County Track & Field Championships — all-time records, county top 25, and team champions history">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="stark-icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -665,11 +672,7 @@ function parseSchoolRecordsHtml(html) {
     const paras = Array.from(clone.querySelectorAll('p'));
     if (paras.length > 1) {
       const lines = paras.map(p => p.textContent.replace(/\u00a0/g, ' ').trim()).filter(Boolean);
-      if (lines.length > 1) {
-        if (eventName && /4\s*[xX×]\s*\d+|relay/i.test(eventName))
-          console.log(`RELAY [${eventName}] split into ${lines.length} lines:`, lines);
-        return lines;
-      }
+      if (lines.length > 1) return lines;
     }
 
     // Replace <br> with pipe
@@ -680,10 +683,6 @@ function parseSchoolRecordsHtml(html) {
 
     // Split on pipe (from <br>), or on 2+ spaces
     const parts = text.split(/\||[ ]{2,}/).map(s => s.trim()).filter(Boolean);
-
-    if (eventName && /4\s*[xX×]\s*\d+|relay/i.test(eventName))
-      console.log(`RELAY [${eventName}] fallback split into ${parts.length}:`, parts, '| raw:', JSON.stringify(clone.innerHTML));
-
     return parts.length > 0 ? parts : [text.trim()].filter(Boolean);
   }
 
@@ -719,20 +718,12 @@ function parseSchoolRecordsHtml(html) {
       const girlsYears = cells.length > 6 ? cellLines(cells[6], event) : [];
 
       if (isRelay) {
-        const boysJoined = boysNames.join(', ');
-        const girlsJoined = girlsNames.join(', ');
-        // Log specifically for known-broken relays
-        const watch = ['Lake','Marlington','Timken'];
-        if (watch.some(s => name.includes(s))) {
-          console.log(`[${name}] ${event} — boysNames(${boysNames.length}):`, boysNames, '→', boysJoined);
-          console.log(`[${name}] ${event} — girlsNames(${girlsNames.length}):`, girlsNames, '→', girlsJoined);
-        }
         events.push({
           event,
-          boysName:  boysJoined,
+          boysName:  boysNames.join(', '),
           boysMark:  boysMarks[0] || '',
           boysYear:  boysYears[0] || '',
-          girlsName: girlsJoined,
+          girlsName: girlsNames.join(', '),
           girlsMark: girlsMarks[0] || '',
           girlsYear: girlsYears[0] || '',
         });
@@ -2087,6 +2078,11 @@ async function init() {
   renderContent();
 }
 init();
+
+// ── PWA Service Worker ─────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
