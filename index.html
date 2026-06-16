@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -776,6 +777,14 @@ function renderSchoolRecords(container) {
     h.addEventListener('click', () => h.closest('.school-card').classList.toggle('collapsed')));
 }
 
+// ── Shared helpers ─────────────────────────────────────────────
+// Format a mark: if it has a (mi) or (y) annotation, drop to a small second line
+function fmtMark(mark) {
+  const m = String(mark).match(/^(.+?)\s*(\([^)]+\))$/);
+  if (m) return `${m[1]}<span style="display:block;font-size:9px;font-weight:400;color:var(--text-dim);line-height:1.4;">${m[2]}</span>`;
+  return mark;
+}
+
 function renderSchoolCard(school) {
   const color    = SCHOOL_COLORS[school.name] || '#888';
   const mascot   = SCHOOL_MASCOTS[school.name] || '';
@@ -804,7 +813,7 @@ function renderSchoolCard(school) {
       return `<div class="rec-row${hl?' hl':''}">
         <span class="rec-event">${e.event}</span>
         ${nameHtml}
-        <span class="rec-mark ${markClass}">${mark}</span>
+        <span class="rec-mark ${markClass}">${fmtMark(mark)}</span>
         <span class="rec-year">${e[yearKey]}</span>
       </div>`;
     }).join('');
@@ -1184,7 +1193,7 @@ const TOP25_DATA = {
       {rank:25, name:"Al McCallin", school:"Canton Lehman", mark:"9:27.4 2Mile", year:1975},
     ],
     girls: [
-      {rank:1, name:"Daniela Scheffler", school:"Lake", mark:"10:12.59c", year:2025},
+      {rank:1, name:"Daniela Scheffler", school:"Lake", mark:"10:12.59", year:2025},
       {rank:2, name:"Kalee Soehnlen", school:"St. Thomas Aquinas", mark:"10:24.57", year:2017},
       {rank:3, name:"Kylah Meyer", school:"Louisville", mark:"10:28.82", year:2026},
       {rank:4, name:"Irelyn Johnson", school:"Marlington", mark:"10:36.08", year:2026},
@@ -1812,7 +1821,7 @@ function renderTop25(container) {
         <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
         <td style="font-weight:${isHL?'700':'400'}">${nameHtml}</td>
         <td class="school-cell">${displaySchool(school)}</td>
-        <td class="mark-cell ${g}">${r.mark}</td>
+        <td class="mark-cell ${g}">${fmtMark(r.mark)}</td>
         <td class="year-cell">${r.year}</td>
       </tr>`;
     };
@@ -1876,19 +1885,31 @@ const MEET_RECORDS = [
   {event:'Shot Put Seated', boysName:'Christopher Good',    boysSchool:'Perry',      boysMark:"18'3\"",    boysYear:2026, girlsName:'Abigail LaPole',       girlsSchool:'Jackson',    girlsMark:"21'9.75\"", girlsYear:2026},
 ];
 
-// Overall Records = derived live from Top 25 #1 entries, so stays current automatically
+// Overall Records = hardcoded from the official Stark County Overall Records document
 function getOverallRecords() {
-  return TOP25_EVENTS.map(evt => {
-    const boys  = (TOP25_DATA[evt.label]?.boys  || []).find(r => r.rank === 1);
-    const girls = (TOP25_DATA[evt.label]?.girls || []).find(r => r.rank === 1);
-    return {
-      event: evt.label,
-      boysName:   boys?.name   || '—', boysSchool:  boys?.school  || '',
-      boysMark:   boys?.mark   || '—', boysYear:    boys?.year    || '',
-      girlsName:  girls?.name  || '—', girlsSchool: girls?.school || '',
-      girlsMark:  girls?.mark  || '—', girlsYear:   girls?.year   || '',
-    };
-  });
+  return [
+    {event:'Pole Vault',      boysName:'Lucas Kelley',       boysSchool:'Perry',          boysMark:"16'9\"",      boysYear:2016, girlsName:'Allyson Simmons',    girlsSchool:'Fairless',      girlsMark:"13'4.25\"",  girlsYear:2014},
+    {event:'Shot Put',        boysName:'Dan Minocchi',        boysSchool:'Central',        boysMark:"61'9.75\"",   boysYear:2000, girlsName:'Ashley Muffet',      girlsSchool:'Hoover',        girlsMark:"50'10\"",    girlsYear:2005},
+    {event:'Discus',          boysName:'Andrew White',        boysSchool:'GlenOak',        boysMark:"204'10\"",    boysYear:2018, girlsName:'Ashley Muffet',      girlsSchool:'Hoover',        girlsMark:"162'4\"",    girlsYear:2005},
+    {event:'High Jump',       boysName:'Jamil Dudley',        boysSchool:'Massillon',      boysMark:"7'1\"",       boysYear:2010, girlsName:'Maddie Morrow',      girlsSchool:'Hoover',        girlsMark:"5'11\"",     girlsYear:2011},
+    {event:'Long Jump',       boysName:'Devin Smith',         boysSchool:'Massillon',      boysMark:"24'7\"",      boysYear:2011, girlsName:'Zakiya Harris',      girlsSchool:'Perry',         girlsMark:"19'3.75\"",  girlsYear:2000},
+    {event:'100 Dash',        boysName:'Devin Smith',         boysSchool:'Massillon',      boysMark:'10.56',       boysYear:2011, girlsName:'Kandace Thomas',     girlsSchool:'GlenOak',       girlsMark:'11.71',      girlsYear:'2009/10'},
+    {event:'110/100 Hurdles', boysName:'Derrick Williams',    boysSchool:'GlenOak',        boysMark:'13.68',       boysYear:2001, girlsName:'Becca Maj',          girlsSchool:'Hoover',        girlsMark:'14.18',      girlsYear:2011},
+    {event:'200 Dash',        boysName:'Anthony Blair',       boysSchool:'Alliance',       boysMark:'20.8 (h)',    boysYear:1976, girlsName:'Kandace Thomas',     girlsSchool:'GlenOak',       girlsMark:'24.09',      girlsYear:2010},
+    {event:'300 Hurdles',     boysName:'Derrick Williams',    boysSchool:'GlenOak',        boysMark:'36.25',       boysYear:2001, girlsName:'Marsha Cleveland',   girlsSchool:'GlenOak',       girlsMark:'43.09',      girlsYear:2005},
+    {event:'400 Dash',        boysName:'Anthony Blair',       boysSchool:'Alliance',       boysMark:'46.5 (h)',    boysYear:1976, girlsName:'Daziah Green',       girlsSchool:'McKinley',      girlsMark:'55.12',      girlsYear:2013},
+    {event:'800 Run',         boysName:'Colin Cernansky',     boysSchool:'Marlington',     boysMark:'1:50.96',     boysYear:2024, girlsName:'Kalee Soehnlen',     girlsSchool:'St. Thomas',    girlsMark:'2:10.29',    girlsYear:2016},
+    {event:'1600 Run',        boysName:'Colin Cernansky',     boysSchool:'Marlington',     boysMark:'4:06.87 (c)', boysYear:2024, girlsName:'Daniela Scheffler',  girlsSchool:'Lake',          girlsMark:'4:47.08',    girlsYear:2025},
+    {event:'3200 Run',        boysName:'Brice Fuller',        boysSchool:'Fairless',       boysMark:'8:56.36',     boysYear:2026, girlsName:'Daniela Scheffler',  girlsSchool:'Lake',          girlsMark:'10:12.59 (c)',girlsYear:2025},
+    {event:'4×100 Relay',     boysName:'Matt Miller, Derrick Williams, Josh Anderson, Dustin Fox',                  boysSchool:'GlenOak',   boysMark:'41.50', boysYear:2001, girlsName:'Kandace Thomas, Nina Grambling, Reilyn Boone, Ka\'rynn Thomas', girlsSchool:'GlenOak',   girlsMark:'47.05', girlsYear:2011},
+    {event:'4×200 Relay',     boysName:'Tyree Broyles, Dean Clark, Jayden Ballard, Andrew Wilson-Lamp',             boysSchool:'Massillon', boysMark:'1:27.15',boysYear:2005, girlsName:'Cherrelle Montgomery, Sybil McLeod, Destanie Morgan, Corine Gavin-Hall', girlsSchool:'McKinley', girlsMark:'1:38.88',girlsYear:2003},
+    {event:'4×400 Relay',     boysName:'Alex DiMarzio, Dwight Lewis, Alexander Johnson, Tony DiMarzio',             boysSchool:'McKinley',  boysMark:'3:17.5 (h)',boysYear:1971,girlsName:'Faith Strickland, Jackie Genetin, Mikayla Dearing, Hannah Luke',    girlsSchool:'Perry',    girlsMark:'3:48.59',girlsYear:2013},
+    {event:'4×800 Relay',     boysName:'Elliott Zuckett, Sean McNulty, William Prato, Cael Ball',                   boysSchool:'Jackson',   boysMark:'7:40.02',boysYear:2024, girlsName:'Athena Welsh, Hannah Soehnlen, Kacee Soehnlen, Kalee Soehnlen',     girlsSchool:'St. Thomas',girlsMark:'9:05.84',girlsYear:2016},
+    {event:'100 Seated',      boysName:'Christopher Good',    boysSchool:'Perry',          boysMark:'16.48',       boysYear:2026, girlsName:'Ahsha DiPietro',     girlsSchool:'Perry',         girlsMark:'20.67',      girlsYear:2023},
+    {event:'400 Seated',      boysName:'Christopher Good',    boysSchool:'Perry',          boysMark:'1:01.02',     boysYear:2026, girlsName:'Ahsha DiPietro',     girlsSchool:'Perry',         girlsMark:'1:17.76',    girlsYear:2026},
+    {event:'800 Seated',      boysName:'Christopher Good',    boysSchool:'Perry',          boysMark:'2:12.21',     boysYear:2026, girlsName:'Ahsha DiPietro',     girlsSchool:'Perry',         girlsMark:'2:39.50',    girlsYear:2026},
+    {event:'Shot Seated',     boysName:'Christopher Good',    boysSchool:'Perry',          boysMark:"20'0\"",      boysYear:2026, girlsName:'Abigail Lapole',     girlsSchool:'Jackson',       girlsMark:"22'1.25\"",  girlsYear:2026},
+  ];
 }
 
 function renderCountyRecordsTable(rows, title, subtitle) {
@@ -1923,7 +1944,7 @@ function renderCountyRecordsTable(rows, title, subtitle) {
       return `<div class="rec-row" style="${bg}">
         <span class="rec-event" style="font-weight:600;">${r.event}</span>
         ${nameHtml}
-        <span class="rec-mark ${markClass}">${mark}</span>
+        <span class="rec-mark ${markClass}">${fmtMark(mark)}</span>
         <span class="rec-year">${year}</span>
       </div>`;
     }).join('');
@@ -1962,7 +1983,7 @@ function renderCountyRecordsTable(rows, title, subtitle) {
         <span class="rec-event" style="font-weight:600;">${r.event}</span>
         ${nameHtml}
         <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">${school}</span>
-        <span class="rec-mark ${markClass}">${mark}</span>
+        <span class="rec-mark ${markClass}">${fmtMark(mark)}</span>
         <span class="rec-year">${year}</span>
       </div>`;
     }).join('');
