@@ -513,7 +513,7 @@ const SCHOOL_COLORS = {
   'Lincoln':                 '#703050',
 };
 
-// Logo filenames — upload these to a /logos/ folder in your GitHub repo
+// Logo filenames — these should be in the same root folder as index.html
 const SCHOOL_LOGOS = {
   'Alliance':              'Alliance.png',
   'Central Catholic':      'Canton_C_C_.png',
@@ -842,7 +842,7 @@ function renderSchoolCard(school) {
   const logoSrc  = schoolLogo(school.name);
   const logoHtml = logoSrc
     ? `<img src="${logoSrc}" style="width:52px;height:52px;object-fit:contain;flex-shrink:0;" alt="">`
-    : `<div class="school-color-bar" style="background:${color}"></div>`;
+    : ``;
   const showBoys  = filterGender !== 'F';
   const showGirls = filterGender !== 'M';
 
@@ -900,7 +900,7 @@ function renderSchoolCard(school) {
     body = `<div class="rec-list">${rows}</div>`;
   }
 
-  return `<div class="school-card">
+  return `<div class="school-card" style="border-left:4px solid ${color};">
     <div class="school-card-header">
       ${logoHtml}
       <div style="flex:1;">
