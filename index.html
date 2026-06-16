@@ -669,14 +669,12 @@ function parseSchoolRecordsHtml(html) {
   // 2. <br> tags between entries
   // 3. Multiple regular spaces or &nbsp; chains between entries (print-layout trick)
   // 4. Unicode non-breaking spaces (\u00a0) between entries
-  function cellLines(cell) {
+  function cellLines(cell, eventName) {
     const clone = cell.cloneNode(true);
 
-    // Log raw innerHTML for relay name cells (first 3 multi-word cells only)
-    if (typeof window._diagCount === 'undefined') window._diagCount = 0;
-    if (window._diagCount < 6 && clone.textContent.trim().includes(' ')) {
-      console.log('CELL HTML:', JSON.stringify(clone.innerHTML));
-      window._diagCount++;
+    // Log relay cells so we can see exactly what format they're in
+    if (eventName && /4\s*[xX×]\s*\d+|relay/i.test(eventName)) {
+      console.log(`RELAY CELL [${eventName}]:`, JSON.stringify(clone.innerHTML));
     }
 
     // If multiple <p> children, each is one entry
@@ -721,12 +719,12 @@ function parseSchoolRecordsHtml(html) {
 
       const isRelay = RELAY_EVENTS.test(event);
 
-      const boysNames  = cellLines(cells[1]);
-      const boysMarks  = cellLines(cells[2]);
-      const boysYears  = cellLines(cells[3]);
-      const girlsNames = cells.length > 4 ? cellLines(cells[4]) : [];
-      const girlsMarks = cells.length > 5 ? cellLines(cells[5]) : [];
-      const girlsYears = cells.length > 6 ? cellLines(cells[6]) : [];
+      const boysNames  = cellLines(cells[1], event);
+      const boysMarks  = cellLines(cells[2], event);
+      const boysYears  = cellLines(cells[3], event);
+      const girlsNames = cells.length > 4 ? cellLines(cells[4], event) : [];
+      const girlsMarks = cells.length > 5 ? cellLines(cells[5], event) : [];
+      const girlsYears = cells.length > 6 ? cellLines(cells[6], event) : [];
 
       if (isRelay) {
         // Relay: all names join into one row, mark shown once
