@@ -2857,56 +2857,51 @@ function renderPastResults(container) {
 
     const mkResultRow = (r, gClass) => {
       const logo = schoolLogo(r.school);
-      const logoHtml = logo ? `<img src="${logo}" style="width:18px;height:18px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
+      const logoHtml = logo ? `<img src="${logo}" style="width:16px;height:16px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
       const schoolShort = displaySchool(r.school);
       if (r.isRelay) {
         const memberHtml = r.members && r.members.length
-          ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:1px;">${r.members.join(' · ')}</div>` : '';
+          ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:1px;white-space:normal;">${r.members.join(' · ')}</div>` : '';
         return `<tr>
           <td class="rank-cell ${r.place<=3?'top3':''}">${r.place}</td>
-          <td><div style="display:flex;align-items:center;gap:4px;">${logoHtml}<span style="font-size:12px;font-weight:600;">${schoolShort}</span></div>${memberHtml}</td>
-          <td></td>
+          <td colspan="2"><div style="display:flex;align-items:center;gap:4px;">${logoHtml}<span style="font-size:12px;font-weight:600;white-space:normal;">${schoolShort}</span></div>${memberHtml}</td>
           <td class="mark-cell ${gClass}">${r.mark||'—'}</td>
           <td class="year-cell">${r.points||''}</td>
         </tr>`;
       }
       return `<tr>
         <td class="rank-cell ${r.place<=3?'top3':''}">${r.place}</td>
-        <td style="font-size:12px;">${r.name}</td>
-        <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span class="school-cell" style="overflow:visible;white-space:normal;">${schoolShort}</span></div></td>
+        <td style="font-size:12px;white-space:normal;word-break:break-word;">${r.name}</td>
+        <td><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">${logoHtml}<span style="font-size:11px;color:var(--text-muted);white-space:normal;line-height:1.3;">${schoolShort}</span></div></td>
         <td class="mark-cell ${gClass}">${r.mark||'—'}</td>
         <td class="year-cell">${r.points||''}</td>
       </tr>`;
     };
+
+    const sectionBar = (label) => `<tr><td colspan="5" style="background:var(--header-bg);color:rgba(255,255,255,0.55);
+      font-family:var(--font-d);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+      padding:4px 8px;">${label}</td></tr>`;
 
     const mkTable = (data, gClass, label) => {
       if (!data) return '';
       const { finals, prelims } = data;
       if (!finals.length && !prelims.length) return '';
 
-      const finalsRows = finals.map(r => mkResultRow(r, gClass)).join('');
-      const prelimsRows = prelims.map(r => mkResultRow(r, gClass)).join('');
-
-      const prelimSection = prelims.length ? `
-        <tr><td colspan="5" style="background:var(--header-bg);color:rgba(255,255,255,0.5);
-          font-family:var(--font-d);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
-          padding:4px 8px;">Preliminaries</td></tr>
-        ${prelimsRows}` : '';
-
-      const finalsHeader = finals.length ? `
-        <tr><td colspan="5" style="background:var(--header-bg);color:rgba(255,255,255,0.5);
-          font-family:var(--font-d);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
-          padding:4px 8px;">Finals</td></tr>` : '';
+      const hasBoth = finals.length && prelims.length;
+      // Prelims first, then finals
+      const body = [
+        hasBoth ? sectionBar('Preliminaries') : '',
+        prelims.map(r => mkResultRow(r, gClass)).join(''),
+        hasBoth ? sectionBar('Finals') : '',
+        finals.map(r => mkResultRow(r, gClass)).join(''),
+      ].join('');
 
       return `<div class="top25-col">
         <div class="top25-col-header ${gClass}">${label}</div>
-        <div class="table-scroll"><table class="top25-table">
-          <colgroup><col style="width:22px"><col><col style="width:80px"><col style="width:64px"><col style="width:26px"></colgroup>
+        <div class="table-scroll"><table class="top25-table" style="table-layout:fixed;width:100%;">
+          <colgroup><col style="width:20px"><col style="width:auto"><col style="width:72px"><col style="width:60px"><col style="width:24px"></colgroup>
           <thead><tr><th>#</th><th>Athlete / Team</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Pts</th></tr></thead>
-          <tbody>
-            ${finalsHeader}${finalsRows}
-            ${prelimSection}
-          </tbody>
+          <tbody>${body}</tbody>
         </table></div>
       </div>`;
     };
@@ -2975,8 +2970,8 @@ function renderAllTimeResults(container) {
       const schoolShort = displaySchool(r.school);
       return `<tr>
         <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
-        <td style="font-size:12px;">${r.isRelay ? schoolShort : r.name}</td>
-        <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span class="school-cell" style="overflow:visible;white-space:normal;">${r.isRelay?'':schoolShort}</span></div></td>
+        <td style="font-size:12px;white-space:normal;word-break:break-word;">${r.isRelay ? schoolShort : r.name}</td>
+        <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span style="font-size:11px;color:var(--text-muted);white-space:normal;line-height:1.3;">${r.isRelay?'':schoolShort}</span></div></td>
         <td class="mark-cell ${gClass}">${r.mark}</td>
         <td class="year-cell">${r.year}</td>
       </tr>`;
@@ -2988,7 +2983,7 @@ function renderAllTimeResults(container) {
       return `<div class="top25-col">
         <div class="top25-col-header ${gClass}">${label} — All-Time Top 25</div>
         <div class="table-scroll"><table class="top25-table">
-          <colgroup><col style="width:22px"><col><col style="width:80px"><col style="width:64px"><col style="width:36px"></colgroup>
+          <colgroup><col style="width:20px"><col style="width:auto"><col style="width:72px"><col style="width:60px"><col style="width:30px"></colgroup>
           <thead><tr><th>#</th><th>Athlete / Team</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
