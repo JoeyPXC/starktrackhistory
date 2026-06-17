@@ -709,6 +709,13 @@ function renderFilterBar() {
       <div class="filter-divider"></div>`;
 
     // Build event list for dropdown from EVENT_ORDER labels
+    const singleYearEventOpts = [
+      '100 Meter Dash','200 Meter Dash','400 Meter Dash','800 Meter Run',
+      '1600 Meter Run','3200 Meter Run',
+      '110 Meter Hurdles','100 Meter Hurdles','300 Meter Hurdles',
+      '4x100 Meter Relay','4x200 Meter Relay','4x400 Meter Relay','4x800 Meter Relay',
+      'High Jump','Pole Vault','Long Jump','Shot Put','Discus Throw',
+    ];
     const atEventOpts = allTimeMode ? [
       '4x800 Meter Relay','100 Meter Dash','110 Meter Hurdles','100 Meter Hurdles',
       '200 Meter Dash','400 Meter Dash','300 Meter Hurdles','800 Meter Run',
@@ -727,7 +734,13 @@ function renderFilterBar() {
       <div class="filter-group">
         <button class="filter-btn ${allTimeLimit===25?'active':''}" onclick="setAllTimeLimit(25)">Top 25</button>
         <button class="filter-btn ${allTimeLimit===Infinity?'active':''}" onclick="setAllTimeLimit(Infinity)">All</button>
-      </div>` : '';
+      </div>` : `
+      <div class="filter-divider"></div>
+      <span class="filter-label">Jump to</span>
+      <select class="filter-search" style="width:140px;" onchange="jumpPastResultsEvent(this.value)">
+        <option value="">— Event —</option>
+        ${singleYearEventOpts.map(e => `<option value="${e}">${e}</option>`).join('')}
+      </select>`;
 
     bar.innerHTML = `
       ${yearSelect}
@@ -791,6 +804,14 @@ function setEvent(e)  { filterEvent=e;  renderFilterBar(); renderContent(); }
 function setHighlight(s) { highlightSchool=s; renderFilterBar(); renderContent(); }
 function setSearch(v) { searchQuery=v.toLowerCase(); renderContent(); }
 function setResultsYear(y) { resultsYear=y; renderFilterBar(); renderContent(); }
+function jumpPastResultsEvent(val) {
+  if (!val) return;
+  const id = 'pr-evt-' + val.replace(/[\s\/×x]+/g,'_');
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+}
 
 // ── School records fetch ───────────────────────────────────────
 async function loadSchoolRecords() {
@@ -3236,7 +3257,8 @@ function renderPastResults(container) {
       const bT = showBoys  ? mkTable(g['Boys'],  'boys',  'Boys')  : '';
       const gT = showGirls ? mkTable(g['Girls'], 'girls', 'Girls') : '';
       if (!bT && !gT) continue;
-      html += `<div class="top25-event">
+      const anchorId = 'pr-evt-' + key.replace(/[\s\/×x]+/g,'_');
+      html += `<div class="top25-event" id="${anchorId}" style="scroll-margin-top:50px;">
         <div class="top25-event-header"><div class="top25-event-name">${key}</div><div class="top25-rule"></div></div>
         <div class="top25-split">${bT}${gT}</div>
       </div>`;
