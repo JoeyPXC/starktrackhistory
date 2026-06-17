@@ -3238,206 +3238,185 @@ const PLACE_PTS = [10, 8, 6, 5, 4, 3, 2, 1];
 // Returns { teamScores:{school->pts}, events:[{label, entries:[{name,school,mark,year,pts,place}]}] }
 function scoreDreamMeet(gender, schoolRecordsData) {
   if (!schoolRecordsData) return null;
-  const gKey = gender === 'Boys' ? 'boys' : 'girls';
-  const nameKey  = gender === 'Boys' ? 'boysName'  : 'girlsName';
-  const markKey  = gender === 'Boys' ? 'boysMark'  : 'girlsMark';
-  const yearKey  = gender === 'Boys' ? 'boysYear'  : 'girlsYear';
+  const gKey    = gender === 'Boys' ? 'boys'      : 'girls';
+  const nameKey = gender === 'Boys' ? 'boysName'  : 'girlsName';
+  const markKey = gender === 'Boys' ? 'boysMark'  : 'girlsMark';
+  const yearKey = gender === 'Boys' ? 'boysYear'  : 'girlsYear';
 
-  // Exclude schools with incomplete/pre-metric records — use regex to catch any spelling
-  const isExcludedSchool = (name) =>
-    /lincoln/i.test(name||'') || /lehman/i.test(name||'');
+  const isExcludedSchool = (name) => /lincoln/i.test(name||'') || /lehman/i.test(name||'');
 
-  // Normalize school name for Top25 lookup — handles Massillon/Massillon Washington etc.
   const canonicalSchool = (name) => {
     if (!name) return name;
-    if (/massillon/i.test(name)) return 'Massillon Washington';
-    if (/mckinley/i.test(name)) return 'Canton McKinley';
-    if (/timken/i.test(name)) return 'Canton Timken';
-    if (/glen\s*oak/i.test(name) || /^glenwood$/i.test(name)) return 'GlenOak';
-    if (/st\.?\s*thomas/i.test(name)) return 'St. Thomas Aquinas';
-    if (/lake\s*center/i.test(name)) return 'Lake Center Christian';
-    if (/sandy\s*valley/i.test(name)) return 'Sandy Valley';
-    if (/east\s*canton/i.test(name)) return 'East Canton';
-    if (/canton\s*south/i.test(name)) return 'Canton South';
+    if (/massillon/i.test(name))                          return 'Massillon Washington';
+    if (/mckinley/i.test(name))                           return 'Canton McKinley';
+    if (/timken/i.test(name))                             return 'Canton Timken';
+    if (/glen\s*oak/i.test(name)||/^glenwood$/i.test(name)) return 'GlenOak';
+    if (/st\.?\s*thomas/i.test(name))                     return 'St. Thomas Aquinas';
+    if (/lake\s*center/i.test(name))                      return 'Lake Center Christian';
+    if (/sandy\s*valley/i.test(name))                     return 'Sandy Valley';
+    if (/east\s*canton/i.test(name))                      return 'East Canton';
+    if (/canton\s*south/i.test(name))                     return 'Canton South';
     return name;
   };
 
-  // Detect yards-era marks: (y) in mark/year string, 2-mile relay marks, OR yard event names
   const isYardsMark = (mark, year, eventName) =>
     /\(y\)/i.test(mark||'') || /\(y\)/i.test(year||'') ||
     /\bh\s*\(y\)/i.test(mark||'') ||
     /2\s*mile/i.test(mark||'') ||
     /\byard\b/i.test(eventName||'');
 
+  // Convert and normalise a raw mark string → { mark, displayMark, markNum, handTime }
+  function processmark(raw, isField) {
+    if (!raw) return null;
+    let mark = raw.replace(/\(mi\)/gi,'').replace(/\(2mi\)/gi,'').trim();
+    let displayMark = mark;
+
+    // Handle (mi) suffix → convert to metric equivalent
+    const miM = raw.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
+    if (miM) {
+      const tm = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
+      if (tm) {
+        const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
+        const c = mileToMetricSecs(secs, true);
+        mark = secsToTime(c);
+        displayMark = mark + ' (c)';
+      }
+    }
+    const markNum = dreamMarkToNum(mark, isField);
+    if (!isFinite(markNum) || markNum === 0) return null;
+    const handTime = !isField && isHandTime(mark);
+    return { mark, displayMark, markNum, handTime };
+  }
+
   const teamScores = {};
-  const events = [];
+  const events    = [];
 
   for (const evtDef of DREAM_EVENT_MAP) {
-    const entries = [];
+    const entries = []; // { name, school, mark, displayMark, markNum, year, isRelay, handTime }
 
-    for (const school of schoolRecordsData) {
-      if (isExcludedSchool(school.name)) continue;
-      const schoolCanon = canonicalSchool(school.name);
+    if (evtDef.relay) {
+      // ── RELAY: one entry per school from TOP25 ──────────────────
+      const top25 = (TOP25_DATA[evtDef.key]||{})[gKey]||[];
+      // Take the best mark per school (TOP25 is already sorted best first)
+      const seen = new Set();
+      for (const r of top25) {
+        if (isExcludedSchool(r.school)) continue;
+        if (isYardsMark(r.mark, String(r.year), '')) continue;
+        const canon = canonicalSchool(r.school);
+        if (seen.has(canon)) continue;
+        seen.add(canon);
+        const pm = processmark(r.mark, false);
+        if (!pm) continue;
+        entries.push({ name: r.name, school: r.school, ...pm, year: r.year, isRelay: true });
+      }
 
-      const rows = school.events.filter(e => evtDef.re.test(e.event || ''));
-      if (!rows.length) continue;
+      // Also add schools that have a school record but NO top25 entry
+      for (const school of schoolRecordsData) {
+        if (isExcludedSchool(school.name)) continue;
+        const canon = canonicalSchool(school.name);
+        if (seen.has(canon)) continue;
+        const rows = school.events.filter(e => evtDef.re.test(e.event||''));
+        if (!rows.length) continue;
+        const rawMark = rows[0][markKey];
+        const rawYear = rows[0][yearKey];
+        if (!rawMark || isYardsMark(rawMark, rawYear, rows[0].event||'')) continue;
+        const pm = processmark(rawMark, false);
+        if (!pm) continue;
+        seen.add(canon);
+        entries.push({ name: school.name, school: school.name, ...pm, year: rawYear||'', isRelay: true });
+      }
 
-      if (evtDef.relay) {
-        const mark = rows[0][markKey];
-        const year = rows[0][yearKey];
-        if (!mark || isYardsMark(mark, year, rows[0].event)) continue;
-        const markNum = dreamMarkToNum(mark, false);
-        entries.push({ name: school.name, school: school.name, mark, displayMark: mark, year: year||'', markNum, isRelay: true });
-      } else {
-        const seen = new Set();
+    } else {
+      // ── INDIVIDUAL: up to 2 athletes per school, TOP25 is primary ─
+      const top25 = (TOP25_DATA[evtDef.key]||{})[gKey]||[];
+
+      // Build map: canonicalSchool → up to 2 athletes from TOP25
+      const schoolSlots = {}; // canon → [{name,school,mark,...}]
+      for (const r of top25) {
+        if (isExcludedSchool(r.school)) continue;
+        if (isYardsMark(r.mark, String(r.year), '')) continue;
+        const canon = canonicalSchool(r.school);
+        if (!schoolSlots[canon]) schoolSlots[canon] = [];
+        if (schoolSlots[canon].length >= 2) continue;
+        const pm = processmark(r.mark, evtDef.field);
+        if (!pm) continue;
+        schoolSlots[canon].push({ name: r.name, school: r.school, ...pm, year: r.year, isRelay: false });
+      }
+
+      // Add athletes for any school with a school record but no TOP25 slot
+      for (const school of schoolRecordsData) {
+        if (isExcludedSchool(school.name)) continue;
+        const canon = canonicalSchool(school.name);
+        if (schoolSlots[canon] && schoolSlots[canon].length > 0) continue; // already covered
+        const rows = school.events.filter(e => evtDef.re.test(e.event||''));
+        if (!rows.length) continue;
+
+        const seenNames = new Set();
         for (const row of rows) {
+          if (seenNames.size >= 2) break;
           const name = row[nameKey];
           const rawMark = row[markKey];
-          const year = row[yearKey];
-          if (!name || !rawMark || seen.has(name)) continue;
-          if (isYardsMark(rawMark, year, row.event)) continue;
-          seen.add(name);
-
-          const isMileEvent = /^(1\s*)?mile\s*run\b/i.test(row.event || '');
-          const is2MileEvent = /^2\s*mile\s*run\b/i.test(row.event || '');
-          let mark = rawMark.replace(/\(mi\)/gi,'').replace(/\(2mi\)/gi,'').trim();
-          let displayMark = mark;
-          if (isMileEvent || is2MileEvent) {
-            const tm = mark.match(/^(\d+):(\d+(?:\.\d+)?)$/);
+          const rawYear = row[yearKey];
+          if (!name || !rawMark) continue;
+          if (isYardsMark(rawMark, rawYear, row.event||'')) continue;
+          if (seenNames.has(name)) continue;
+          seenNames.add(name);
+          let processRaw = rawMark;
+          // Handle (mi) suffix or mile event names
+          const isMileEvt  = /^(1\s*)?mile\s*run\b/i.test(row.event||'');
+          const is2MileEvt = /^2\s*mile\s*run\b/i.test(row.event||'');
+          if (isMileEvt || is2MileEvt) {
+            const tm = rawMark.replace(/\(mi\)/gi,'').trim().match(/^(\d+):(\d+(?:\.\d+)?)$/);
             if (tm) {
               const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
-              const converted = mileToMetricSecs(secs, isMileEvent);
-              displayMark = secsToTime(converted) + ' (c)';
-              mark = secsToTime(converted);
+              const c = mileToMetricSecs(secs, isMileEvt);
+              processRaw = secsToTime(c) + ' (c)';
             }
           }
-          const miM = rawMark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
-          if (miM) {
-            const tm2 = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
-            if (tm2) {
-              const secs = parseInt(tm2[1])*60 + parseFloat(tm2[2]);
-              const converted = mileToMetricSecs(secs, true);
-              mark = secsToTime(converted);
-              displayMark = mark + ' (c)';
-            }
-          }
-
-          const markNum = dreamMarkToNum(mark, evtDef.field);
-          const handTime = !evtDef.field && isHandTime(mark);
-          entries.push({ name, school: school.name, mark, displayMark, year: year||'', markNum, isRelay: false, source: 'record', handTime });
+          const pm = processmark(processRaw, evtDef.field);
+          if (!pm) continue;
+          if (!schoolSlots[canon]) schoolSlots[canon] = [];
+          schoolSlots[canon].push({ name, school: school.name, ...pm, year: rawYear||'', isRelay: false });
         }
+      }
 
-        // After school records: upgrade any entry's mark with the TOP25 canonical value.
-        // This corrects cases where the school records doc has a slightly different mark
-        // than the all-time top 25 (e.g. missing (mi) flag, or a county-best vs all-time-best).
-        const top25All = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
-        for (const entry of entries.filter(e => e.school === school.name)) {
-          const t25 = top25All.find(r =>
-            !isExcludedSchool(r.school) &&
-            canonicalSchool(r.school) === schoolCanon &&
-            r.name === entry.name &&
-            !isYardsMark(r.mark, String(r.year), '')
-          );
-          if (!t25) continue;
-          let mark = t25.mark;
-          let displayMark = mark;
-          const miM = mark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
-          if (miM) {
-            const tm = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
-            if (tm) {
-              const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
-              const converted = mileToMetricSecs(secs, true);
-              mark = secsToTime(converted);
-              displayMark = mark + ' (c)';
-            }
-          }
-          // Only upgrade if better (lower for track, higher for field)
-          const newNum = dreamMarkToNum(mark, evtDef.field);
-          const isBetter = evtDef.field ? newNum > entry.markNum : newNum < entry.markNum;
-          if (isBetter || !isFinite(entry.markNum)) {
-            entry.mark = mark;
-            entry.displayMark = displayMark;
-            entry.markNum = newNum;
-            entry.handTime = !evtDef.field && isHandTime(mark);
-          }
-        }
-
-        // Second scorer: find Top 25 athletes from this school not already entered, cap at 2 total
-        const schoolEntryCount = entries.filter(e => e.school === school.name).length;
-        if (schoolEntryCount < 2) {
-          const top25list = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
-          const schoolTop25 = top25list.filter(r =>
-            !isExcludedSchool(r.school) &&
-            canonicalSchool(r.school) === schoolCanon &&
-            !entries.some(e => canonicalSchool(e.school) === schoolCanon && e.name === r.name) &&
-            !isYardsMark(r.mark, String(r.year), '')
-          );
-          const toAdd = schoolTop25.slice(0, 2 - schoolEntryCount);
-          for (const r of toAdd) {
-            let mark = r.mark;
-            let displayMark = mark;
-            const miM = mark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
-            if (miM) {
-              const tm = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
-              if (tm) {
-                const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
-                const converted = mileToMetricSecs(secs, true);
-                mark = secsToTime(converted);
-                displayMark = mark + ' (c)';
-              }
-            }
-            const markNum = dreamMarkToNum(mark, evtDef.field);
-            const handTime = !evtDef.field && isHandTime(mark);
-            entries.push({ name: r.name, school: school.name, mark, displayMark, year: r.year, markNum, isRelay: false, source: 'top25', handTime });
-          }
-        }
+      // Flatten all slots into entries
+      for (const athletes of Object.values(schoolSlots)) {
+        entries.push(...athletes);
       }
     }
 
     if (!entries.length) continue;
 
-    // Sort: field = descending (bigger better), track = ascending (smaller better)
-    entries.sort((a, b) => evtDef.field ? b.markNum - a.markNum : a.markNum - b.markNum);
+    // Sort
+    entries.sort((a,b) => evtDef.field ? b.markNum - a.markNum : a.markNum - b.markNum);
 
-    // Remove invalid marks
-    const valid = entries.filter(e => isFinite(e.markNum) && e.markNum !== 0);
-    if (!valid.length) continue;
-
-    // Assign places with tie splitting
-    // Group consecutive entries with same markNum into tied groups
+    // Assign places with tie splitting (scoring top 8)
     const placed = [];
-    let i = 0;
-    let placeIdx = 0; // index into PLACE_PTS
-    while (i < valid.length && placeIdx < PLACE_PTS.length) {
-      // Find how many are tied at this mark
-      const tiedMark = valid[i].markNum;
+    let i = 0, placeIdx = 0;
+    while (i < entries.length && placeIdx < PLACE_PTS.length) {
+      const tiedMark = entries[i].markNum;
       let j = i;
-      while (j < valid.length && valid[j].markNum === tiedMark) j++;
+      while (j < entries.length && entries[j].markNum === tiedMark) j++;
       const tiedCount = j - i;
-      // How many scoring positions do they consume?
       const slotsAvail = PLACE_PTS.length - placeIdx;
       const slots = Math.min(tiedCount, slotsAvail);
-      // Sum the points for those slots and split evenly
       let ptSum = 0;
-      for (let s = 0; s < slots; s++) ptSum += PLACE_PTS[placeIdx + s] || 0;
-      const ptsEach = slots > 0 ? ptSum / tiedCount : 0;
-      const placeLabel = placeIdx + 1; // 1-based place for first of the tied group
+      for (let s = 0; s < slots; s++) ptSum += PLACE_PTS[placeIdx+s]||0;
+      const ptsEach = slots > 0 ? ptSum/tiedCount : 0;
+      const placeLabel = placeIdx+1;
       for (let k = i; k < j; k++) {
-        placed.push({ ...valid[k], place: placeLabel, pts: k < i + slotsAvail ? ptsEach : 0 });
+        placed.push({...entries[k], place: placeLabel, pts: k < i+slotsAvail ? ptsEach : 0});
       }
       placeIdx += tiedCount;
       i = j;
     }
-    // Any beyond 8th place get 0 pts
-    for (; i < valid.length; i++) {
-      placed.push({ ...valid[i], place: i + 1, pts: 0 });
+    for (; i < entries.length; i++) {
+      placed.push({...entries[i], place: i+1, pts: 0});
     }
 
-    // Accumulate team scores
     for (const e of placed) {
-      if (e.pts > 0) {
-        teamScores[e.school] = (teamScores[e.school] || 0) + e.pts;
-      }
+      if (e.pts > 0) teamScores[e.school] = (teamScores[e.school]||0) + e.pts;
     }
 
     events.push({ label: evtDef.label, entries: placed, isField: evtDef.field, isRelay: evtDef.relay });
@@ -3445,6 +3424,7 @@ function scoreDreamMeet(gender, schoolRecordsData) {
 
   return { teamScores, events };
 }
+
 
 function renderDreamMeet(container) {
   if (!schoolRecordsData) {
