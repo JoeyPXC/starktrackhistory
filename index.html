@@ -2378,8 +2378,8 @@ function renderState(container) {
     const factsHtml = e.facts.map((f, i) => {
       // First fact is team members for relays — style differently
       if (relay && i === 0 && f.startsWith('Team:')) {
-        return `<div style="font-size:11px;color:var(--text-muted);margin-bottom:5px;line-height:1.6;">
-          ${f.replace('Team: ','').split(', ').map(n => `<span style="display:inline-block;margin-right:12px;">${n}</span>`).join('')}
+        return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;font-size:13px;color:var(--text-muted);margin-bottom:5px;line-height:1.7;">
+          ${f.replace('Team: ','').split(', ').map(n => `<span>${n}</span>`).join('')}
         </div>`;
       }
       return `<div style="font-size:13px;color:var(--text);line-height:1.5;padding:2px 0;">${f}</div>`;
