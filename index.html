@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2536,11 +2537,14 @@ function normalizeHytekSchool(s) {
 }
 
 // Extract finals mark from the numeric columns at end of a Hy-Tek row.
-// Layout: [seed]  finals  [wind]  [H#]  [pts]
+// Layout: [seed]  [%]  finals  [wind]  [H#]  [pts]
 // Returns {mark, points}
 function extractMarkPts(rest) {
-  const tokens = rest.trim().split(/\s+/);
+  let tokens = rest.trim().split(/\s+/).filter(Boolean);
   if (!tokens.length) return { mark: null, points: null };
+
+  // Strip standalone record markers like "%" or "#" that appear between seed and mark
+  tokens = tokens.filter(t => !/^[%@#*]$/.test(t));
 
   let pts = null;
   // Points = last plain-number token
@@ -2556,10 +2560,22 @@ function extractMarkPts(rest) {
     if (wm && parseInt(wm[2]) < 10) { tokens.pop(); continue; }
     break;
   }
-  if (!tokens.length) return { mark: null, points: pts };
-  let mark = tokens[tokens.length - 1].replace(/[%@#*jJQq]/g, '').trim();
-  if (['NT','FS','DNS','DNF','DQ',''].includes(mark)) mark = null;
-  if (mark && !/^[\d:'"\\-]/.test(mark)) mark = null;
+  let mark = null;
+  if (tokens.length) {
+    mark = tokens[tokens.length - 1].replace(/[%@#*jJQqM]/g, '').trim();
+    if (['NT','FS','DNS','DNF','DQ',''].includes(mark)) mark = null;
+    if (mark && !/^[\d:'"\\-]/.test(mark)) mark = null;
+  }
+  // Rescue dropout prelim rows where the only token was the time, parsed as pts
+  // Real pts are always integers ≤ 10 or .5 increments. A time > 10 or with decimals ≠ .5 is a mark.
+  if (mark === null && pts !== null) {
+    const isWholePts = Number.isInteger(pts) && pts <= 10;
+    const isHalfPts = (pts * 2) === Math.round(pts * 2) && pts <= 10;
+    if (!isWholePts && !isHalfPts) {
+      mark = String(pts);
+      pts = null;
+    }
+  }
   return { mark, points: pts };
 }
 
@@ -2927,7 +2943,7 @@ function renderPastResults(container) {
       return `<div class="top25-col">
         <div class="top25-col-header ${gClass}">${label}</div>
         <div class="table-scroll"><table class="top25-table" style="table-layout:fixed;width:100%;">
-          <colgroup><col style="width:20px"><col style="width:auto"><col style="width:72px"><col style="width:60px"><col style="width:24px"></colgroup>
+          <colgroup><col style="width:20px"><col style="width:auto"><col style="width:68px"><col style="width:68px"><col style="width:20px"></colgroup>
           <thead><tr><th>#</th><th>Athlete / Team</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Pts</th></tr></thead>
           <tbody>${body}</tbody>
         </table></div>
@@ -3029,7 +3045,7 @@ function renderAllTimeResults(container) {
       return `<div class="top25-col">
         <div class="top25-col-header ${gClass}">${label} — ${entries.length} finishers</div>
         <div class="table-scroll"><table class="top25-table" style="table-layout:fixed;width:100%;">
-          <colgroup><col style="width:20px"><col style="width:auto"><col style="width:72px"><col style="width:60px"><col style="width:30px"></colgroup>
+          <colgroup><col style="width:20px"><col style="width:auto"><col style="width:68px"><col style="width:68px"><col style="width:28px"></colgroup>
           <thead><tr><th>#</th><th>Athlete / Team</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
