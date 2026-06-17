@@ -445,31 +445,31 @@
 <!-- Tabs -->
 <!-- Desktop tab nav -->
 <nav class="page-tabs" id="pageTabs">
-  <button class="page-tab" data-page="champs" onclick="switchPage('champs')">🥇 Team Champions</button>
-  <button class="page-tab" data-page="countyrecords" onclick="switchPage('countyrecords')">🎯 County Records</button>
+  <button class="page-tab" data-page="countyrecords" onclick="switchPage('countyrecords')">⏱️ County Records</button>
+  <button class="page-tab" data-page="top25" onclick="switchPage('top25')">🏆 County Top 25</button>
   <button class="page-tab" data-page="dreammeet" onclick="switchPage('dreammeet')">🌟 Dream Meet</button>
   <button class="page-tab" data-page="pastresults" onclick="switchPage('pastresults')">📋 Past Results</button>
   <button class="page-tab" data-page="records" onclick="switchPage('records')">🏫 School Records</button>
   <button class="page-tab" data-page="state" onclick="switchPage('state')">🏅 State Champions</button>
-  <button class="page-tab" data-page="top25" onclick="switchPage('top25')">🏆 County Top 25</button>
+  <button class="page-tab" data-page="champs" onclick="switchPage('champs')">🥇 Team Champions</button>
 </nav>
 
 <!-- Mobile hamburger nav -->
 <nav class="nav-mobile" id="navMobile">
   <div class="nav-mobile-bar">
-    <span class="nav-current-page" id="navCurrentPage">🎯 County Records</span>
+    <span class="nav-current-page" id="navCurrentPage">⏱️ County Records</span>
     <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
   </div>
   <div class="nav-dropdown" id="navDropdown">
-    <button class="nav-dropdown-item" data-page="champs" onclick="switchPage('champs');toggleMenu()">🥇 Team Champions</button>
-    <button class="nav-dropdown-item" data-page="countyrecords" onclick="switchPage('countyrecords');toggleMenu()">🎯 County Records</button>
+    <button class="nav-dropdown-item" data-page="countyrecords" onclick="switchPage('countyrecords');toggleMenu()">⏱️ County Records</button>
+    <button class="nav-dropdown-item" data-page="top25" onclick="switchPage('top25');toggleMenu()">🏆 County Top 25</button>
     <button class="nav-dropdown-item" data-page="dreammeet" onclick="switchPage('dreammeet');toggleMenu()">🌟 Dream Meet</button>
     <button class="nav-dropdown-item" data-page="pastresults" onclick="switchPage('pastresults');toggleMenu()">📋 Past Results</button>
     <button class="nav-dropdown-item" data-page="records" onclick="switchPage('records');toggleMenu()">🏫 School Records</button>
     <button class="nav-dropdown-item" data-page="state" onclick="switchPage('state');toggleMenu()">🏅 State Champions</button>
-    <button class="nav-dropdown-item" data-page="top25" onclick="switchPage('top25');toggleMenu()">🏆 County Top 25</button>
+    <button class="nav-dropdown-item" data-page="champs" onclick="switchPage('champs');toggleMenu()">🥇 Team Champions</button>
   </div>
 </nav>
 
@@ -620,7 +620,7 @@ let allTimeLimit  = 25; // 25 or Infinity
 const PAGE_LABELS = {
   records: '🏫 School Records',
   top25: '🏆 County Top 25',
-  countyrecords: '🎯 County Records',
+  countyrecords: '⏱️ County Records',
   champs: '🥇 Team Champions',
   state: '🏅 State Champions',
   pastresults: '📋 Past Results',
@@ -838,19 +838,28 @@ function parseSchoolRecordsHtml(html) {
   // Normalize school names that might appear differently in the doc
   function normalizeName(n) {
     n = n.trim();
-    if (/lake\s*center/i.test(n) && !/christian/i.test(n)) return 'Lake Center Christian';
+    // Strip mascot/nickname — school names in the doc are formatted "School Mascot"
+    // e.g. "Hoover Vikings", "Perry Panthers", "Marlington Dukes"
+    // Known multi-word school names must be matched BEFORE stripping
+    if (/lake\s*center/i.test(n))             return 'Lake Center Christian';
     if (/glen\s*oak/i.test(n) || /^glenwood$/i.test(n)) return 'GlenOak';
-    if (/massillon/i.test(n) && /washington/i.test(n)) return 'Massillon Washington';
-    if (/massillon/i.test(n)) return 'Massillon';
-    if (/mckinley/i.test(n)) return 'Canton McKinley';
-    if (/st\.?\s*thomas/i.test(n)) return 'St. Thomas Aquinas';
-    if (/sandy\s*valley/i.test(n)) return 'Sandy Valley';
-    if (/east\s*canton/i.test(n)) return 'East Canton';
-    if (/canton\s*south/i.test(n)) return 'Canton South';
-    if (/canton\s*timken/i.test(n)) return 'Canton Timken';
-    if (/canton\s*lincoln/i.test(n)) return 'Canton Lincoln';
-    if (/canton\s*lehman/i.test(n)) return 'Canton Lehman';
-    if (/central\s*catholic/i.test(n)) return 'Central Catholic';
+    if (/massillon/i.test(n) && /washington/i.test(n))  return 'Massillon Washington';
+    if (/massillon/i.test(n))                 return 'Massillon Washington';
+    if (/mckinley/i.test(n))                  return 'Canton McKinley';
+    if (/st\.?\s*thomas/i.test(n))            return 'St. Thomas Aquinas';
+    if (/sandy\s*valley/i.test(n))            return 'Sandy Valley';
+    if (/east\s*canton/i.test(n))             return 'East Canton';
+    if (/canton\s*south/i.test(n))            return 'Canton South';
+    if (/canton\s*timken/i.test(n))           return 'Canton Timken';
+    if (/canton\s*lincoln/i.test(n))          return 'Canton Lincoln';
+    if (/canton\s*lehman/i.test(n))           return 'Canton Lehman';
+    if (/central\s*catholic/i.test(n))        return 'Central Catholic';
+    // Single-word schools: take only the first word (strips mascot suffix)
+    const knownSingle = ['Alliance','Fairless','GlenOak','Hoover','Jackson','Lake',
+      'Louisville','Marlington','Massillon','Minerva','Northwest','Perry','Tuslaw'];
+    const first = n.split(/\s+/)[0];
+    if (knownSingle.some(k => k.toLowerCase() === first.toLowerCase())) return first;
+    // Fallback: return as-is (covers any school not in the list above)
     return n;
   }
 
@@ -3247,15 +3256,21 @@ function scoreDreamMeet(gender, schoolRecordsData) {
 
   const canonicalSchool = (name) => {
     if (!name) return name;
-    if (/massillon/i.test(name))                          return 'Massillon Washington';
-    if (/mckinley/i.test(name))                           return 'Canton McKinley';
-    if (/timken/i.test(name))                             return 'Canton Timken';
+    // Multi-word known names first
+    if (/massillon/i.test(name))                             return 'Massillon Washington';
+    if (/mckinley/i.test(name))                              return 'Canton McKinley';
+    if (/timken/i.test(name))                                return 'Canton Timken';
     if (/glen\s*oak/i.test(name)||/^glenwood$/i.test(name)) return 'GlenOak';
-    if (/st\.?\s*thomas/i.test(name))                     return 'St. Thomas Aquinas';
-    if (/lake\s*center/i.test(name))                      return 'Lake Center Christian';
-    if (/sandy\s*valley/i.test(name))                     return 'Sandy Valley';
-    if (/east\s*canton/i.test(name))                      return 'East Canton';
-    if (/canton\s*south/i.test(name))                     return 'Canton South';
+    if (/st\.?\s*thomas/i.test(name))                        return 'St. Thomas Aquinas';
+    if (/lake\s*center/i.test(name))                         return 'Lake Center Christian';
+    if (/sandy\s*valley/i.test(name))                        return 'Sandy Valley';
+    if (/east\s*canton/i.test(name))                         return 'East Canton';
+    if (/canton\s*south/i.test(name))                        return 'Canton South';
+    // Single-word schools — strip any trailing mascot
+    const knownSingle = ['Alliance','Fairless','GlenOak','Hoover','Jackson','Lake',
+      'Louisville','Marlington','Massillon','Minerva','Northwest','Perry','Tuslaw'];
+    const first = name.split(/\s+/)[0];
+    if (knownSingle.some(k => k.toLowerCase() === first.toLowerCase())) return first;
     return name;
   };
 
@@ -3307,7 +3322,7 @@ function scoreDreamMeet(gender, schoolRecordsData) {
         seen.add(canon);
         const pm = processmark(r.mark, false);
         if (!pm) continue;
-        entries.push({ name: r.name, school: r.school, ...pm, year: r.year, isRelay: true });
+        entries.push({ name: r.name, school: canon, ...pm, year: r.year, isRelay: true });
       }
 
       // Also add schools that have a school record but NO top25 entry
@@ -3340,7 +3355,7 @@ function scoreDreamMeet(gender, schoolRecordsData) {
         if (schoolSlots[canon].length >= 2) continue;
         const pm = processmark(r.mark, evtDef.field);
         if (!pm) continue;
-        schoolSlots[canon].push({ name: r.name, school: r.school, ...pm, year: r.year, isRelay: false });
+        schoolSlots[canon].push({ name: r.name, school: canon, ...pm, year: r.year, isRelay: false });
       }
 
       // Add athletes for any school with a school record but no TOP25 slot
