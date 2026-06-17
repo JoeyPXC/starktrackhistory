@@ -2327,17 +2327,17 @@ function renderChamps(container) {
   const summaryBlocks = [];
 
   if (showBoys) {
-    const bLarge = mkLeaderboard(boysLarge, 'boys', 'Boys — Large School Titles');
-    const bD23   = mkLeaderboard(boysD23,   'boys', 'Boys — Div. 2/3 Titles (2006–2025)');
-    const bD35   = mkLeaderboard(boysD35,   'boys', 'Boys — Div. 3–5 Titles (2026+)');
+    const bLarge = mkLeaderboard(boysLarge, 'boys', 'Boys — Overall Championships');
+    const bD23   = mkLeaderboard(boysD23,   'boys', 'Boys — Div. 2/3 Championships (2006–2025)');
+    const bD35   = mkLeaderboard(boysD35,   'boys', 'Boys — Div. 3–5 Championships (2026+)');
     summaryBlocks.push(`<div style="flex:1;min-width:220px;padding:14px 16px;border-right:1px solid var(--card-border);">
       ${bLarge}<div style="margin-top:14px;">${bD23}</div>${Object.keys(boysD35).length?`<div style="margin-top:14px;">${bD35}</div>`:''}
     </div>`);
   }
   if (showGirls) {
-    const gLarge = mkLeaderboard(girlsLarge, 'girls', 'Girls — Large School Titles');
-    const gD23   = mkLeaderboard(girlsD23,   'girls', 'Girls — Div. 2/3 Titles (2006–2025)');
-    const gD35   = mkLeaderboard(girlsD35,   'girls', 'Girls — Div. 3–5 Titles (2026+)');
+    const gLarge = mkLeaderboard(girlsLarge, 'girls', 'Girls — Overall Championships');
+    const gD23   = mkLeaderboard(girlsD23,   'girls', 'Girls — Div. 2/3 Championships (2006–2025)');
+    const gD35   = mkLeaderboard(girlsD35,   'girls', 'Girls — Div. 3–5 Championships (2026+)');
     summaryBlocks.push(`<div style="flex:1;min-width:220px;padding:14px 16px;">
       ${gLarge}<div style="margin-top:14px;">${gD23}</div>${Object.keys(girlsD35).length?`<div style="margin-top:14px;">${gD35}</div>`:''}
     </div>`);
