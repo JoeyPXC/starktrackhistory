@@ -3358,8 +3358,8 @@ const DREAM_EVENT_MAP = [
   { key:'200m',       label:'200m',             re:/^200\b(?!.*relay)/i,   relay:false, field:false },
   { key:'400m',       label:'400m',             re:/^400\b(?!.*relay)/i,   relay:false, field:false },
   { key:'800m',       label:'800m',             re:/^800\b(?!.*relay)/i,   relay:false, field:false },
-  { key:'1600m',      label:'1600m',            re:/^(1600\b|1,600\b|1\s*mile\s*run|mile\s*run)(?!.*relay)/i,  relay:false, field:false },
-  { key:'3200m',      label:'3200m',            re:/^(3200\b|3,200\b|2\s*mile\s*run|3\.2\s*km)(?!.*relay)/i,  relay:false, field:false },
+  { key:'1600m',      label:'1600m',            re:/^(1600\b|1,600\b|1[\s-]?mile(?:\s*run)?|mile(?:\s*run)?)(?!.*relay)/i,  relay:false, field:false },
+  { key:'3200m',      label:'3200m',            re:/^(3200\b|3,200\b|2[\s-]?mile(?:\s*run)?|3\.2\s*km)(?!.*relay)/i,  relay:false, field:false },
   { key:'Hurdles',    label:'110/100 Hurdles',  re:/^(110|100)\s*(m|meter)?\s*hurdle/i, relay:false, field:false },
   { key:'300H',       label:'300 Hurdles',      re:/^300\s*(m|meter)?\s*hurdle/i,       relay:false, field:false },
   { key:'4x100',      label:'4×100 Relay',      re:/4\s*[x×]\s*100/i,      relay:true,  field:false },
@@ -3590,8 +3590,8 @@ function scoreDreamMeet(gender, schoolRecordsData) {
           seenNames.add(name);
           let processRaw = rawMark;
           // Handle (mi) suffix or mile event names
-          const isMileEvt  = /^(1\s*)?mile\s*run\b/i.test(row.event||'');
-          const is2MileEvt = /^2\s*mile\s*run\b/i.test(row.event||'');
+          const isMileEvt  = /^1[\s-]?mile(?:\s*run)?\b/i.test(row.event||'') || /^mile(?:\s*run)?\b/i.test(row.event||'');
+          const is2MileEvt = /^2[\s-]?mile(?:\s*run)?\b/i.test(row.event||'');
           if (isMileEvt || is2MileEvt) {
             const hadH = /\s*h\s*$/i.test(rawMark.replace(/\(mi\)/gi,'').trim());
             const tm = rawMark.replace(/\(mi\)/gi,'').replace(/\s*h\s*$/i,'').trim().match(/^(\d+):(\d+(?:\.\d+)?)$/);
