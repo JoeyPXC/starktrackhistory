@@ -399,7 +399,7 @@
   .mark-cell { font-family: var(--font-d); font-size: 13px; font-weight: 700; white-space: nowrap; text-align: right; }
   .mark-cell.boys { color: var(--blue); }
   .mark-cell.girls { color: var(--red); }
-  .school-cell { color: var(--text-muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .school-cell { color: var(--text-muted); font-size: 10px; white-space: normal; }
   .year-cell { color: var(--text-dim); font-size: 10px; text-align: right; white-space: nowrap; }
   .school-highlight td { background: #fffbf0 !important; }
   .school-highlight td:first-child { border-left: 3px solid var(--red); }
@@ -2028,7 +2028,7 @@ function renderTop25(container) {
         nameCell = `<td colspan="2"><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span style="font-size:12px;font-weight:600;">${displaySchool(school)}</span></div>${memberHtml}</td>`;
       } else {
         nameCell = `<td style="font-weight:${isHL?'700':'400'};font-size:12.5px;">${r.name}</td>
-          <td class="school-cell">${displaySchool(school)}</td>`;
+          <td class="school-cell" style="white-space:normal;font-size:11px;"><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span>${displaySchool(school)}</span></div></td>`;
       }
       return `<tr class="${isHL?'school-highlight':''}">
         <td class="rank-cell ${rankClass(r.rank)}">${r.rank}</td>
@@ -2043,15 +2043,7 @@ function renderTop25(container) {
     const bTable = showBoys && fB.length ? `<div class="top25-col">
       <div class="top25-col-header boys">Boys Top ${count}</div>
       <div class="table-scroll"><table class="top25-table">
-        <colgroup><col style="width:24px"><col><col style="width:64px"><col style="width:58px"><col style="width:34px"></colgroup>
-        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
-        <tbody>${fB.map(r=>mkRow(r,'boys')).join('')}</tbody>
-      </table></div></div>` : '';
-
-    const gTable = showGirls && fG.length ? `<div class="top25-col">
-      <div class="top25-col-header girls">Girls Top ${count}</div>
-      <div class="table-scroll"><table class="top25-table">
-        <colgroup><col style="width:24px"><col><col style="width:64px"><col style="width:58px"><col style="width:34px"></colgroup>
+        <colgroup><col style="width:22px"><col style="width:38%"><col><col style="width:56px"><col style="width:30px"></colgroup>
         <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
         <tbody>${fG.map(r=>mkRow(r,'girls')).join('')}</tbody>
       </table></div></div>` : '';
@@ -2160,16 +2152,16 @@ function renderCountyRecordsTable(rows, title, subtitle) {
       // Logo under school name
       const logo = schoolLogo(r[schoolKey] || '');
       const logoHtml = logo
-        ? `<img src="${logo}" style="width:28px;height:28px;object-fit:contain;display:block;margin-top:3px;" alt="" onerror="this.style.display='none'">`
+        ? `<img src="${logo}" style="width:22px;height:22px;object-fit:contain;display:block;margin-top:2px;" alt="" onerror="this.style.display='none'">`
         : '';
-      // On desktop: name + school inline. On mobile: school below name
       const nameBlock = `<span style="flex:1;min-width:0;">
-        <span style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
-          ${nameHtml}
-          <span class="rec-school-desktop" style="font-size:10px;color:var(--text-dim);white-space:nowrap;">${school}</span>
+        ${nameHtml}
+        <span style="display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;margin-top:1px;">
+          <span style="display:inline-flex;flex-direction:column;">
+            <span class="rec-school-desktop" style="font-size:10px;color:var(--text-dim);white-space:nowrap;">${school}</span>
+            ${logoHtml}
+          </span>
         </span>
-        <span class="rec-school-mobile" style="font-size:10px;color:var(--text-dim);display:none;margin-top:1px;">${school}</span>
-        ${logoHtml}
       </span>`;
       const bg = i % 2 === 0 ? '' : 'background:#f8f9fc;';
       return `<div class="rec-row" style="${bg}">
@@ -2211,15 +2203,16 @@ function renderCountyRecordsTable(rows, title, subtitle) {
         : `<span class="rec-name">${name}</span>`;
       const logo2 = schoolLogo(r[schoolKey] || '');
       const logoHtml2 = logo2
-        ? `<img src="${logo2}" style="width:28px;height:28px;object-fit:contain;display:block;margin-top:3px;" alt="" onerror="this.style.display='none'">`
+        ? `<img src="${logo2}" style="width:22px;height:22px;object-fit:contain;display:block;margin-top:2px;" alt="" onerror="this.style.display='none'">`
         : '';
       const nameBlock = `<span style="flex:1;min-width:0;">
-        <span style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
-          ${nameHtml}
-          <span class="rec-school-desktop" style="font-size:10px;color:var(--text-dim);white-space:nowrap;">${school}</span>
+        ${nameHtml}
+        <span style="display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;margin-top:1px;">
+          <span style="display:inline-flex;flex-direction:column;">
+            <span class="rec-school-desktop" style="font-size:10px;color:var(--text-dim);white-space:nowrap;">${school}</span>
+            ${logoHtml2}
+          </span>
         </span>
-        <span class="rec-school-mobile" style="font-size:10px;color:var(--text-dim);display:none;margin-top:1px;">${school}</span>
-        ${logoHtml2}
       </span>`;
       const bg = i % 2 === 0 ? '' : 'background:#f8f9fc;';
       return `<div class="rec-row" style="${bg}">
