@@ -1,17 +1,13 @@
-const CACHE = 'stark-county-v2';
-const ASSETS = [
-  '/starktrackhistory/',
-  '/starktrackhistory/index.html',
-  'https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap',
-];
+// sw.js — network-first, updates immediately
+const CACHE = 'stark-v3';
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
-  );
+  // Skip waiting so the new SW activates immediately
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
+  // Take control of all open clients right away
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
@@ -20,20 +16,17 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  const url = e.request.url;
-  if (url.includes('docs.google.com')) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-    return;
-  }
+  // Network first — always try live, fall back to cache
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
-        if (e.request.method === 'GET' && response.status === 200) {
-          caches.open(CACHE).then(c => c.put(e.request, response.clone()));
+    fetch(e.request)
+      .then(res => {
+        // Cache a fresh copy
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
         }
-        return response;
-      }).catch(() => cached);
-    })
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
