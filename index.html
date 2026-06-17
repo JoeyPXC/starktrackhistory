@@ -2231,7 +2231,7 @@ function renderCountyRecordsTable(rows, title, subtitle) {
 
 function renderCountyRecords(container) {
   const overall = renderCountyRecordsTable(getOverallRecords(), '🏅 All-Time County Records', 'All venues, all years');
-  const meet    = renderCountyRecordsTable(MEET_RECORDS, '🎽 Jim Craig Meet Records', 'Best marks set at the Championship');
+  const meet    = renderCountyRecordsTable(MEET_RECORDS, '🎽 County Meet Records', 'Best marks set at the Championship');
   container.innerHTML = overall + meet;
 }
 
