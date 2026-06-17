@@ -3242,12 +3242,31 @@ function scoreDreamMeet(gender, schoolRecordsData) {
   const markKey  = gender === 'Boys' ? 'boysMark'  : 'girlsMark';
   const yearKey  = gender === 'Boys' ? 'boysYear'  : 'girlsYear';
 
-  // Exclude schools with incomplete/pre-metric records
-  const DREAM_EXCLUDE = new Set(['Canton Lehman','Lehman','Canton Lincoln','Lincoln']);
-  // Detect yards-era marks or 2-mile relay marks (not valid 4x800m)
-  const isYardsMark = (mark, year) =>
-    /\(y\)/i.test(mark||'') || /\(y\)/i.test(year||'') || /\bh\s*\(y\)/i.test(mark||'') ||
-    /2\s*mile/i.test(mark||'');
+  // Exclude schools with incomplete/pre-metric records — use regex to catch any spelling
+  const isExcludedSchool = (name) =>
+    /lincoln/i.test(name||'') || /lehman/i.test(name||'');
+
+  // Normalize school name for Top25 lookup — handles Massillon/Massillon Washington etc.
+  const canonicalSchool = (name) => {
+    if (!name) return name;
+    if (/massillon/i.test(name)) return 'Massillon Washington';
+    if (/mckinley/i.test(name)) return 'Canton McKinley';
+    if (/timken/i.test(name)) return 'Canton Timken';
+    if (/glen\s*oak/i.test(name) || /^glenwood$/i.test(name)) return 'GlenOak';
+    if (/st\.?\s*thomas/i.test(name)) return 'St. Thomas Aquinas';
+    if (/lake\s*center/i.test(name)) return 'Lake Center Christian';
+    if (/sandy\s*valley/i.test(name)) return 'Sandy Valley';
+    if (/east\s*canton/i.test(name)) return 'East Canton';
+    if (/canton\s*south/i.test(name)) return 'Canton South';
+    return name;
+  };
+
+  // Detect yards-era marks: (y) in mark/year string, 2-mile relay marks, OR yard event names
+  const isYardsMark = (mark, year, eventName) =>
+    /\(y\)/i.test(mark||'') || /\(y\)/i.test(year||'') ||
+    /\bh\s*\(y\)/i.test(mark||'') ||
+    /2\s*mile/i.test(mark||'') ||
+    /\byard\b/i.test(eventName||'');
 
   const teamScores = {};
   const events = [];
@@ -3256,7 +3275,8 @@ function scoreDreamMeet(gender, schoolRecordsData) {
     const entries = [];
 
     for (const school of schoolRecordsData) {
-      if (DREAM_EXCLUDE.has(school.name)) continue;
+      if (isExcludedSchool(school.name)) continue;
+      const schoolCanon = canonicalSchool(school.name);
 
       const rows = school.events.filter(e => evtDef.re.test(e.event || ''));
       if (!rows.length) continue;
@@ -3264,7 +3284,7 @@ function scoreDreamMeet(gender, schoolRecordsData) {
       if (evtDef.relay) {
         const mark = rows[0][markKey];
         const year = rows[0][yearKey];
-        if (!mark || isYardsMark(mark, year)) continue;
+        if (!mark || isYardsMark(mark, year, rows[0].event)) continue;
         const markNum = dreamMarkToNum(mark, false);
         entries.push({ name: school.name, school: school.name, mark, displayMark: mark, year: year||'', markNum, isRelay: true });
       } else {
@@ -3274,12 +3294,11 @@ function scoreDreamMeet(gender, schoolRecordsData) {
           const rawMark = row[markKey];
           const year = row[yearKey];
           if (!name || !rawMark || seen.has(name)) continue;
-          if (isYardsMark(rawMark, year)) continue;
+          if (isYardsMark(rawMark, year, row.event)) continue;
           seen.add(name);
 
-          // Detect if this is a mile or 2-mile event row and convert
-          const isMileEvent = /^(1\s*)?mile\b/i.test(row.event || '');
-          const is2MileEvent = /^2\s*mile\b/i.test(row.event || '');
+          const isMileEvent = /^(1\s*)?mile\s*run\b/i.test(row.event || '');
+          const is2MileEvent = /^2\s*mile\s*run\b/i.test(row.event || '');
           let mark = rawMark.replace(/\(mi\)/gi,'').replace(/\(2mi\)/gi,'').trim();
           let displayMark = mark;
           if (isMileEvent || is2MileEvent) {
@@ -3291,7 +3310,6 @@ function scoreDreamMeet(gender, schoolRecordsData) {
               mark = secsToTime(converted);
             }
           }
-          // Also handle (mi) suffix already present in the mark string
           const miM = rawMark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
           if (miM) {
             const tm2 = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
@@ -3308,18 +3326,16 @@ function scoreDreamMeet(gender, schoolRecordsData) {
           entries.push({ name, school: school.name, mark, displayMark, year: year||'', markNum, isRelay: false, source: 'record', handTime });
         }
 
-        // Second scorer: find one more athlete from this school in Top 25 not already entered
-        // Cap total at 2 per school per event
+        // Second scorer: find Top 25 athletes from this school not already entered, cap at 2 total
         const schoolEntryCount = entries.filter(e => e.school === school.name).length;
         if (schoolEntryCount < 2) {
           const top25list = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
           const schoolTop25 = top25list.filter(r =>
-            r.school === school.name &&
-            !DREAM_EXCLUDE.has(r.school) &&
-            !entries.some(e => e.school === school.name && e.name === r.name) &&
-            !isYardsMark(r.mark, String(r.year))
+            !isExcludedSchool(r.school) &&
+            canonicalSchool(r.school) === schoolCanon &&
+            !entries.some(e => canonicalSchool(e.school) === schoolCanon && e.name === r.name) &&
+            !isYardsMark(r.mark, String(r.year), '')
           );
-          // Add only enough to reach the 2-per-school cap
           const toAdd = schoolTop25.slice(0, 2 - schoolEntryCount);
           for (const r of toAdd) {
             let mark = r.mark;
