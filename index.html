@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2017,7 +2018,7 @@ function renderCountyRecordsTable(rows, title, subtitle) {
   const eventCell = (event, schoolKey, r) => {
     const logo = schoolLogo(r[schoolKey] || '');
     const logoHtml = logo
-      ? `<img src="${logo}" style="width:18px;height:18px;object-fit:contain;display:block;margin-top:3px;opacity:0.85;" alt="">`
+      ? `<img src="${logo}" style="width:18px;height:18px;object-fit:contain;display:block;margin-top:3px;" alt="">`
       : '';
     return `<span style="display:flex;flex-direction:column;align-items:flex-start;">
       <span style="font-weight:600;white-space:nowrap;">${event}</span>
