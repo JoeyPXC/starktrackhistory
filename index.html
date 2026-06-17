@@ -850,13 +850,14 @@ function parseSchoolRecordsHtml(html) {
     if (/sandy\s*valley/i.test(n))            return 'Sandy Valley';
     if (/east\s*canton/i.test(n))             return 'East Canton';
     if (/canton\s*south/i.test(n))            return 'Canton South';
-    if (/canton\s*timken/i.test(n))           return 'Canton Timken';
-    if (/canton\s*lincoln/i.test(n))          return 'Canton Lincoln';
-    if (/canton\s*lehman/i.test(n))           return 'Canton Lehman';
+    if (/canton\s*timken/i.test(n) || /^timken\b/i.test(n)) return 'Canton Timken';
+    if (/canton\s*lincoln/i.test(n) || /^lincoln\b/i.test(n)) return 'Canton Lincoln';
+    if (/canton\s*lehman/i.test(n) || /^lehman\b/i.test(n)) return 'Canton Lehman';
     if (/central\s*catholic/i.test(n))        return 'Central Catholic';
     // Single-word schools: take only the first word (strips mascot suffix)
     const knownSingle = ['Alliance','Fairless','GlenOak','Hoover','Jackson','Lake',
-      'Louisville','Marlington','Massillon','Minerva','Northwest','Perry','Tuslaw'];
+      'Louisville','Marlington','Massillon','Minerva','Northwest','Perry','Tuslaw',
+      'Canton'];  // "Canton McKinley Eagles" etc. already caught above
     const first = n.split(/\s+/)[0];
     if (knownSingle.some(k => k.toLowerCase() === first.toLowerCase())) return first;
     // Fallback: return as-is (covers any school not in the list above)
@@ -962,7 +963,6 @@ function renderSchoolCard(school) {
   const isClosed = HISTORICAL_SCHOOLS.has(school.name);
   const badge    = isClosed ? `<span class="closed-badge">CLOSED</span>` : '';
   const logoSrc  = schoolLogo(school.name);
-  console.log("School:", JSON.stringify(school.name), "logo:", logoSrc);
   const logoHtml = logoSrc
     ? `<img src="${logoSrc}" style="width:52px;height:52px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">`
     : ``;
@@ -1028,6 +1028,7 @@ function renderSchoolCard(school) {
       ${logoHtml}
       <div style="flex:1;">
         <div class="school-name">${school.name}</div>
+        ${mascot ? `<div style="font-size:11px;color:var(--text-muted);margin-top:1px;font-style:italic;">${mascot}</div>` : ''}
       </div>
       ${badge}
       <span class="school-chevron">▼</span>
