@@ -2685,10 +2685,12 @@ function parseRelayRow(line) {
 // Parse relay member line: "     1) Smith, John 11     2) Doe, Jane 10"
 function parseRelayMembers(line) {
   const members = [];
-  const re = /\d\)\s+([\w''\-]+),\s*([\w''\-]+)/g;
+  // Match "1) Last Name, First  12" — last name can have spaces (e.g. Van Elzen)
+  // Stop first name capture before the grade year (1-2 digits at word boundary)
+  const re = /\d\)\s+([\w''\- ]+?),\s*([\w''\- ]+?)\s+\d{1,2}\b/g;
   let m;
   while ((m = re.exec(line)) !== null) {
-    members.push(`${m[2]} ${m[1]}`);
+    members.push(`${m[2].trim()} ${m[1].trim()}`);
   }
   return members;
 }
@@ -3220,24 +3222,30 @@ function isHandTime(mark) {
 // Applies +0.24s FAT adjustment to hand-timed marks for ranking purposes only
 function dreamMarkToNum(mark, isField) {
   if (!mark) return isField ? -Infinity : Infinity;
-  const clean = mark.replace(/\([^)]*\)/g, '').replace(/\bh\b/gi,'').trim();
-  // Feet-inches with apostrophe notation: "16' 9\"" or "16' 9.25\""  (must do BEFORE stripping quotes)
+  let clean = mark.replace(/\([^)]*\)/g, '').trim();
+  // Strip trailing 'h' (hand-time marker). \bh\b misses "4:14.1h" because
+  // the h follows a digit (no word boundary before it), so we strip it explicitly.
+  const hadH = /h\s*$/i.test(clean);
+  clean = clean.replace(/\s*h\s*$/i, '').trim();
+  // Feet-inches with apostrophe: "16' 9\"" or "16'9\""
   const fi = clean.match(/^(\d+)'\s*(\d+(?:\.\d+)?)["]?\s*$/);
   if (fi) return parseFloat(fi[1])*12 + parseFloat(fi[2]);
   // Feet-inches with dash: "16-04.25"
   const di = clean.match(/^(\d+)-(\d+(?:\.\d+)?)$/);
   if (di) return parseFloat(di[1])*12 + parseFloat(di[2]);
-  // Time with colon: "1:23.45" or "4:28.6" (strip remaining quotes)
   const stripped = clean.replace(/['"]/g,'').trim();
+  // Time with colon: "1:23.45" or "4:28.6" — must match fully to avoid parseFloat("4") bug
   const tm = stripped.match(/^(\d+):(\d+(?:\.\d+)?)$/);
   if (tm) {
     const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
-    return isHandTime(mark) ? secs + 0.24 : secs;
+    return hadH ? secs + 0.24 : secs;
   }
-  // Plain decimal or integer
-  const n = parseFloat(stripped);
-  if (isNaN(n)) return isField ? -Infinity : Infinity;
-  return isHandTime(mark) ? n + 0.24 : n;
+  // Plain decimal or integer — guard: only accept if it looks like a standalone number
+  if (/^\d+(\.\d+)?$/.test(stripped)) {
+    const n = parseFloat(stripped);
+    return hadH ? n + 0.24 : n;
+  }
+  return isField ? -Infinity : Infinity;
 }
 
 // Standard place points: 1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7th=2, 8th=1
