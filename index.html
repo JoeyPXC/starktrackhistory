@@ -828,7 +828,7 @@ function parseSchoolRecordsHtml(html) {
   function normalizeName(n) {
     n = n.trim();
     if (/lake\s*center/i.test(n) && !/christian/i.test(n)) return 'Lake Center Christian';
-    if (/glen\s*oak/i.test(n)) return 'GlenOak';
+    if (/glen\s*oak/i.test(n) || /^glenwood$/i.test(n)) return 'GlenOak';
     if (/massillon/i.test(n) && /washington/i.test(n)) return 'Massillon Washington';
     if (/massillon/i.test(n)) return 'Massillon';
     if (/mckinley/i.test(n)) return 'Canton McKinley';
@@ -3180,18 +3180,22 @@ function isHandTime(mark) {
 // Applies +0.24s FAT adjustment to hand-timed marks for ranking purposes only
 function dreamMarkToNum(mark, isField) {
   if (!mark) return isField ? -Infinity : Infinity;
-  const clean = mark.replace(/\([^)]*\)/g, '').replace(/\bh\b/gi,'').replace(/['"]/g,'').trim();
-  // Distance feet-inches: "16-04.25" -> inches
-  const dm = clean.match(/^(\d+)[-'](\d+(?:\.\d+)?)(?:"|'')?$/);
-  if (dm) return parseFloat(dm[1])*12 + parseFloat(dm[2]);
-  // Time with colon: "1:23.45" or "4:28.6"
-  const tm = clean.match(/^(\d+):(\d+(?:\.\d+)?)$/);
+  const clean = mark.replace(/\([^)]*\)/g, '').replace(/\bh\b/gi,'').trim();
+  // Feet-inches with apostrophe notation: "16' 9\"" or "16' 9.25\""  (must do BEFORE stripping quotes)
+  const fi = clean.match(/^(\d+)'\s*(\d+(?:\.\d+)?)["]?\s*$/);
+  if (fi) return parseFloat(fi[1])*12 + parseFloat(fi[2]);
+  // Feet-inches with dash: "16-04.25"
+  const di = clean.match(/^(\d+)-(\d+(?:\.\d+)?)$/);
+  if (di) return parseFloat(di[1])*12 + parseFloat(di[2]);
+  // Time with colon: "1:23.45" or "4:28.6" (strip remaining quotes)
+  const stripped = clean.replace(/['"]/g,'').trim();
+  const tm = stripped.match(/^(\d+):(\d+(?:\.\d+)?)$/);
   if (tm) {
     const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
     return isHandTime(mark) ? secs + 0.24 : secs;
   }
   // Plain decimal or integer
-  const n = parseFloat(clean);
+  const n = parseFloat(stripped);
   if (isNaN(n)) return isField ? -Infinity : Infinity;
   return isHandTime(mark) ? n + 0.24 : n;
 }
@@ -3210,9 +3214,10 @@ function scoreDreamMeet(gender, schoolRecordsData) {
 
   // Exclude schools with incomplete/pre-metric records
   const DREAM_EXCLUDE = new Set(['Canton Lehman','Lehman','Canton Lincoln','Lincoln']);
-  // Detect yards-era marks (hand-timed yard races)
+  // Detect yards-era marks or 2-mile relay marks (not valid 4x800m)
   const isYardsMark = (mark, year) =>
-    /\(y\)/i.test(mark||'') || /\(y\)/i.test(year||'') || /\bh\s*\(y\)/i.test(mark||'');
+    /\(y\)/i.test(mark||'') || /\(y\)/i.test(year||'') || /\bh\s*\(y\)/i.test(mark||'') ||
+    /2\s*mile/i.test(mark||'');
 
   const teamScores = {};
   const events = [];
@@ -3253,10 +3258,10 @@ function scoreDreamMeet(gender, schoolRecordsData) {
               const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
               const converted = mileToMetricSecs(secs, isMileEvent);
               displayMark = secsToTime(converted) + ' (c)';
-              mark = secsToTime(converted); // clean mark for sorting
+              mark = secsToTime(converted);
             }
           }
-          // Also handle (mi) suffix already present in the mark string (Top 25 data style)
+          // Also handle (mi) suffix already present in the mark string
           const miM = rawMark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
           if (miM) {
             const tm2 = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
@@ -3273,18 +3278,17 @@ function scoreDreamMeet(gender, schoolRecordsData) {
           entries.push({ name, school: school.name, mark, displayMark, year: year||'', markNum, isRelay: false, source: 'record', handTime });
         }
 
-        // Second scorer from Top 25 (also convert mile marks, filter yards)
+        // Second+ scorer: ALL Top 25 athletes from this school not already entered
         const top25list = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
         const schoolTop25 = top25list.filter(r =>
           r.school === school.name &&
+          !DREAM_EXCLUDE.has(r.school) &&
           !entries.some(e => e.school === school.name && e.name === r.name) &&
           !isYardsMark(r.mark, String(r.year))
         );
-        if (schoolTop25.length > 0) {
-          const r = schoolTop25[0];
+        for (const r of schoolTop25) {
           let mark = r.mark;
           let displayMark = mark;
-          // Handle (mi) suffix in Top 25 data
           const miM = mark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
           if (miM) {
             const tm = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
