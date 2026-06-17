@@ -2040,11 +2040,18 @@ function renderTop25(container) {
 
     const isRelay = evt.label.startsWith('4x');
     const count = isRelay ? 15 : 25;
+    const colgroup = `<colgroup><col style="width:22px"><col style="width:38%"><col><col style="width:56px"><col style="width:30px"></colgroup>`;
+    const thead = `<thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>`;
     const bTable = showBoys && fB.length ? `<div class="top25-col">
       <div class="top25-col-header boys">Boys Top ${count}</div>
       <div class="table-scroll"><table class="top25-table">
-        <colgroup><col style="width:22px"><col style="width:38%"><col><col style="width:56px"><col style="width:30px"></colgroup>
-        <thead><tr><th>#</th><th>Athlete(s)</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
+        ${colgroup}${thead}
+        <tbody>${fB.map(r=>mkRow(r,'boys')).join('')}</tbody>
+      </table></div></div>` : '';
+    const gTable = showGirls && fG.length ? `<div class="top25-col">
+      <div class="top25-col-header girls">Girls Top ${count}</div>
+      <div class="table-scroll"><table class="top25-table">
+        ${colgroup}${thead}
         <tbody>${fG.map(r=>mkRow(r,'girls')).join('')}</tbody>
       </table></div></div>` : '';
 
