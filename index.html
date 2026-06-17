@@ -391,7 +391,10 @@
   .top25-table tbody tr:nth-child(even) td { background: #f8f9fc; }
   .top25-table tbody tr:hover td { background: #eef2ff; }
   .rank-cell { color: var(--text-dim); font-family: var(--font-d); font-size: 11px; text-align: center; white-space: nowrap; }
-  .rank-cell.top3 { color: #b8860b; font-weight: 700; font-size: 13px; }
+  .rank-cell.top3 { font-weight: 700; font-size: 13px; }
+  .rank-cell.gold   { color: #c9910a; }
+  .rank-cell.silver { color: #888fa0; }
+  .rank-cell.bronze { color: #a0622a; }
   .mark-cell { font-family: var(--font-d); font-size: 13px; font-weight: 700; white-space: nowrap; text-align: right; }
   .mark-cell.boys { color: var(--blue); }
   .mark-cell.girls { color: var(--red); }
@@ -629,6 +632,14 @@ function toggleMenu() {
   const dropdown = document.getElementById('navDropdown');
   btn.classList.toggle('open');
   dropdown.classList.toggle('open');
+}
+
+// Returns CSS classes for a rank cell: gold (1st), silver (2nd), bronze (3rd)
+function rankClass(n) {
+  if (n === 1) return 'top3 gold';
+  if (n === 2) return 'top3 silver';
+  if (n === 3) return 'top3 bronze';
+  return '';
 }
 
 function switchPage(page) {
@@ -1974,7 +1985,7 @@ function renderTop25(container) {
         nameHtml = `<span style="font-size:12.5px;font-weight:${isHL?'700':'400'}">${r.name}</span>`;
       }
       return `<tr class="${isHL?'school-highlight':''}">
-        <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
+        <td class="rank-cell ${rankClass(r.rank)}">${r.rank}</td>
         <td style="font-weight:${isHL?'700':'400'}">${nameHtml}</td>
         <td class="school-cell">${displaySchool(school)}</td>
         <td class="mark-cell ${g}">${fmtMark(r.mark)}</td>
@@ -2674,20 +2685,30 @@ function parseRelayMembers(line) {
 
 // Canonical event sort order
 const EVENT_ORDER = [
-  '4x800','4×800','4 x 800',
-  '100 Meter Dash','100 Meter Hurdles','110 Meter Hurdles',
-  '200 Meter Dash','400 Meter Dash','300 Meter Hurdles',
-  '800 Meter Run','1600 Meter Run','3200 Meter Run',
-  'Pole Vault','High Jump','Long Jump','Triple Jump','Shot Put','Discus',
+  '100 Meter Dash',
+  '200 Meter Dash',
+  '400 Meter Dash',
+  '800 Meter Run',
+  '1600 Meter Run','1,600 Meter Run','1 Mile Run','Mile Run',
+  '3200 Meter Run','3,200 Meter Run','2 Mile Run',
+  '100 Meter Hurdles','110 Meter Hurdles',
+  '300 Meter Hurdles',
   '4x100','4×100','4 x 100',
   '4x200','4×200','4 x 200',
   '4x400','4×400','4 x 400',
+  '4x800','4×800','4 x 800',
+  'High Jump',
+  'Pole Vault',
+  'Long Jump',
+  'Shot Put',
+  'Discus',
   'Seated','Wheelchair',
 ];
 function eventSortKey(name) {
-  const n = name.replace(/\s*Varsity\s*/i,'').trim();
+  const n = name.replace(/\s*Varsity\s*/i,'').trim().toLowerCase();
   for (let i = 0; i < EVENT_ORDER.length; i++) {
-    if (n.toLowerCase().includes(EVENT_ORDER[i].toLowerCase())) return i;
+    const o = EVENT_ORDER[i].toLowerCase();
+    if (n === o || n.startsWith(o) || n.includes(o)) return i;
   }
   return 99;
 }
@@ -2702,13 +2723,22 @@ function parseHytekText(text) {
   const evtHdrRe = /^(?:Event\s+\d+\s+)?(Boys|Girls|Men|Women)\s+(.+?)\s*(?:\bVarsity\b)?\s*$/i;
   const isRelayEvt = name => /relay/i.test(name);
 
-  // Helper: clean up event name
+  // Helper: clean up event name and normalize seated/wheelchair variants to one canonical name
   function cleanEvtName(raw) {
-    return raw
+    let n = raw
       .replace(/\bVarsity\b/gi, '')
       .replace(/\bWheelchair\s*Wheelchair\b/gi, 'Wheelchair')
       .replace(/\s+/g, ' ')
       .trim();
+    // Normalize: treat "Seated" and "Wheelchair" as the same qualifier — always use "Seated Wheelchair"
+    // so "100 Meter Dash Seated Wheelchair" and "100 Meter Dash Wheelchair" merge into one event
+    const hasSeated = /seated/i.test(n);
+    const hasWheelchair = /wheelchair/i.test(n);
+    if (hasSeated || hasWheelchair) {
+      n = n.replace(/\s*(seated|wheelchair)\s*/gi, ' ').trim();
+      n = n + ' Seated';
+    }
+    return n;
   }
 
   // Build a map of gender|eventName -> event object so duplicate headers (prelims+finals) merge
@@ -2947,14 +2977,14 @@ function renderPastResults(container) {
         const memberHtml = r.members && r.members.length
           ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:1px;white-space:normal;">${r.members.join(' · ')}</div>` : '';
         return `<tr>
-          <td class="rank-cell ${r.place<=3?'top3':''}">${r.place}</td>
+          <td class="rank-cell ${rankClass(r.place)}">${r.place}</td>
           <td colspan="2"><div style="display:flex;align-items:center;gap:4px;">${logoHtml}<span style="font-size:12px;font-weight:600;white-space:normal;">${schoolShort}</span></div>${memberHtml}</td>
           <td class="mark-cell ${gClass}">${r.mark||'—'}</td>
           <td class="year-cell">${r.points||''}</td>
         </tr>`;
       }
       return `<tr>
-        <td class="rank-cell ${r.place<=3?'top3':''}">${r.place}</td>
+        <td class="rank-cell ${rankClass(r.place)}">${r.place}</td>
         <td style="font-size:12px;white-space:normal;word-break:break-word;">${r.name}</td>
         <td><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">${logoHtml}<span style="font-size:11px;color:var(--text-muted);white-space:normal;line-height:1.3;">${schoolShort}</span></div></td>
         <td class="mark-cell ${gClass}">${r.mark||'—'}</td>
@@ -2997,7 +3027,7 @@ function renderPastResults(container) {
         const logo = schoolLogo(school);
         const logoHtml = logo ? `<img src="${logo}" style="width:22px;height:22px;object-fit:contain;margin-right:5px;" alt="" onerror="this.style.display='none'">` : '';
         return `<tr>
-          <td class="rank-cell ${idx<3?'top3':''}">${idx+1}</td>
+          <td class="rank-cell ${rankClass(idx+1)}">${idx+1}</td>
           <td><div style="display:flex;align-items:center;">${logoHtml}<span style="font-size:12px;font-weight:${idx===0?700:400};white-space:normal;">${displaySchool(school)}</span></div></td>
           <td class="mark-cell ${gClass}">${pts%1===0?pts:pts.toFixed(1)}</td>
         </tr>`;
@@ -3054,7 +3084,7 @@ function renderAllTimeResults(container) {
       const isTied = r.tiedWithPrev;
       const rankCell = isTied
         ? `<td class="rank-cell"></td>`
-        : `<td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>`;
+        : `<td class="rank-cell ${rankClass(r.rank)}">${r.rank}</td>`;
       if (r.isRelay) {
         const memberHtml = r.members && r.members.length
           ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.4;margin-top:1px;white-space:normal;">${r.members.join(' · ')}</div>` : '';
@@ -3123,23 +3153,23 @@ function renderAllTimeResults(container) {
 // Map school record event names → TOP25_DATA keys
 // School records doc uses names like "100 Meter Dash", "110/100 Hurdles", "4×100 Relay" etc.
 const DREAM_EVENT_MAP = [
-  { key:'100m',       label:'100m',             re:/^100\b/i,              relay:false, field:false },
-  { key:'200m',       label:'200m',             re:/^200\b/i,              relay:false, field:false },
-  { key:'400m',       label:'400m',             re:/^400\b/i,              relay:false, field:false },
-  { key:'800m',       label:'800m',             re:/^800\b/i,              relay:false, field:false },
-  { key:'1600m',      label:'1600m',            re:/^1600\b|^1,600\b|^1\s*mile|^mile\b/i,           relay:false, field:false },
-  { key:'3200m',      label:'3200m',            re:/^3200\b|^3,200\b|^2\s*mile|^3\.2\s*km/i,        relay:false, field:false },
+  { key:'100m',       label:'100m',             re:/^100\b(?!.*relay)/i,   relay:false, field:false },
+  { key:'200m',       label:'200m',             re:/^200\b(?!.*relay)/i,   relay:false, field:false },
+  { key:'400m',       label:'400m',             re:/^400\b(?!.*relay)/i,   relay:false, field:false },
+  { key:'800m',       label:'800m',             re:/^800\b(?!.*relay)/i,   relay:false, field:false },
+  { key:'1600m',      label:'1600m',            re:/^(1600\b|1,600\b|1\s*mile\s*run|mile\s*run)(?!.*relay)/i,  relay:false, field:false },
+  { key:'3200m',      label:'3200m',            re:/^(3200\b|3,200\b|2\s*mile\s*run|3\.2\s*km)(?!.*relay)/i,  relay:false, field:false },
   { key:'Hurdles',    label:'110/100 Hurdles',  re:/^(110|100)\s*(m|meter)?\s*hurdle/i, relay:false, field:false },
-  { key:'300H',       label:'300 Hurdles',      re:/^300\s*(m|meter)?\s*hurdle/i, relay:false, field:false },
-  { key:'Pole Vault', label:'Pole Vault',       re:/pole\s*vault/i,        relay:false, field:true  },
-  { key:'High Jump',  label:'High Jump',        re:/high\s*jump/i,         relay:false, field:true  },
-  { key:'Long Jump',  label:'Long Jump',        re:/long\s*jump/i,         relay:false, field:true  },
-  { key:'Shot Put',   label:'Shot Put',         re:/shot\s*put/i,          relay:false, field:true  },
-  { key:'Discus',     label:'Discus',           re:/discus/i,              relay:false, field:true  },
+  { key:'300H',       label:'300 Hurdles',      re:/^300\s*(m|meter)?\s*hurdle/i,       relay:false, field:false },
   { key:'4x100',      label:'4×100 Relay',      re:/4\s*[x×]\s*100/i,      relay:true,  field:false },
   { key:'4x200',      label:'4×200 Relay',      re:/4\s*[x×]\s*200/i,      relay:true,  field:false },
   { key:'4x400',      label:'4×400 Relay',      re:/4\s*[x×]\s*400/i,      relay:true,  field:false },
   { key:'4x800',      label:'4×800 Relay',      re:/4\s*[x×]\s*800/i,      relay:true,  field:false },
+  { key:'High Jump',  label:'High Jump',        re:/high\s*jump/i,         relay:false, field:true  },
+  { key:'Pole Vault', label:'Pole Vault',       re:/pole\s*vault/i,        relay:false, field:true  },
+  { key:'Long Jump',  label:'Long Jump',        re:/long\s*jump/i,         relay:false, field:true  },
+  { key:'Shot Put',   label:'Shot Put',         re:/shot\s*put/i,          relay:false, field:true  },
+  { key:'Discus',     label:'Discus',           re:/discus/i,              relay:false, field:true  },
 ];
 
 // Convert a mile time (seconds) to 1600m equivalent seconds
@@ -3278,30 +3308,36 @@ function scoreDreamMeet(gender, schoolRecordsData) {
           entries.push({ name, school: school.name, mark, displayMark, year: year||'', markNum, isRelay: false, source: 'record', handTime });
         }
 
-        // Second+ scorer: ALL Top 25 athletes from this school not already entered
-        const top25list = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
-        const schoolTop25 = top25list.filter(r =>
-          r.school === school.name &&
-          !DREAM_EXCLUDE.has(r.school) &&
-          !entries.some(e => e.school === school.name && e.name === r.name) &&
-          !isYardsMark(r.mark, String(r.year))
-        );
-        for (const r of schoolTop25) {
-          let mark = r.mark;
-          let displayMark = mark;
-          const miM = mark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
-          if (miM) {
-            const tm = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
-            if (tm) {
-              const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
-              const converted = mileToMetricSecs(secs, true);
-              mark = secsToTime(converted);
-              displayMark = mark + ' (c)';
+        // Second scorer: find one more athlete from this school in Top 25 not already entered
+        // Cap total at 2 per school per event
+        const schoolEntryCount = entries.filter(e => e.school === school.name).length;
+        if (schoolEntryCount < 2) {
+          const top25list = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
+          const schoolTop25 = top25list.filter(r =>
+            r.school === school.name &&
+            !DREAM_EXCLUDE.has(r.school) &&
+            !entries.some(e => e.school === school.name && e.name === r.name) &&
+            !isYardsMark(r.mark, String(r.year))
+          );
+          // Add only enough to reach the 2-per-school cap
+          const toAdd = schoolTop25.slice(0, 2 - schoolEntryCount);
+          for (const r of toAdd) {
+            let mark = r.mark;
+            let displayMark = mark;
+            const miM = mark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
+            if (miM) {
+              const tm = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
+              if (tm) {
+                const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
+                const converted = mileToMetricSecs(secs, true);
+                mark = secsToTime(converted);
+                displayMark = mark + ' (c)';
+              }
             }
+            const markNum = dreamMarkToNum(mark, evtDef.field);
+            const handTime = !evtDef.field && isHandTime(mark);
+            entries.push({ name: r.name, school: school.name, mark, displayMark, year: r.year, markNum, isRelay: false, source: 'top25', handTime });
           }
-          const markNum = dreamMarkToNum(mark, evtDef.field);
-          const handTime = !evtDef.field && isHandTime(mark);
-          entries.push({ name: r.name, school: school.name, mark, displayMark, year: r.year, markNum, isRelay: false, source: 'top25', handTime });
         }
       }
     }
@@ -3381,7 +3417,7 @@ function renderDreamMeet(container) {
       const logoHtml = logo ? `<img src="${logo}" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
       const color = SCHOOL_COLORS[school] || '#888';
       return `<tr style="${idx===0?'font-weight:700;':''}">
-        <td class="rank-cell ${idx<3?'top3':''}">${idx+1}</td>
+        <td class="rank-cell ${rankClass(idx+1)}">${idx+1}</td>
         <td><div style="display:flex;align-items:center;gap:8px;">${logoHtml}
           <span style="font-size:13px;border-left:3px solid ${color};padding-left:6px;">${displaySchool(school)}</span>
         </div></td>
@@ -3413,7 +3449,7 @@ function renderDreamMeet(container) {
         const schoolDisp = e.isRelay ? '' : displaySchool(e.school);
         const scoringRow = e.pts > 0;
         return `<tr style="${!scoringRow?'opacity:0.45;':''}">
-          <td class="rank-cell ${e.place<=3?'top3':''}">${e.place}</td>
+          <td class="rank-cell ${rankClass(e.place)}">${e.place}</td>
           <td style="font-size:12px;white-space:normal;word-break:break-word;">${nameDisp}</td>
           <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span style="font-size:11px;color:var(--text-muted);white-space:normal;">${schoolDisp}</span></div></td>
           <td class="mark-cell ${gClass}">${e.displayMark||e.mark}${e.handTime?'<span style="font-size:9px;font-weight:400;color:var(--text-dim);margin-left:2px;">h</span>':''}</td>
