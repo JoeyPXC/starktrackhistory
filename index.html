@@ -3282,11 +3282,26 @@ function scoreDreamMeet(gender, schoolRecordsData) {
     return name;
   };
 
-  const isYardsMark = (mark, year, eventName) =>
-    /\(y\)/i.test(mark||'') || /\(y\)/i.test(year||'') ||
-    /\bh\s*\(y\)/i.test(mark||'') ||
-    /2\s*mile/i.test(mark||'') ||
-    /\byard\b/i.test(eventName||'');
+  const isYardsMark = (mark, year, eventName) => {
+    // 440yd ≈ 400m and 880yd ≈ 800m — these are comparable distances, don't exclude them.
+    // Only exclude (y) marks for sprint yard events (100yd, 220yd) or explicit "yard" event names.
+    const m = mark||'', y = year||'', e = eventName||'';
+    if (/\byard\b/i.test(e)) return true;           // event name says "yard"
+    if (/2\s*mile/i.test(m)) return true;            // 2-mile relay mark
+    if (/\(y\)/i.test(y)) return true;               // year field has (y) flag
+    if (/\(y\)/i.test(m) || /\bh\s*\(y\)/i.test(m)) {
+      // (y) in the mark — only exclude for sprint events (100, 200 dash)
+      // 400m/440yd and longer are close enough to include
+      if (/^(100|200)\b/i.test(e)) return true;
+      if (/^(100|200)\b/i.test(m)) return true;
+      // If no event context, exclude sprints by checking if it looks like a sprint time
+      // Sprint times are < 25s; 400m times are 45s+
+      const num = parseFloat(m.replace(/[^\d.]/g,''));
+      if (!isNaN(num) && num < 30) return true;       // looks like a sprint, exclude
+      return false;                                    // 400m+, keep it
+    }
+    return false;
+  };
 
   // Convert and normalise a raw mark string → { mark, displayMark, markNum, handTime }
   function processmark(raw, isField) {
@@ -3429,7 +3444,7 @@ function scoreDreamMeet(gender, schoolRecordsData) {
       const ptsEach = slots > 0 ? ptSum/tiedCount : 0;
       const placeLabel = placeIdx+1;
       for (let k = i; k < j; k++) {
-        placed.push({...entries[k], place: placeLabel, pts: k < i+slotsAvail ? ptsEach : 0});
+        placed.push({...entries[k], place: placeLabel, pts: ptsEach});
       }
       placeIdx += tiedCount;
       i = j;
