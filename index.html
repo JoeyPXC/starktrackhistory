@@ -2023,7 +2023,7 @@ function renderTop25(container) {
       let nameCell;
       if (isRelay) {
         const members = r.name.replace(/,\s*$/, '').split(',').map(n => n.trim()).filter(Boolean);
-        const memberHtml = members.length
+        const memberHtml = members.length > 1
           ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:1px;white-space:normal;">${members.join(' · ')}</div>` : '';
         nameCell = `<td colspan="2"><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span style="font-size:12px;font-weight:600;">${displaySchool(school)}</span></div>${memberHtml}</td>`;
       } else {
@@ -3718,10 +3718,10 @@ function renderDreamMeet(container) {
         const scoringRow = e.pts > 0;
 
         if (e.isRelay) {
-          // Parse member names from the stored comma-separated string, stripping trailing comma
-          const rawNames = (e.name||'').replace(/,\s*$/, '').trim();
-          const memberHtml = rawNames
-            ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:1px;white-space:normal;">${rawNames}</div>`
+          // Only show members if name contains commas (actual relay members, not just a school name)
+          const members = (e.name||'').replace(/,\s*$/, '').split(',').map(n => n.trim()).filter(Boolean);
+          const memberHtml = members.length > 1
+            ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:1px;white-space:normal;">${members.join(' · ')}</div>`
             : '';
           return `<tr style="${!scoringRow?'opacity:0.45;':''}">
             <td class="rank-cell ${rankClass(e.place)}">${e.place}</td>
