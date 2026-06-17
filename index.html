@@ -2243,6 +2243,79 @@ function renderChamps(container) {
   const showBoys  = filterGender !== 'F';
   const showGirls = filterGender !== 'M';
 
+  // ── Build summary counts ─────────────────────────────────────
+  const boysLarge = {}, girlsLarge = {};
+  const boysD23 = {}, girlsD23 = {};
+  const boysD35 = {}, girlsD35 = {};
+  const addCount = (map, key, n = 1) => {
+    if (!key) return;
+    // Handle tie strings like "Tie: Minerva & Tuslaw"
+    if (/^Tie:/i.test(key)) {
+      key.replace(/^Tie:\s*/i,'').split('&').forEach(s => {
+        s = s.trim(); if (s) map[s] = (map[s]||0) + n/2;
+      });
+    } else {
+      map[key] = (map[key]||0) + n;
+    }
+  };
+  CHAMPS_DATA.forEach(d => {
+    addCount(boysLarge,  d.boys1);
+    addCount(girlsLarge, d.girls1);
+    if (d.smallLabel) {
+      const is35 = /3[^2].*5|3–5|3-5/i.test(d.smallLabel||'');
+      const bMap = is35 ? boysD35  : boysD23;
+      const gMap = is35 ? girlsD35 : girlsD23;
+      addCount(bMap, d.boysSmall1);
+      addCount(gMap, d.girlsSmall1);
+    }
+  });
+
+  const mkLeaderboard = (map, gClass, title) => {
+    const sorted = Object.entries(map).sort(([,a],[,b]) => b-a);
+    if (!sorted.length) return '';
+    const rows = sorted.map(([school, n], idx) => {
+      const logo = schoolLogo(school);
+      const logoHtml = logo ? `<img src="${logo}" style="width:22px;height:22px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
+      const pts = n % 1 === 0 ? n : n.toFixed(1);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f2f6;">
+        <span style="font-family:var(--font-d);font-size:11px;font-weight:700;width:18px;text-align:center;${idx===0?'color:#c9910a':idx===1?'color:#888fa0':idx===2?'color:#a0622a':'color:var(--text-dim)'}">${idx+1}</span>
+        ${logoHtml}
+        <span style="flex:1;font-size:13px;font-weight:${idx===0?700:400};">${school}</span>
+        <span style="font-family:var(--font-d);font-size:15px;font-weight:700;color:${gClass==='boys'?'var(--blue)':'var(--red)'};">${pts}</span>
+      </div>`;
+    }).join('');
+    return `<div>
+      <div style="font-family:var(--font-d);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:${gClass==='boys'?'var(--blue)':'var(--red)'};margin-bottom:4px;">${title}</div>
+      ${rows}
+    </div>`;
+  };
+
+  // ── Summary card ─────────────────────────────────────────────
+  const summaryBlocks = [];
+
+  if (showBoys) {
+    const bLarge = mkLeaderboard(boysLarge, 'boys', 'Boys — Large School Titles');
+    const bD23   = mkLeaderboard(boysD23,   'boys', 'Boys — Div. 2/3 Titles (2006–2025)');
+    const bD35   = mkLeaderboard(boysD35,   'boys', 'Boys — Div. 3–5 Titles (2026+)');
+    summaryBlocks.push(`<div style="flex:1;min-width:220px;padding:14px 16px;border-right:1px solid var(--card-border);">
+      ${bLarge}<div style="margin-top:14px;">${bD23}</div>${Object.keys(boysD35).length?`<div style="margin-top:14px;">${bD35}</div>`:''}
+    </div>`);
+  }
+  if (showGirls) {
+    const gLarge = mkLeaderboard(girlsLarge, 'girls', 'Girls — Large School Titles');
+    const gD23   = mkLeaderboard(girlsD23,   'girls', 'Girls — Div. 2/3 Titles (2006–2025)');
+    const gD35   = mkLeaderboard(girlsD35,   'girls', 'Girls — Div. 3–5 Titles (2026+)');
+    summaryBlocks.push(`<div style="flex:1;min-width:220px;padding:14px 16px;">
+      ${gLarge}<div style="margin-top:14px;">${gD23}</div>${Object.keys(girlsD35).length?`<div style="margin-top:14px;">${gD35}</div>`:''}
+    </div>`);
+  }
+
+  const summaryCard = summaryBlocks.length ? `
+    <div class="school-card" style="overflow:hidden;margin-bottom:20px;">
+      <div style="padding:8px 14px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:var(--header-bg);color:rgba(255,255,255,0.7);">All-Time Championship Titles</div>
+      <div style="display:flex;flex-wrap:wrap;">${summaryBlocks.join('')}</div>
+    </div>` : '';
+
   const badge = (text, gold) =>
     `<span style="display:inline-block;background:${gold?'var(--gold)':'#e2e8f0'};color:${gold?'white':'var(--text-muted)'};font-size:9px;font-family:var(--font-d);letter-spacing:0.5px;padding:1px 5px;border-radius:3px;margin-right:5px;">${gold?'1ST':'2ND'}</span>`;
 
@@ -2290,6 +2363,7 @@ function renderChamps(container) {
     <div style="margin-bottom:8px;">
       <div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">🥇 Team Champions &amp; Runner-Ups</div>
       <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Since 2003</div>
+      ${summaryCard}
       <div class="school-card" style="overflow:hidden;">
         <div style="display:flex;border-bottom:1px solid var(--card-border);">
           <div style="flex:0 0 44px;border-right:1px solid var(--card-border);"></div>
@@ -2459,6 +2533,41 @@ function renderState(container) {
     return;
   }
 
+  // ── Count state titles per school ───────────────────────────
+  // Count each individual champion/relay as titles by parsing "Nx state champion" patterns
+  const schoolTitles = {};
+  STATE_CHAMPIONS.forEach(e => {
+    const school = e.school;
+    let count = 0;
+    e.facts.forEach(f => {
+      // "2× state champion" or "3× Division..." patterns
+      const multi = f.match(/^(\d+)[×x×*]\s/i);
+      if (multi) { count += parseInt(multi[1]); return; }
+      // Plain "state champion" mention (not in multi pattern)
+      if (/\bstate champion\b/i.test(f)) count += 1;
+    });
+    if (count > 0) schoolTitles[school] = (schoolTitles[school]||0) + count;
+  });
+  const sortedTitles = Object.entries(schoolTitles).sort(([,a],[,b]) => b-a);
+
+  const stateSummaryRows = sortedTitles.map(([school, n], idx) => {
+    const logo = schoolLogo(school);
+    const logoHtml = logo ? `<img src="${logo}" style="width:22px;height:22px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
+    const col = idx===0?'#c9910a':idx===1?'#888fa0':idx===2?'#a0622a':'var(--text-dim)';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f2f6;">
+      <span style="font-family:var(--font-d);font-size:11px;font-weight:700;width:18px;text-align:center;color:${col};">${idx+1}</span>
+      ${logoHtml}
+      <span style="flex:1;font-size:13px;font-weight:${idx===0?700:400};">${displaySchool(school)}</span>
+      <span style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--text-muted);">${n}</span>
+    </div>`;
+  }).join('');
+
+  const stateSummaryCard = !q ? `
+    <div class="school-card" style="overflow:hidden;margin-bottom:20px;">
+      <div style="padding:8px 14px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:var(--header-bg);color:rgba(255,255,255,0.7);">All-Time State Titles by School (Boys &amp; Girls Combined)</div>
+      <div style="padding:8px 16px 4px;">${stateSummaryRows}</div>
+    </div>` : '';
+
   const isRelay = e => /relay/i.test(e.name);
   const color = e => SCHOOL_COLORS[e.school] || SCHOOL_COLORS[e.school.replace('Canton ','')] || '#888';
 
@@ -2501,6 +2610,7 @@ function renderState(container) {
   container.innerHTML = `
     <div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">🏅 State Champions of Stark County</div>
     <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">1914 – Present</div>
+    ${stateSummaryCard}
     ${cards}`;
 }
 
