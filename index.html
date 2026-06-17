@@ -3547,7 +3547,7 @@ function scoreDreamMeet(gender, schoolRecordsData) {
         entries.push({ name: r.name, school: canon, ...pm, year: r.year, isRelay: true });
       }
 
-      // Also add schools that have a school record but NO top25 entry
+      // School records fallback: add schools not in TOP25 relay list, using member names from doc
       for (const school of schoolRecordsData) {
         if (isExcludedSchool(school.name)) continue;
         const canon = canonicalSchool(school.name);
@@ -3560,7 +3560,8 @@ function scoreDreamMeet(gender, schoolRecordsData) {
         const pm = processmark(rawMark, false);
         if (!pm) continue;
         seen.add(canon);
-        entries.push({ name: school.name, school: school.name, ...pm, year: rawYear||'', isRelay: true });
+        const memberNames = rows[0][nameKey] || '';
+        entries.push({ name: memberNames, school: school.name, ...pm, year: rawYear||'', isRelay: true });
       }
 
     } else {
