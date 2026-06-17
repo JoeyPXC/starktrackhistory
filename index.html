@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -816,11 +817,12 @@ function parseSchoolRecordsHtml(html) {
           events.push({
             event: i === 0 ? event : '',
             boysName:  boysNames[i]  || '',
-            boysMark:  boysMarks[i]  || boysMarks[0]  || '',
-            boysYear:  boysYears[i]  || boysYears[0]  || '',
+            // Only show the mark/year on the first row for each gender
+            boysMark:  i < boysNames.length ? (boysMarks[i]  || boysMarks[0]  || '') : '',
+            boysYear:  i < boysNames.length ? (boysYears[i]  || boysYears[0]  || '') : '',
             girlsName: girlsNames[i] || '',
-            girlsMark: girlsMarks[i] || girlsMarks[0] || '',
-            girlsYear: girlsYears[i] || girlsYears[0] || '',
+            girlsMark: i < girlsNames.length ? (girlsMarks[i] || girlsMarks[0] || '') : '',
+            girlsYear: i < girlsNames.length ? (girlsYears[i] || girlsYears[0] || '') : '',
           });
         }
       }
@@ -938,7 +940,6 @@ function renderSchoolCard(school) {
       ${logoHtml}
       <div style="flex:1;">
         <div class="school-name">${school.name}</div>
-        ${mascot?`<div class="school-mascot">${mascot}</div>`:''}
       </div>
       ${badge}
       <span class="school-chevron">▼</span>
@@ -2014,16 +2015,9 @@ function renderCountyRecordsTable(rows, title, subtitle) {
     return `<span style="white-space:nowrap;">${name}</span>`;
   };
 
-  // Small logo under event name
-  const eventCell = (event, schoolKey, r) => {
-    const logo = schoolLogo(r[schoolKey] || '');
-    const logoHtml = logo
-      ? `<img src="${logo}" style="width:18px;height:18px;object-fit:contain;display:block;margin-top:3px;" alt="">`
-      : '';
-    return `<span style="display:flex;flex-direction:column;align-items:flex-start;">
-      <span style="font-weight:600;white-space:nowrap;">${event}</span>
-      ${logoHtml}
-    </span>`;
+  // Event cell — just the event name (logo moved to nameBlock)
+  const eventCell = (event) => {
+    return `<span style="font-weight:600;white-space:nowrap;">${event}</span>`;
   };
 
   // Build one gender panel as flex rows
@@ -2038,6 +2032,11 @@ function renderCountyRecordsTable(rows, title, subtitle) {
       const nameHtml = relay
         ? `<span class="rec-name relay-names">${fmtRelay(name)}</span>`
         : `<span class="rec-name">${fmtName(name)}</span>`;
+      // Logo under school name
+      const logo = schoolLogo(r[schoolKey] || '');
+      const logoHtml = logo
+        ? `<img src="${logo}" style="width:28px;height:28px;object-fit:contain;display:block;margin-top:3px;" alt="" onerror="this.style.display='none'">`
+        : '';
       // On desktop: name + school inline. On mobile: school below name
       const nameBlock = `<span style="flex:1;min-width:0;">
         <span style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
@@ -2045,10 +2044,11 @@ function renderCountyRecordsTable(rows, title, subtitle) {
           <span class="rec-school-desktop" style="font-size:10px;color:var(--text-dim);white-space:nowrap;">${school}</span>
         </span>
         <span class="rec-school-mobile" style="font-size:10px;color:var(--text-dim);display:none;margin-top:1px;">${school}</span>
+        ${logoHtml}
       </span>`;
       const bg = i % 2 === 0 ? '' : 'background:#f8f9fc;';
       return `<div class="rec-row" style="${bg}">
-        <span class="rec-event">${eventCell(r.event, schoolKey, r)}</span>
+        <span class="rec-event">${eventCell(r.event)}</span>
         ${nameBlock}
         <span class="rec-mark ${markClass}">${fmtMark(mark)}</span>
         <span class="rec-year">${year}</span>
@@ -2084,16 +2084,21 @@ function renderCountyRecordsTable(rows, title, subtitle) {
       const nameHtml = relay
         ? `<span class="rec-name relay-names">${fmtRelay(name)}</span>`
         : `<span class="rec-name">${name}</span>`;
+      const logo2 = schoolLogo(r[schoolKey] || '');
+      const logoHtml2 = logo2
+        ? `<img src="${logo2}" style="width:28px;height:28px;object-fit:contain;display:block;margin-top:3px;" alt="" onerror="this.style.display='none'">`
+        : '';
       const nameBlock = `<span style="flex:1;min-width:0;">
         <span style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
           ${nameHtml}
           <span class="rec-school-desktop" style="font-size:10px;color:var(--text-dim);white-space:nowrap;">${school}</span>
         </span>
         <span class="rec-school-mobile" style="font-size:10px;color:var(--text-dim);display:none;margin-top:1px;">${school}</span>
+        ${logoHtml2}
       </span>`;
       const bg = i % 2 === 0 ? '' : 'background:#f8f9fc;';
       return `<div class="rec-row" style="${bg}">
-        <span class="rec-event">${eventCell(r.event, schoolKey, r)}</span>
+        <span class="rec-event">${eventCell(r.event)}</span>
         ${nameBlock}
         <span class="rec-mark ${markClass}">${fmtMark(mark)}</span>
         <span class="rec-year">${year}</span>
