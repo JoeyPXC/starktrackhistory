@@ -448,6 +448,7 @@
   <button class="page-tab" data-page="champs" onclick="switchPage('champs')">🥇 Team Champions</button>
   <button class="page-tab" data-page="state" onclick="switchPage('state')">🏅 State Champions</button>
   <button class="page-tab" data-page="pastresults" onclick="switchPage('pastresults')">📋 Past Results</button>
+  <button class="page-tab" data-page="dreammeet" onclick="switchPage('dreammeet')">🌟 Dream Meet</button>
 </nav>
 
 <!-- Mobile hamburger nav -->
@@ -465,6 +466,7 @@
     <button class="nav-dropdown-item" data-page="champs" onclick="switchPage('champs');toggleMenu()">🥇 Team Champions</button>
     <button class="nav-dropdown-item" data-page="state" onclick="switchPage('state');toggleMenu()">🏅 State Champions</button>
     <button class="nav-dropdown-item" data-page="pastresults" onclick="switchPage('pastresults');toggleMenu()">📋 Past Results</button>
+    <button class="nav-dropdown-item" data-page="dreammeet" onclick="switchPage('dreammeet');toggleMenu()">🌟 Dream Meet</button>
   </div>
 </nav>
 
@@ -619,6 +621,7 @@ const PAGE_LABELS = {
   champs: '🥇 Team Champions',
   state: '🏅 State Champions',
   pastresults: '📋 Past Results',
+  dreammeet:   '🌟 Dream Meet',
 };
 
 function toggleMenu() {
@@ -651,6 +654,13 @@ function renderFilterBar() {
     </button>`).join('');
 
   if (currentPage === 'countyrecords') {
+    bar.innerHTML = `
+      <span class="filter-label">Gender</span>
+      <div class="filter-group">${genderBtns}</div>`;
+    return;
+  }
+
+  if (currentPage === 'dreammeet') {
     bar.innerHTML = `
       <span class="filter-label">Gender</span>
       <div class="filter-group">${genderBtns}</div>`;
@@ -889,6 +899,7 @@ function renderContent() {
   else if (currentPage === 'champs') renderChamps(c);
   else if (currentPage === 'state') renderState(c);
   else if (currentPage === 'pastresults') renderPastResults(c);
+  else if (currentPage === 'dreammeet') renderDreamMeet(c);
   else renderTop25(c);
 }
 
@@ -3090,8 +3101,253 @@ function renderAllTimeResults(container) {
 }
 
 
+// ── Dream Meet ─────────────────────────────────────────────────
+
+// Map school record event names → TOP25_DATA keys
+// School records doc uses names like "100 Meter Dash", "110/100 Hurdles", "4×100 Relay" etc.
+const DREAM_EVENT_MAP = [
+  { key:'100m',       label:'100m',             re:/^100\b/i,              relay:false, field:false },
+  { key:'200m',       label:'200m',             re:/^200\b/i,              relay:false, field:false },
+  { key:'400m',       label:'400m',             re:/^400\b/i,              relay:false, field:false },
+  { key:'800m',       label:'800m',             re:/^800\b/i,              relay:false, field:false },
+  { key:'1600m',      label:'1600m',            re:/^1600\b|^1,600\b/i,    relay:false, field:false },
+  { key:'3200m',      label:'3200m',            re:/^3200\b|^3,200\b/i,    relay:false, field:false },
+  { key:'Hurdles',    label:'110/100 Hurdles',  re:/^(110|100)\s*(m|meter)?\s*hurdle/i, relay:false, field:false },
+  { key:'300H',       label:'300 Hurdles',      re:/^300\s*(m|meter)?\s*hurdle/i, relay:false, field:false },
+  { key:'Pole Vault', label:'Pole Vault',       re:/pole\s*vault/i,        relay:false, field:true  },
+  { key:'High Jump',  label:'High Jump',        re:/high\s*jump/i,         relay:false, field:true  },
+  { key:'Long Jump',  label:'Long Jump',        re:/long\s*jump/i,         relay:false, field:true  },
+  { key:'Shot Put',   label:'Shot Put',         re:/shot\s*put/i,          relay:false, field:true  },
+  { key:'Discus',     label:'Discus',           re:/discus/i,              relay:false, field:true  },
+  { key:'4x100',      label:'4×100 Relay',      re:/4\s*[x×]\s*100/i,      relay:true,  field:false },
+  { key:'4x200',      label:'4×200 Relay',      re:/4\s*[x×]\s*200/i,      relay:true,  field:false },
+  { key:'4x400',      label:'4×400 Relay',      re:/4\s*[x×]\s*400/i,      relay:true,  field:false },
+  { key:'4x800',      label:'4×800 Relay',      re:/4\s*[x×]\s*800/i,      relay:true,  field:false },
+];
+
+// Convert a mark string to a sortable number (lower = better for track, higher = better for field)
+function dreamMarkToNum(mark, isField) {
+  if (!mark) return isField ? -Infinity : Infinity;
+  mark = mark.replace(/['"]/g,'').trim();
+  // Distance feet-inches: "16-04.25" or "16'4.25\"" -> inches
+  const dm = mark.match(/^(\d+)[-'](\d+(?:\.\d+)?)(?:"|'')?$/);
+  if (dm) return parseFloat(dm[1])*12 + parseFloat(dm[2]);
+  // Time with colon: "1:23.45"
+  const tm = mark.match(/^(\d+):(\d+(?:\.\d+)?)$/);
+  if (tm) return parseInt(tm[1])*60 + parseFloat(tm[2]);
+  // Plain decimal or integer
+  const n = parseFloat(mark);
+  return isNaN(n) ? (isField ? -Infinity : Infinity) : n;
+}
+
+// Standard place points: 1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7th=2, 8th=1
+const PLACE_PTS = [10, 8, 6, 5, 4, 3, 2, 1];
+
+// Score a single gender's dream meet
+// Returns { teamScores:{school->pts}, events:[{label, entries:[{name,school,mark,year,pts,place}]}] }
+function scoreDreamMeet(gender, schoolRecordsData) {
+  if (!schoolRecordsData) return null;
+  const gKey = gender === 'Boys' ? 'boys' : 'girls';
+  const nameKey  = gender === 'Boys' ? 'boysName'  : 'girlsName';
+  const markKey  = gender === 'Boys' ? 'boysMark'  : 'girlsMark';
+  const yearKey  = gender === 'Boys' ? 'boysYear'  : 'girlsYear';
+
+  const teamScores = {};
+  const events = [];
+
+  for (const evtDef of DREAM_EVENT_MAP) {
+    // --- Collect entries from school records (primary) ---
+    const entries = []; // {name, school, mark, year, markNum, source}
+
+    for (const school of schoolRecordsData) {
+      // Find matching event rows
+      const rows = school.events.filter(e => evtDef.re.test(e.event || ''));
+      if (!rows.length) continue;
+
+      if (evtDef.relay) {
+        // Relay: one entry per school, best mark
+        const marks = rows.map(r => r[markKey]).filter(Boolean);
+        const names = rows.map(r => r[nameKey]).filter(Boolean);
+        if (!marks[0]) continue;
+        const markNum = dreamMarkToNum(marks[0], false);
+        entries.push({ name: school.name, school: school.name, mark: marks[0], year: rows[0][yearKey]||'', markNum, isRelay: true });
+      } else {
+        // Individual: collect all tied record holders from school records
+        const seen = new Set();
+        for (const row of rows) {
+          const name = row[nameKey];
+          const mark = row[markKey];
+          const year = row[yearKey];
+          if (!name || !mark || seen.has(name)) continue;
+          seen.add(name);
+          const markNum = dreamMarkToNum(mark, evtDef.field);
+          entries.push({ name, school: school.name, mark, year, markNum, isRelay: false, source: 'record' });
+        }
+
+        // Second scorer: look in TOP25_DATA for another athlete from same school
+        if (!evtDef.relay) {
+          const top25list = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
+          // Find athletes from this school not already in entries
+          const schoolTop25 = top25list.filter(r =>
+            r.school === school.name &&
+            !entries.some(e => e.school === school.name && e.name === r.name)
+          );
+          if (schoolTop25.length > 0) {
+            const r = schoolTop25[0];
+            const markNum = dreamMarkToNum(r.mark, evtDef.field);
+            entries.push({ name: r.name, school: school.name, mark: r.mark, year: r.year, markNum, isRelay: false, source: 'top25' });
+          }
+        }
+      }
+    }
+
+    if (!entries.length) continue;
+
+    // Sort: field = descending (bigger better), track = ascending (smaller better)
+    entries.sort((a, b) => evtDef.field ? b.markNum - a.markNum : a.markNum - b.markNum);
+
+    // Remove invalid marks
+    const valid = entries.filter(e => isFinite(e.markNum) && e.markNum !== 0);
+    if (!valid.length) continue;
+
+    // Assign places with tie splitting
+    // Group consecutive entries with same markNum into tied groups
+    const placed = [];
+    let i = 0;
+    let placeIdx = 0; // index into PLACE_PTS
+    while (i < valid.length && placeIdx < PLACE_PTS.length) {
+      // Find how many are tied at this mark
+      const tiedMark = valid[i].markNum;
+      let j = i;
+      while (j < valid.length && valid[j].markNum === tiedMark) j++;
+      const tiedCount = j - i;
+      // How many scoring positions do they consume?
+      const slotsAvail = PLACE_PTS.length - placeIdx;
+      const slots = Math.min(tiedCount, slotsAvail);
+      // Sum the points for those slots and split evenly
+      let ptSum = 0;
+      for (let s = 0; s < slots; s++) ptSum += PLACE_PTS[placeIdx + s] || 0;
+      const ptsEach = slots > 0 ? ptSum / tiedCount : 0;
+      const placeLabel = placeIdx + 1; // 1-based place for first of the tied group
+      for (let k = i; k < j; k++) {
+        placed.push({ ...valid[k], place: placeLabel, pts: k < i + slotsAvail ? ptsEach : 0 });
+      }
+      placeIdx += tiedCount;
+      i = j;
+    }
+    // Any beyond 8th place get 0 pts
+    for (; i < valid.length; i++) {
+      placed.push({ ...valid[i], place: i + 1, pts: 0 });
+    }
+
+    // Accumulate team scores
+    for (const e of placed) {
+      if (e.pts > 0) {
+        teamScores[e.school] = (teamScores[e.school] || 0) + e.pts;
+      }
+    }
+
+    events.push({ label: evtDef.label, entries: placed, isField: evtDef.field, isRelay: evtDef.relay });
+  }
+
+  return { teamScores, events };
+}
+
+function renderDreamMeet(container) {
+  if (!schoolRecordsData) {
+    container.innerHTML = `<div class="loading-msg"><div class="loading-spinner"></div>Loading school records…</div>`;
+    return;
+  }
+
+  const showBoys  = filterGender !== 'F';
+  const showGirls = filterGender !== 'M';
+
+  const mkMeet = (gender, gClass) => {
+    const result = scoreDreamMeet(gender, schoolRecordsData);
+    if (!result) return '';
+
+    // Team scores sorted
+    const sorted = Object.entries(result.teamScores)
+      .sort(([,a],[,b]) => b - a);
+
+    // Scores table
+    const scoreRows = sorted.map(([school, pts], idx) => {
+      const logo = schoolLogo(school);
+      const logoHtml = logo ? `<img src="${logo}" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
+      const color = SCHOOL_COLORS[school] || '#888';
+      return `<tr style="${idx===0?'font-weight:700;':''}">
+        <td class="rank-cell ${idx<3?'top3':''}">${idx+1}</td>
+        <td><div style="display:flex;align-items:center;gap:8px;">${logoHtml}
+          <span style="font-size:13px;border-left:3px solid ${color};padding-left:6px;">${displaySchool(school)}</span>
+        </div></td>
+        <td class="mark-cell ${gClass}" style="font-size:16px;">${pts%1===0?pts:pts.toFixed(1)}</td>
+      </tr>`;
+    }).join('');
+
+    const scoresHtml = `<div class="school-card" style="margin-bottom:28px;overflow:hidden;">
+      <div style="padding:6px 14px;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+        color:${gClass==='boys'?'var(--blue)':'var(--red)'};
+        background:${gClass==='boys'?'#eff4ff':'#fff0f3'};
+        border-bottom:2px solid ${gClass==='boys'?'var(--blue)':'var(--red)'};">
+        ${gender} — Final Team Scores
+      </div>
+      <div class="table-scroll"><table class="top25-table" style="table-layout:fixed;width:100%;">
+        <colgroup><col style="width:24px"><col><col style="width:56px"></colgroup>
+        <thead><tr><th>#</th><th>School</th><th style="text-align:right">Pts</th></tr></thead>
+        <tbody>${scoreRows}</tbody>
+      </table></div>
+    </div>`;
+
+    // Event results
+    const eventHtml = result.events.map(evt => {
+      const rows = evt.entries.map(e => {
+        const logo = schoolLogo(e.school);
+        const logoHtml = logo ? `<img src="${logo}" style="width:16px;height:16px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
+        const ptsDisp = e.pts > 0 ? (e.pts%1===0 ? e.pts : e.pts.toFixed(2).replace(/\.?0+$/,'')) : '';
+        const nameDisp = e.isRelay ? displaySchool(e.school) : e.name;
+        const schoolDisp = e.isRelay ? '' : displaySchool(e.school);
+        const scoringRow = e.pts > 0;
+        return `<tr style="${!scoringRow?'opacity:0.45;':''}">
+          <td class="rank-cell ${e.place<=3?'top3':''}">${e.place}</td>
+          <td style="font-size:12px;white-space:normal;word-break:break-word;">${nameDisp}</td>
+          <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span style="font-size:11px;color:var(--text-muted);white-space:normal;">${schoolDisp}</span></div></td>
+          <td class="mark-cell ${gClass}">${e.mark}</td>
+          <td class="year-cell">${e.year}</td>
+          <td class="year-cell" style="color:${gClass==='boys'?'var(--blue)':'var(--red)'};font-weight:600;">${ptsDisp}</td>
+        </tr>`;
+      }).join('');
+
+      return `<div class="top25-event">
+        <div class="top25-event-header">
+          <div class="top25-event-name">${evt.label}</div>
+          <div class="top25-rule"></div>
+        </div>
+        <div class="top25-col" style="width:100%;">
+          <div class="top25-col-header ${gClass}">${gender}</div>
+          <div class="table-scroll"><table class="top25-table" style="table-layout:fixed;width:100%;">
+            <colgroup><col style="width:20px"><col style="width:34%"><col style="width:58px"><col style="width:64px"><col style="width:28px"><col style="width:32px"></colgroup>
+            <thead><tr><th>#</th><th>${evt.isRelay?'Team':'Athlete'}</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Year</th><th style="text-align:right">Pts</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return scoresHtml + eventHtml;
+  };
+
+  const bHtml = showBoys  ? mkMeet('Boys',  'boys')  : '';
+  const gHtml = showGirls ? mkMeet('Girls', 'girls') : '';
+
+  container.innerHTML = `
+    <div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">🌟 All-Time Dream Meet</div>
+    <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">School records vs County Top 25 — who scores the most?</div>
+    <div style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:20px;">Points split on ties · 2nd athletes from County Top 25 · School records are primary entries</div>
+    ${bHtml}${gHtml}`;
+}
+
+
 // ── Init ───────────────────────────────────────────────────────
-async function init() {
   renderFilterBar();
   schoolRecordsData = await loadSchoolRecords();
   if (schoolRecordsData) {
