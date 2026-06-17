@@ -671,14 +671,20 @@ function renderFilterBar() {
 
   if (currentPage === 'pastresults') {
     const years = RESULTS_YEARS.map(y => y.year);
-    bar.innerHTML = `
+    const yearSelect = allTimeMode ? '' : `
       <span class="filter-label">Year</span>
       <select class="filter-search" style="width:90px;" onchange="setResultsYear(this.value)">
         ${years.map(y => `<option value="${y}" ${resultsYear==y?'selected':''}>${y}</option>`).join('')}
       </select>
-      <div class="filter-divider"></div>
+      <div class="filter-divider"></div>`;
+    bar.innerHTML = `
+      ${yearSelect}
       <span class="filter-label">Gender</span>
-      <div class="filter-group">${genderBtns}</div>`;
+      <div class="filter-group">${genderBtns}</div>
+      <div class="filter-divider"></div>
+      <button class="filter-btn ${allTimeMode?'active':''}" onclick="setAllTimeMode(${!allTimeMode})">
+        ${allTimeMode ? '← Single Year' : '📊 All-Time Rankings'}
+      </button>`;
     return;
   }
 
@@ -2436,8 +2442,6 @@ function renderState(container) {
 
 // ── Past Results ───────────────────────────────────────────────
 
-// Year manifest — maps year to file(s). Files live alongside index.html.
-// For years with split boys/girls files, supply both.
 const RESULTS_YEARS = [
   { year:'2026', files:['04-25-2026 Stark County Overall Results.htm'] },
   { year:'2025', files:['04-26-2025 Stark County Results with splits.htm'] },
@@ -2462,50 +2466,50 @@ const RESULTS_YEARS = [
   { year:'2005', files:['04-23-2005 Boys Stark County Results.htm','04-23-2005 Girls Stark County Results.htm'] },
 ];
 
-// Cache parsed results by year
 const resultsCache = {};
+// allTimeCache: built lazily — maps eventKey -> { boys:[], girls:[] } sorted by mark
+let allTimeCache = null;
+let allTimeMode = false; // toggle between single-year and all-time view
 
-// Normalize abbreviated school names from Hy-Tek back to canonical names
 function normalizeHytekSchool(s) {
   if (!s) return s;
   s = s.trim();
-  // Exact or near-exact common Hy-Tek abbreviations
   const map = [
-    [/^mass\.?\s*perry$/i,       'Perry'],
-    [/^mass\.?\s*jackso/i,       'Jackson'],
-    [/^mass\.?\s*washin/i,       'Massillon Washington'],
-    [/^mass\.?\s*tuslaw/i,       'Tuslaw'],
-    [/^canton\s*mckin/i,         'Canton McKinley'],
-    [/^mckinley$/i,              'Canton McKinley'],
-    [/^canton\s*south$/i,        'Canton South'],
-    [/^canton\s*c\.?c\.?$/i,     'Central Catholic'],
-    [/^canton\s*centr/i,         'Central Catholic'],
-    [/^c\.?c\.?\s*northwe/i,     'Northwest'],
-    [/^cf\s*northwe/i,           'Northwest'],
-    [/^st\.?\s*thomas/i,         'St. Thomas Aquinas'],
-    [/^uniont\.?\s*lake$/i,      'Lake'],
-    [/^uniontown\s*la/i,         'Lake'],
-    [/^lake\s*center/i,          'Lake Center Christian'],
-    [/^sandy\s*valley/i,         'Sandy Valley'],
-    [/^east\s*canton$/i,         'East Canton'],
-    [/^canton\s*timke/i,         'Canton Timken'],
-    [/^timken$/i,                'Canton Timken'],
-    [/^canton\s*lehma/i,         'Canton Lehman'],
-    [/^canton\s*linco/i,         'Canton Lincoln'],
-    [/^glenoak$/i,               'GlenOak'],
-    [/^glen\s*oak$/i,            'GlenOak'],
-    [/^alliance$/i,              'Alliance'],
-    [/^fairless$/i,              'Fairless'],
-    [/^hoover$/i,                'Hoover'],
-    [/^jackson$/i,               'Jackson'],
-    [/^lake$/i,                  'Lake'],
-    [/^louisville$/i,            'Louisville'],
-    [/^marlington$/i,            'Marlington'],
-    [/^massillon$/i,             'Massillon Washington'],
-    [/^minerva$/i,               'Minerva'],
-    [/^northwest$/i,             'Northwest'],
-    [/^perry$/i,                 'Perry'],
-    [/^tuslaw$/i,                'Tuslaw'],
+    [/^mass\.?\s*perry$/i,      'Perry'],
+    [/^mass\.?\s*jackso/i,      'Jackson'],
+    [/^mass\.?\s*washin/i,      'Massillon Washington'],
+    [/^mass\.?\s*tuslaw/i,      'Tuslaw'],
+    [/^canton\s*mckin/i,        'Canton McKinley'],
+    [/^mckinley$/i,             'Canton McKinley'],
+    [/^canton\s*south$/i,       'Canton South'],
+    [/^canton\s*c\.?c\.?$/i,    'Central Catholic'],
+    [/^canton\s*centr/i,        'Central Catholic'],
+    [/^c\.?c\.?\s*northwe/i,    'Northwest'],
+    [/^cf\s*northwe/i,          'Northwest'],
+    [/^st\.?\s*thomas/i,        'St. Thomas Aquinas'],
+    [/^uniont\.?\s*lake/i,      'Lake'],
+    [/^uniontown\s*la/i,        'Lake'],
+    [/^lake\s*center/i,         'Lake Center Christian'],
+    [/^sandy\s*valley/i,        'Sandy Valley'],
+    [/^east\s*canton$/i,        'East Canton'],
+    [/^canton\s*timke/i,        'Canton Timken'],
+    [/^timken$/i,               'Canton Timken'],
+    [/^canton\s*lehma/i,        'Canton Lehman'],
+    [/^canton\s*linco/i,        'Canton Lincoln'],
+    [/^glenoak$/i,              'GlenOak'],
+    [/^glen\s*oak$/i,           'GlenOak'],
+    [/^alliance$/i,             'Alliance'],
+    [/^fairless$/i,             'Fairless'],
+    [/^hoover$/i,               'Hoover'],
+    [/^jackson$/i,              'Jackson'],
+    [/^lake$/i,                 'Lake'],
+    [/^louisville$/i,           'Louisville'],
+    [/^marlington$/i,           'Marlington'],
+    [/^massillon$/i,            'Massillon Washington'],
+    [/^minerva$/i,              'Minerva'],
+    [/^northwest$/i,            'Northwest'],
+    [/^perry$/i,                'Perry'],
+    [/^tuslaw$/i,               'Tuslaw'],
   ];
   for (const [re, canonical] of map) {
     if (re.test(s)) return canonical;
@@ -2513,117 +2517,197 @@ function normalizeHytekSchool(s) {
   return s;
 }
 
-// Parse raw Hy-Tek <pre> text into structured events
-// Returns array of { gender, event, results: [{place, name, school, year, mark, points, isRelay, members}] }
+// Extract finals mark from the numeric columns at end of a Hy-Tek row.
+// Layout: [seed]  finals  [wind]  [H#]  [pts]
+// Returns {mark, points}
+function extractMarkPts(rest) {
+  const tokens = rest.trim().split(/\s+/);
+  if (!tokens.length) return { mark: null, points: null };
+
+  let pts = null;
+  // Points = last plain-number token
+  if (/^\d+(\.\d+)?$/.test(tokens[tokens.length - 1])) {
+    pts = parseFloat(tokens.pop());
+  }
+  // Strip trailing H# (single digit 1-9) and wind (small decimal |x| < 10, or NWI)
+  while (tokens.length) {
+    const t = tokens[tokens.length - 1];
+    if (/^[1-9]$/.test(t)) { tokens.pop(); continue; }
+    if (t === 'NWI') { tokens.pop(); continue; }
+    const wm = t.match(/^([+-]?)(\d+)\.(\d+)$/);
+    if (wm && parseInt(wm[2]) < 10) { tokens.pop(); continue; }
+    break;
+  }
+  if (!tokens.length) return { mark: null, points: pts };
+  let mark = tokens[tokens.length - 1].replace(/[%@#*jJQq]/g, '').trim();
+  if (['NT','FS','DNS','DNF','DQ',''].includes(mark)) mark = null;
+  if (mark && !/^[\d:'"\\-]/.test(mark)) mark = null;
+  return { mark, points: pts };
+}
+
+// Parse one Hy-Tek result row (individual athlete, not relay).
+// Returns null if not a valid result row.
+function parseIndivRow(line) {
+  const pm = line.match(/^\s{0,4}(\d+)\s+/);
+  if (!pm) return null;
+  const place = parseInt(pm[1]);
+  const rest = line.slice(pm[0].length).trimEnd();
+
+  const commaIdx = rest.indexOf(',');
+  if (commaIdx === -1) return null; // relay or junk
+
+  const lastName = rest.slice(0, commaIdx).trim();
+  const afterComma = rest.slice(commaIdx + 1).trimStart();
+
+  // First name: one word (letters/apostrophes/hyphens only)
+  const fnM = afterComma.match(/^([A-Za-z''\-]+)\s+/);
+  if (!fnM) return null;
+  const firstName = fnM[1];
+  const name = `${firstName} ${lastName}`;
+  let tail = afterComma.slice(fnM[0].length);
+
+  // Optional grade year: 1-2 digits before a non-digit
+  let gradYear = '';
+  const yrM = tail.match(/^(\d{1,2})\s+(\D)/);
+  if (yrM) { gradYear = yrM[1]; tail = tail.slice(yrM[1].length).trimStart(); }
+
+  // School: up to first double-space
+  const schM = tail.match(/^([\w.\-'/ ]+?)\s{2,}/);
+  if (!schM) {
+    // no numbers follow — probably just a prelim dropout
+    return { place, name, gradYear, school: normalizeHytekSchool(tail.trim()), mark: null, points: null, isPrelim: true };
+  }
+  const school = normalizeHytekSchool(schM[1].trim());
+  const { mark, points } = extractMarkPts(tail.slice(schM[0].length));
+  // Determine if this is a prelim row (ends with Q/q/H# and no points)
+  const isPrelim = points === null && /[Qq]\s*\d*\s*$/.test(line.trim());
+  return { place, name, gradYear, school, mark, points, isPrelim: isPrelim || false };
+}
+
+// Parse relay result row: "  1 School Name    ...  mark  [H#]  pts"
+function parseRelayRow(line) {
+  const pm = line.match(/^\s{0,4}(\d+)\s+/);
+  if (!pm) return null;
+  const place = parseInt(pm[1]);
+  const rest = line.slice(pm[0].length).trimEnd();
+  // School fills up to double-space
+  const schM = rest.match(/^([\w.\-'/ ]+?)\s{2,}/);
+  if (!schM) return null;
+  const school = normalizeHytekSchool(schM[1].trim());
+  const { mark, points } = extractMarkPts(rest.slice(schM[0].length));
+  const isPrelim = points === null && /[Qq*%@]\s*\d*\s*$/.test(line.trim());
+  return { place, name: school, school, mark, points, isRelay: true, members: [], isPrelim: isPrelim || false };
+}
+
+// Parse relay member line: "     1) Smith, John 11     2) Doe, Jane 10"
+function parseRelayMembers(line) {
+  const members = [];
+  const re = /\d\)\s+([\w''\-]+),\s*([\w''\-]+)/g;
+  let m;
+  while ((m = re.exec(line)) !== null) {
+    members.push(`${m[2]} ${m[1]}`);
+  }
+  return members;
+}
+
+// Canonical event sort order
+const EVENT_ORDER = [
+  '4x800','4×800','4 x 800',
+  '100 Meter Dash','100 Meter Hurdles','110 Meter Hurdles',
+  '200 Meter Dash','400 Meter Dash','300 Meter Hurdles',
+  '800 Meter Run','1600 Meter Run','3200 Meter Run',
+  'Pole Vault','High Jump','Long Jump','Triple Jump','Shot Put','Discus',
+  '4x100','4×100','4 x 100',
+  '4x200','4×200','4 x 200',
+  '4x400','4×400','4 x 400',
+  'Seated','Wheelchair',
+];
+function eventSortKey(name) {
+  const n = name.replace(/\s*Varsity\s*/i,'').trim();
+  for (let i = 0; i < EVENT_ORDER.length; i++) {
+    if (n.toLowerCase().includes(EVENT_ORDER[i].toLowerCase())) return i;
+  }
+  return 99;
+}
+
+// Parse raw Hy-Tek pre text → array of event objects
+// Each event: { gender, event, finals:[], prelims:[] }
 function parseHytekText(text) {
-  // Normalize line endings
-  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   const events = [];
+  const sepRe = /^[=\-]{8,}/;
+  const evtHdrRe = /^(?:Event\s+\d+\s+)?(Boys|Girls|Men|Women)\s+(.+?)(?:\s+Varsity)?(?:\s+Wheelchair)?(?:\s+Seated)?\s*$/i;
+  const isRelayEvt = name => /relay/i.test(name);
+
   let i = 0;
-
-  // Event header patterns:
-  //   "Girls 100 Meter Dash" or "Event 2  Girls 100 Meter Dash" or "Girls 100 Meter Dash Varsity"
-  const eventHeaderRe = /^(?:Event\s+\d+\s+)?(Boys|Girls|Men|Women)\s+(.+?)(?:\s+Varsity)?(?:\s+Wheelchair)?$/i;
-  const separatorRe   = /^[=\-]{10,}/;
-  // Finals section marker
-  const finalsRe      = /^Finals$/i;
-  // Result row — numbered place:  "  1 Smith, John    12 GlenOak   ..."
-  const trackRowRe    = /^\s{0,4}(\d+)\s+([\w',.\- ]+?)\s{2,}(\d{1,2}|[A-Z]{2})\s+([\w.\- ]+?)\s{2,}.*?([\d:.'\"]+(?:\.\d+)?(?:[a-z]+)?)\s*(?:\d+\.\d)?\s*(\d+(?:\.\d+)?(?:\s*\.\d+)?)?\s*$/;
-  // Relay result row — school first: "  1 GlenOak    ..."
-  const relayRowRe    = /^\s{0,4}(\d+)\s+([\w.\- ]+?)\s{2,}.*?([\d:.'\"]+)\s+(?:\d+\s+)?(\d+(?:\.\d+)?)?/;
-  // Relay member line: "     1) Smith, John 11     2) Doe, Jane 10"
-  const memberRe      = /\d\)\s+([\w',.\- ]+?)\s+\d{1,2}\b/g;
-
-  const isRelayEvent = (name) => /relay/i.test(name);
-
   while (i < lines.length) {
     const line = lines[i].trimEnd();
+    const hm = line.match(evtHdrRe);
+    if (hm) {
+      // Confirm separator follows (within 2 lines)
+      let si = i + 1;
+      while (si < lines.length && !lines[si].trim()) si++;
+      if (!sepRe.test(lines[si] || '')) { i++; continue; }
 
-    // Detect event header
-    const hm = line.match(eventHeaderRe);
-    if (hm && !separatorRe.test(lines[i+1] || '') === false) {
-      // Confirm next non-empty line is a separator
-      let j = i + 1;
-      while (j < lines.length && !lines[j].trim()) j++;
-      if (separatorRe.test(lines[j] || '')) {
-        const gender = /girls|women/i.test(hm[1]) ? 'Girls' : 'Boys';
-        const eventName = hm[2].trim().replace(/\s+/g,' ');
-        const relay = isRelayEvent(eventName);
+      const gender = /girls|women/i.test(hm[1]) ? 'Girls' : 'Boys';
+      const eventName = hm[2].trim().replace(/\s+/g,' ');
+      const relay = isRelayEvt(eventName);
+      const finals = [], prelims = [];
+      let inFinals = false, inPrelims = false;
 
-        // Scan forward to find Finals section, collect results
-        let results = [];
-        let inFinals = false;
-        let inPrelims = false;
-        let k = j + 1;
+      let k = si + 1;
+      while (k < lines.length) {
+        const l = lines[k].trimEnd();
 
-        while (k < lines.length) {
-          const l = lines[k].trimEnd();
+        // Stop at next event header
+        if (evtHdrRe.test(l) && !/^\s/.test(l)) {
+          let nsi = k + 1;
+          while (nsi < lines.length && !lines[nsi].trim()) nsi++;
+          if (sepRe.test(lines[nsi] || '')) break;
+        }
 
-          // Stop at next event header (non-relay: "Girls/Boys ...")
-          if (eventHeaderRe.test(l) && !/^\s/.test(l)) {
-            // Check next line for separator
-            let nj = k + 1;
-            while (nj < lines.length && !lines[nj].trim()) nj++;
-            if (separatorRe.test(lines[nj] || '')) break;
-          }
+        const ltrim = l.trim();
+        if (/^Finals$/i.test(ltrim)) { inFinals = true; inPrelims = false; k++; continue; }
+        if (/^Preliminaries$/i.test(ltrim)) { inPrelims = true; inFinals = false; k++; continue; }
+        if (sepRe.test(l)) { k++; continue; }
+        if (/County Meet:|Stark County:|Facility:|Small School:|^\s*(Name|School)\s/i.test(l)) { k++; continue; }
 
-          if (/^Finals$/i.test(l.trim())) { inFinals = true; inPrelims = false; k++; continue; }
-          if (/^Preliminaries$/i.test(l.trim())) { inPrelims = true; inFinals = false; k++; continue; }
-          if (separatorRe.test(l)) { k++; continue; }
-          // Skip record/header lines
-          if (/County Meet:|Stark County:|Facility:|Small School:|^\s*Name\s|^\s*School\s/i.test(l)) { k++; continue; }
-
-          if (inFinals) {
-            if (relay) {
-              // Relay: "  1 GlenOak    ...    48.77    10"
-              const rm = l.match(/^\s{0,4}(\d+)\s+([\w.\-', ]+?)\s{2,}[\d:.'\"]+\s+([\d:.'\"]+(?:\.\d+)?[A-Z%@#*]*)\s*(?:[+\-]?\d+\.\d)?\s*(\d+(?:\.\d+)?)?\s*$/);
-              if (rm) {
-                const school = normalizeHytekSchool(rm[2].trim());
-                const mark   = rm[3].replace(/[%@#*]/g,'').trim();
-                const points = rm[4] ? parseFloat(rm[4]) : 0;
-                // Collect member lines following
-                let members = [];
-                let m = k + 1;
-                while (m < lines.length && /^\s{4,}/.test(lines[m]) && /\d\)/.test(lines[m])) {
-                  let mc;
-                  const mline = lines[m];
-                  const localRe = /\d\)\s+([\w',.\- ]+?)\s+\d{1,2}\b/g;
-                  while ((mc = localRe.exec(mline)) !== null) {
-                    const nm = mc[1].trim();
-                    // Format "Last, First" -> "First Last"
-                    const parts = nm.split(',').map(p => p.trim());
-                    members.push(parts.length === 2 ? `${parts[1]} ${parts[0]}` : nm);
-                  }
-                  m++;
-                }
-                results.push({ place: parseInt(rm[1]), name: school, school, mark, points, isRelay: true, members });
-                k = m;
-                continue;
+        if (inFinals || inPrelims) {
+          const bucket = inFinals ? finals : prelims;
+          if (relay) {
+            const r = parseRelayRow(l);
+            if (r) {
+              r.isPrelim = inPrelims;
+              bucket.push(r);
+              // Collect member lines immediately after
+              let mk = k + 1;
+              while (mk < lines.length && /^\s{4,}/.test(lines[mk]) && /\d\)/.test(lines[mk])) {
+                r.members.push(...parseRelayMembers(lines[mk]));
+                mk++;
               }
-            } else {
-              // Individual: "  1 Smith, John    12 GlenOak    ...   10.96    10"
-              const im = l.match(/^\s{0,4}(\d+)\s+([\w',.\- ]+?)\s{2,}(\d{1,2})\s+([\w.\-', ]+?)\s{2,}.*?([\d:'\"]+(?:[\-\.]\d+)*(?:\.\d+)?[A-Z%@#*jJ]*)\s*(?:[+\-]?\d+\.\d+)?\s+(\d+(?:\.\d+)?)?\s*$/);
-              if (im) {
-                const rawName   = im[2].trim();
-                const parts     = rawName.split(',').map(p => p.trim());
-                const name      = parts.length === 2 ? `${parts[1]} ${parts[0]}` : rawName;
-                const gradYear  = im[3];
-                const school    = normalizeHytekSchool(im[4].trim());
-                const mark      = im[5].replace(/[%@#*jJ]/gi,'').trim();
-                const points    = im[6] ? parseFloat(im[6]) : 0;
-                results.push({ place: parseInt(im[1]), name, school, gradYear, mark, points, isRelay: false });
-              }
+              k = mk;
+              continue;
+            }
+          } else {
+            const r = parseIndivRow(l);
+            if (r) {
+              r.isPrelim = inPrelims;
+              // Skip split-time continuation lines
+              k++;
+              while (k < lines.length && /^\s{5,}\d/.test(lines[k])) k++;
+              bucket.push(r);
+              continue;
             }
           }
-          k++;
         }
-
-        if (results.length) {
-          events.push({ gender, event: eventName, results });
-        }
-        i = k;
-        continue;
+        k++;
       }
+
+      if (finals.length || prelims.length) {
+        events.push({ gender, event: eventName, finals, prelims });
+      }
+      i = k;
+      continue;
     }
     i++;
   }
@@ -2634,142 +2718,186 @@ async function loadResultsYear(year) {
   if (resultsCache[year]) return resultsCache[year];
   const entry = RESULTS_YEARS.find(e => e.year === String(year));
   if (!entry) return null;
-
   try {
     const texts = await Promise.all(
       entry.files.map(f => fetch(encodeURIComponent(f)).then(r => r.text()))
     );
-    // Strip HTML tags, decode entities
     const parser = new DOMParser();
     const cleaned = texts.map(html => {
       const doc = parser.parseFromString(html, 'text/html');
-      const pre = doc.querySelector('pre, PRE');
+      const pre = doc.querySelector('pre,PRE');
       return pre ? pre.textContent : doc.body.textContent;
     }).join('\n');
-
     const events = parseHytekText(cleaned);
     resultsCache[year] = events;
     return events;
-  } catch(e) {
-    console.error('Results load error:', e);
-    return null;
+  } catch(e) { console.error('Results load error:', e); return null; }
+}
+
+// Load ALL years and build all-time rankings
+async function buildAllTimeCache() {
+  if (allTimeCache) return allTimeCache;
+  const allEvents = {};
+  await Promise.all(RESULTS_YEARS.map(async y => {
+    const events = await loadResultsYear(y.year);
+    if (!events) return;
+    for (const evt of events) {
+      const key = `${evt.gender}|${evt.event.replace(/\s*Varsity\s*/i,'').trim()}`;
+      if (!allEvents[key]) allEvents[key] = { gender: evt.gender, event: evt.event.replace(/\s*Varsity\s*/i,'').trim(), entries: [] };
+      for (const r of evt.finals) {
+        if (!r.mark) continue;
+        allEvents[key].entries.push({ ...r, year: y.year });
+      }
+    }
+  }));
+  // Sort each event's entries by mark (need numeric sort)
+  function markToNum(mark, isField) {
+    if (!mark) return Infinity;
+    // Distance: "23-07.25" -> inches
+    const dm = mark.match(/^(\d+)-(\d+)(?:\.(\d+))?$/);
+    if (dm) return -(parseInt(dm[1])*12 + parseFloat(dm[2] + (dm[3]?'.'+dm[3]:''))); // negate = bigger is better
+    // Time: "1:23.45" or "9:05.42"
+    const tm = mark.match(/^(\d+):(\d+(?:\.\d+)?)$/);
+    if (tm) return parseInt(tm[1])*60 + parseFloat(tm[2]); // smaller is better
+    // Plain number
+    const n = parseFloat(mark);
+    return isNaN(n) ? Infinity : n; // smaller sprint time = better
   }
+  const fieldEvents = /vault|jump|put|discus|throw/i;
+  for (const key of Object.keys(allEvents)) {
+    const isField = fieldEvents.test(key);
+    allEvents[key].entries.sort((a, b) => {
+      const na = markToNum(a.mark, isField), nb = markToNum(b.mark, isField);
+      return isField ? na - nb : na - nb; // already negated for field
+    });
+    // Assign ranks (handle ties)
+    let rank = 1;
+    for (let i = 0; i < allEvents[key].entries.length; i++) {
+      if (i > 0 && allEvents[key].entries[i].mark === allEvents[key].entries[i-1].mark) {
+        allEvents[key].entries[i].rank = allEvents[key].entries[i-1].rank;
+      } else {
+        allEvents[key].entries[i].rank = rank;
+      }
+      rank++;
+    }
+  }
+  allTimeCache = allEvents;
+  return allTimeCache;
+}
+
+function setAllTimeMode(val) {
+  allTimeMode = val;
+  renderFilterBar();
+  renderContent();
 }
 
 function renderPastResults(container) {
+  if (allTimeMode) {
+    renderAllTimeResults(container);
+    return;
+  }
   container.innerHTML = `<div class="loading-msg"><div class="loading-spinner"></div>Loading ${resultsYear} results…</div>`;
   loadResultsYear(resultsYear).then(events => {
     if (!events || !events.length) {
-      container.innerHTML = `<div class="loading-msg">Could not load results for ${resultsYear}. Make sure the result files are in the same folder as index.html.</div>`;
+      container.innerHTML = `<div class="loading-msg">Could not load results for ${resultsYear}. Make sure the .htm files are in the same folder as index.html.</div>`;
       return;
     }
 
     const showBoys  = filterGender !== 'F';
     const showGirls = filterGender !== 'M';
 
-    // Filter to gender
-    let filtered = events.filter(e =>
-      (showBoys  && e.gender === 'Boys') ||
-      (showGirls && e.gender === 'Girls')
-    );
-
-    // Group by event name so Boys+Girls appear side by side
-    const eventNames = [...new Set(filtered.map(e => e.event))];
-    // Dedupe: same event can appear twice (once per gender in combined file)
-    // Build map: eventName -> { boys, girls }
+    // Group events: eventName -> { Boys: {finals,prelims}, Girls: {finals,prelims} }
     const grouped = {};
-    for (const e of filtered) {
-      if (!grouped[e.event]) grouped[e.event] = {};
-      grouped[e.event][e.gender] = e.results;
+    for (const e of events) {
+      if ((!showBoys && e.gender==='Boys') || (!showGirls && e.gender==='Girls')) continue;
+      const key = e.event.replace(/\s*Varsity\s*/i,'').trim();
+      if (!grouped[key]) grouped[key] = {};
+      grouped[key][e.gender] = { finals: e.finals, prelims: e.prelims };
     }
 
-    // Canonical event order (track, then field, then relays, then seated)
-    const ORDER = [
-      '4x800 Meter Relay','100 Meter Dash','110 Meter Hurdles','100 Meter Hurdles',
-      '200 Meter Dash','400 Meter Dash','300 Meter Hurdles','800 Meter Run',
-      '1600 Meter Run','3200 Meter Run',
-      'Pole Vault','High Jump','Long Jump','Triple Jump','Shot Put','Discus',
-      '4x100 Meter Relay','4x200 Meter Relay','4x400 Meter Relay',
-    ];
-    const orderIndex = name => {
-      const n = name.replace(/\s+Varsity\s*/i,'').trim();
-      const i = ORDER.findIndex(o => n.includes(o.split(' ').slice(0,2).join(' ')));
-      return i === -1 ? 99 : i;
-    };
-    const sortedEvents = Object.keys(grouped).sort((a,b) => orderIndex(a)-orderIndex(b));
+    const sortedKeys = Object.keys(grouped).sort((a,b) => eventSortKey(a)-eventSortKey(b));
 
-    const mkRow = (r, gClass) => {
-      const schoolShort = displaySchool(r.school);
+    // Team scores from finals
+    const scoreMap = { Boys: {}, Girls: {} };
+    for (const e of events) {
+      for (const r of e.finals) {
+        if (!r.points) continue;
+        scoreMap[e.gender][r.school] = (scoreMap[e.gender][r.school]||0) + r.points;
+      }
+    }
+
+    const mkResultRow = (r, gClass) => {
       const logo = schoolLogo(r.school);
-      const logoHtml = logo
-        ? `<img src="${logo}" style="width:20px;height:20px;object-fit:contain;flex-shrink:0;margin-right:4px;" alt="" onerror="this.style.display='none'">`
-        : '';
+      const logoHtml = logo ? `<img src="${logo}" style="width:18px;height:18px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
+      const schoolShort = displaySchool(r.school);
       if (r.isRelay) {
         const memberHtml = r.members && r.members.length
-          ? `<div style="font-size:10px;color:var(--text-dim);margin-top:1px;line-height:1.5;">${r.members.join(' · ')}</div>`
-          : '';
+          ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:1px;">${r.members.join(' · ')}</div>` : '';
         return `<tr>
           <td class="rank-cell ${r.place<=3?'top3':''}">${r.place}</td>
-          <td><div style="display:flex;align-items:center;gap:4px;">${logoHtml}<span style="font-size:12.5px;font-weight:600;">${schoolShort}</span></div>${memberHtml}</td>
-          <td class="school-cell"></td>
-          <td class="mark-cell ${gClass}">${r.mark}</td>
+          <td><div style="display:flex;align-items:center;gap:4px;">${logoHtml}<span style="font-size:12px;font-weight:600;">${schoolShort}</span></div>${memberHtml}</td>
+          <td></td>
+          <td class="mark-cell ${gClass}">${r.mark||'—'}</td>
           <td class="year-cell">${r.points||''}</td>
         </tr>`;
       }
       return `<tr>
         <td class="rank-cell ${r.place<=3?'top3':''}">${r.place}</td>
-        <td style="font-size:12.5px;">${r.name}</td>
-        <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span class="school-cell">${schoolShort}</span></div></td>
-        <td class="mark-cell ${gClass}">${r.mark}</td>
+        <td style="font-size:12px;">${r.name}</td>
+        <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span class="school-cell" style="overflow:visible;white-space:normal;">${schoolShort}</span></div></td>
+        <td class="mark-cell ${gClass}">${r.mark||'—'}</td>
         <td class="year-cell">${r.points||''}</td>
       </tr>`;
     };
 
-    const mkTable = (results, gClass, label) => {
-      if (!results || !results.length) return '';
-      const rows = results.slice(0,8).map(r => mkRow(r, gClass)).join('');
+    const mkTable = (data, gClass, label) => {
+      if (!data) return '';
+      const { finals, prelims } = data;
+      if (!finals.length && !prelims.length) return '';
+
+      const finalsRows = finals.map(r => mkResultRow(r, gClass)).join('');
+      const prelimsRows = prelims.map(r => mkResultRow(r, gClass)).join('');
+
+      const prelimSection = prelims.length ? `
+        <tr><td colspan="5" style="background:var(--header-bg);color:rgba(255,255,255,0.5);
+          font-family:var(--font-d);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+          padding:4px 8px;">Preliminaries</td></tr>
+        ${prelimsRows}` : '';
+
+      const finalsHeader = finals.length ? `
+        <tr><td colspan="5" style="background:var(--header-bg);color:rgba(255,255,255,0.5);
+          font-family:var(--font-d);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+          padding:4px 8px;">Finals</td></tr>` : '';
+
       return `<div class="top25-col">
         <div class="top25-col-header ${gClass}">${label}</div>
         <div class="table-scroll"><table class="top25-table">
-          <colgroup><col style="width:24px"><col><col style="width:70px"><col style="width:66px"><col style="width:28px"></colgroup>
+          <colgroup><col style="width:22px"><col><col style="width:80px"><col style="width:64px"><col style="width:26px"></colgroup>
           <thead><tr><th>#</th><th>Athlete / Team</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Pts</th></tr></thead>
-          <tbody>${rows}</tbody>
+          <tbody>
+            ${finalsHeader}${finalsRows}
+            ${prelimSection}
+          </tbody>
         </table></div>
       </div>`;
     };
 
-    // Team scores
-    const scoreMap = { Boys: {}, Girls: {} };
-    for (const e of Object.values(grouped)) {
-      for (const [gender, results] of Object.entries(e)) {
-        for (const r of results) {
-          const s = r.school;
-          if (!scoreMap[gender][s]) scoreMap[gender][s] = 0;
-          scoreMap[gender][s] += r.points || 0;
-        }
-      }
-    }
     const mkScores = (gender, gClass) => {
-      const entries = Object.entries(scoreMap[gender])
-        .filter(([,pts]) => pts > 0)
-        .sort(([,a],[,b]) => b-a)
-        .slice(0,10);
+      const entries = Object.entries(scoreMap[gender]).filter(([,p])=>p>0).sort(([,a],[,b])=>b-a).slice(0,12);
       if (!entries.length) return '';
-      const rows = entries.map(([school, pts], idx) => {
+      const rows = entries.map(([school,pts],idx) => {
         const logo = schoolLogo(school);
-        const logoHtml = logo
-          ? `<img src="${logo}" style="width:22px;height:22px;object-fit:contain;margin-right:5px;" alt="" onerror="this.style.display='none'">`
-          : '';
+        const logoHtml = logo ? `<img src="${logo}" style="width:22px;height:22px;object-fit:contain;margin-right:5px;" alt="" onerror="this.style.display='none'">` : '';
         return `<tr>
           <td class="rank-cell ${idx<3?'top3':''}">${idx+1}</td>
-          <td><div style="display:flex;align-items:center;">${logoHtml}<span style="font-size:12.5px;font-weight:${idx===0?'700':'400'}">${displaySchool(school)}</span></div></td>
-          <td class="mark-cell ${gClass}">${pts % 1 === 0 ? pts : pts.toFixed(1)}</td>
+          <td><div style="display:flex;align-items:center;">${logoHtml}<span style="font-size:12px;font-weight:${idx===0?700:400};white-space:normal;">${displaySchool(school)}</span></div></td>
+          <td class="mark-cell ${gClass}">${pts%1===0?pts:pts.toFixed(1)}</td>
         </tr>`;
       }).join('');
       return `<div class="top25-col">
         <div class="top25-col-header ${gClass}">${gender} Team Scores</div>
         <div class="table-scroll"><table class="top25-table">
-          <colgroup><col style="width:24px"><col><col style="width:60px"></colgroup>
+          <colgroup><col style="width:22px"><col><col style="width:50px"></colgroup>
           <thead><tr><th>#</th><th>School</th><th style="text-align:right">Pts</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
@@ -2777,39 +2905,87 @@ function renderPastResults(container) {
     };
 
     let html = `<div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">📋 ${resultsYear} Stark County Championships</div>
-      <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">Finals Results</div>`;
+      <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">Complete Results</div>`;
 
-    // Team scores block
-    if (filterGender === 'ALL') {
-      const bScores = showBoys  ? mkScores('Boys',  'boys')  : '';
-      const gScores = showGirls ? mkScores('Girls', 'girls') : '';
-      if (bScores || gScores) {
-        html += `<div class="top25-event">
-          <div class="top25-event-header"><div class="top25-event-name">Team Scores</div><div class="top25-rule"></div></div>
-          <div class="top25-split">${bScores}${gScores}</div>
-        </div>`;
-      }
-    }
+    // Team scores
+    const bS = showBoys  ? mkScores('Boys',  'boys')  : '';
+    const gS = showGirls ? mkScores('Girls', 'girls') : '';
+    if (bS || gS) html += `<div class="top25-event">
+      <div class="top25-event-header"><div class="top25-event-name">Team Scores</div><div class="top25-rule"></div></div>
+      <div class="top25-split">${bS}${gS}</div></div>`;
 
-    // Event results
-    for (const evtName of sortedEvents) {
-      const g = grouped[evtName];
-      const bTable = showBoys  ? mkTable(g['Boys'],  'boys',  'Boys')  : '';
-      const gTable = showGirls ? mkTable(g['Girls'], 'girls', 'Girls') : '';
-      if (!bTable && !gTable) continue;
-      const label = evtName.replace(/\s*Varsity\s*/i,'').trim();
+    for (const key of sortedKeys) {
+      const g = grouped[key];
+      const bT = showBoys  ? mkTable(g['Boys'],  'boys',  'Boys')  : '';
+      const gT = showGirls ? mkTable(g['Girls'], 'girls', 'Girls') : '';
+      if (!bT && !gT) continue;
       html += `<div class="top25-event">
-        <div class="top25-event-header">
-          <div class="top25-event-name">${label}</div>
-          <div class="top25-rule"></div>
-        </div>
-        <div class="top25-split">${bTable}${gTable}</div>
+        <div class="top25-event-header"><div class="top25-event-name">${key}</div><div class="top25-rule"></div></div>
+        <div class="top25-split">${bT}${gT}</div>
       </div>`;
     }
 
     container.innerHTML = html;
   });
 }
+
+function renderAllTimeResults(container) {
+  container.innerHTML = `<div class="loading-msg"><div class="loading-spinner"></div>Loading all-time rankings… (fetching all years)</div>`;
+  buildAllTimeCache().then(allEvents => {
+    const showBoys  = filterGender !== 'F';
+    const showGirls = filterGender !== 'M';
+
+    // Collect unique event names (strip gender) sorted
+    const eventNames = [...new Set(
+      Object.keys(allEvents).map(k => k.split('|')[1])
+    )].sort((a,b) => eventSortKey(a)-eventSortKey(b));
+
+    const mkRow = (r, gClass) => {
+      const logo = schoolLogo(r.school);
+      const logoHtml = logo ? `<img src="${logo}" style="width:18px;height:18px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
+      const schoolShort = displaySchool(r.school);
+      return `<tr>
+        <td class="rank-cell ${r.rank<=3?'top3':''}">${r.rank}</td>
+        <td style="font-size:12px;">${r.isRelay ? schoolShort : r.name}</td>
+        <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span class="school-cell" style="overflow:visible;white-space:normal;">${r.isRelay?'':schoolShort}</span></div></td>
+        <td class="mark-cell ${gClass}">${r.mark}</td>
+        <td class="year-cell">${r.year}</td>
+      </tr>`;
+    };
+
+    const mkTable = (entries, gClass, label) => {
+      if (!entries || !entries.length) return '';
+      const rows = entries.slice(0, 25).map(r => mkRow(r, gClass)).join('');
+      return `<div class="top25-col">
+        <div class="top25-col-header ${gClass}">${label} — All-Time Top 25</div>
+        <div class="table-scroll"><table class="top25-table">
+          <colgroup><col style="width:22px"><col><col style="width:80px"><col style="width:64px"><col style="width:36px"></colgroup>
+          <thead><tr><th>#</th><th>Athlete / Team</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+      </div>`;
+    };
+
+    let html = `<div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">📊 All-Time Meet Rankings</div>
+      <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">Best marks from every year (2005–2026)</div>`;
+
+    for (const evtName of eventNames) {
+      const bKey = `Boys|${evtName}`, gKey = `Girls|${evtName}`;
+      const bEntries = showBoys  && allEvents[bKey] ? allEvents[bKey].entries : [];
+      const gEntries = showGirls && allEvents[gKey] ? allEvents[gKey].entries : [];
+      const bT = mkTable(bEntries, 'boys',  'Boys');
+      const gT = mkTable(gEntries, 'girls', 'Girls');
+      if (!bT && !gT) continue;
+      html += `<div class="top25-event">
+        <div class="top25-event-header"><div class="top25-event-name">${evtName}</div><div class="top25-rule"></div></div>
+        <div class="top25-split">${bT}${gT}</div>
+      </div>`;
+    }
+
+    container.innerHTML = html;
+  });
+}
+
 
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
