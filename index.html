@@ -3570,10 +3570,11 @@ function scoreDreamMeet(gender, schoolRecordsData) {
           const isMileEvt  = /^(1\s*)?mile\s*run\b/i.test(row.event||'');
           const is2MileEvt = /^2\s*mile\s*run\b/i.test(row.event||'');
           if (isMileEvt || is2MileEvt) {
-            const tm = rawMark.replace(/\(mi\)/gi,'').trim().match(/^(\d+):(\d+(?:\.\d+)?)$/);
+            const hadH = /\s*h\s*$/i.test(rawMark.replace(/\(mi\)/gi,'').trim());
+            const tm = rawMark.replace(/\(mi\)/gi,'').replace(/\s*h\s*$/i,'').trim().match(/^(\d+):(\d+(?:\.\d+)?)$/);
             if (tm) {
               const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
-              const c = mileToMetricSecs(secs, isMileEvt);
+              const c = mileToMetricSecs(secs, isMileEvt) + (hadH ? 0.24 : 0);
               processRaw = secsToTime(c) + ' (c)';
             }
           }
