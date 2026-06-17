@@ -3683,13 +3683,27 @@ function renderDreamMeet(container) {
         const logo = schoolLogo(e.school);
         const logoHtml = logo ? `<img src="${logo}" style="width:16px;height:16px;object-fit:contain;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : '';
         const ptsDisp = e.pts > 0 ? (e.pts%1===0 ? e.pts : e.pts.toFixed(2).replace(/\.?0+$/,'')) : '';
-        const nameDisp = e.isRelay ? displaySchool(e.school) : e.name;
-        const schoolDisp = e.isRelay ? '' : displaySchool(e.school);
         const scoringRow = e.pts > 0;
+
+        if (e.isRelay) {
+          // Parse member names from the stored comma-separated string, stripping trailing comma
+          const rawNames = (e.name||'').replace(/,\s*$/, '').trim();
+          const memberHtml = rawNames
+            ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:1px;white-space:normal;">${rawNames}</div>`
+            : '';
+          return `<tr style="${!scoringRow?'opacity:0.45;':''}">
+            <td class="rank-cell ${rankClass(e.place)}">${e.place}</td>
+            <td colspan="2"><div style="display:flex;align-items:center;gap:4px;">${logoHtml}<span style="font-size:12px;font-weight:600;white-space:normal;">${displaySchool(e.school)}</span></div>${memberHtml}</td>
+            <td class="mark-cell ${gClass}">${e.displayMark||e.mark}</td>
+            <td class="year-cell">${e.year}</td>
+            <td class="year-cell" style="color:${gClass==='boys'?'var(--blue)':'var(--red)'};font-weight:600;">${ptsDisp}</td>
+          </tr>`;
+        }
+
         return `<tr style="${!scoringRow?'opacity:0.45;':''}">
           <td class="rank-cell ${rankClass(e.place)}">${e.place}</td>
-          <td style="font-size:12px;white-space:normal;word-break:break-word;">${nameDisp}</td>
-          <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span style="font-size:11px;color:var(--text-muted);white-space:normal;">${schoolDisp}</span></div></td>
+          <td style="font-size:12px;white-space:normal;word-break:break-word;">${e.name}</td>
+          <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span style="font-size:11px;color:var(--text-muted);white-space:normal;">${displaySchool(e.school)}</span></div></td>
           <td class="mark-cell ${gClass}">${e.displayMark||e.mark}${e.handTime?'<span style="font-size:9px;font-weight:400;color:var(--text-dim);margin-left:2px;">h</span>':''}</td>
           <td class="year-cell">${e.year}</td>
           <td class="year-cell" style="color:${gClass==='boys'?'var(--blue)':'var(--red)'};font-weight:600;">${ptsDisp}</td>
@@ -3705,7 +3719,7 @@ function renderDreamMeet(container) {
         <div class="top25-col" style="width:100%;">
           <div class="top25-col-header ${gClass}">${gender}</div>
           <div class="table-scroll"><table class="top25-table" style="table-layout:fixed;width:100%;">
-            <colgroup><col style="width:20px"><col style="width:34%"><col style="width:58px"><col style="width:64px"><col style="width:28px"><col style="width:32px"></colgroup>
+            <colgroup><col style="width:20px"><col style="width:34%"><col style="width:54px"><col style="width:62px"><col style="width:34px"><col style="width:28px"></colgroup>
             <thead><tr><th>#</th><th>${evt.isRelay?'Team':'Athlete'}</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Year</th><th style="text-align:right">Pts</th></tr></thead>
             <tbody>${rows}</tbody>
           </table></div>
@@ -3721,8 +3735,8 @@ function renderDreamMeet(container) {
 
   container.innerHTML = `
     <div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">🌟 All-Time Dream Meet</div>
-    <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">School records vs County Top 25 — who scores the most?</div>
-    <div style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:20px;">Points split on ties · 2nd athletes from County Top 25 · School records are primary entries</div>
+    <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">The best athletes of all time from each school compete head-to-head</div>
+    <div style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:20px;">Points split on ties · Up to 2 athletes per school · School records &amp; County Top 25 combined</div>
     ${bHtml}${gHtml}`;
 }
 
