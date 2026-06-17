@@ -442,31 +442,31 @@
 <!-- Tabs -->
 <!-- Desktop tab nav -->
 <nav class="page-tabs" id="pageTabs">
-  <button class="page-tab active" data-page="records" onclick="switchPage('records')">🏫 School Records</button>
-  <button class="page-tab" data-page="top25" onclick="switchPage('top25')">🏆 County Top 25</button>
-  <button class="page-tab" data-page="countyrecords" onclick="switchPage('countyrecords')">🎯 County Records</button>
   <button class="page-tab" data-page="champs" onclick="switchPage('champs')">🥇 Team Champions</button>
-  <button class="page-tab" data-page="state" onclick="switchPage('state')">🏅 State Champions</button>
-  <button class="page-tab" data-page="pastresults" onclick="switchPage('pastresults')">📋 Past Results</button>
+  <button class="page-tab" data-page="countyrecords" onclick="switchPage('countyrecords')">🎯 County Records</button>
   <button class="page-tab" data-page="dreammeet" onclick="switchPage('dreammeet')">🌟 Dream Meet</button>
+  <button class="page-tab" data-page="pastresults" onclick="switchPage('pastresults')">📋 Past Results</button>
+  <button class="page-tab" data-page="records" onclick="switchPage('records')">🏫 School Records</button>
+  <button class="page-tab" data-page="state" onclick="switchPage('state')">🏅 State Champions</button>
+  <button class="page-tab" data-page="top25" onclick="switchPage('top25')">🏆 County Top 25</button>
 </nav>
 
 <!-- Mobile hamburger nav -->
 <nav class="nav-mobile" id="navMobile">
   <div class="nav-mobile-bar">
-    <span class="nav-current-page" id="navCurrentPage">🏫 School Records</span>
+    <span class="nav-current-page" id="navCurrentPage">🎯 County Records</span>
     <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
   </div>
   <div class="nav-dropdown" id="navDropdown">
-    <button class="nav-dropdown-item active" data-page="records" onclick="switchPage('records');toggleMenu()">🏫 School Records</button>
-    <button class="nav-dropdown-item" data-page="top25" onclick="switchPage('top25');toggleMenu()">🏆 County Top 25</button>
-    <button class="nav-dropdown-item" data-page="countyrecords" onclick="switchPage('countyrecords');toggleMenu()">🎯 County Records</button>
     <button class="nav-dropdown-item" data-page="champs" onclick="switchPage('champs');toggleMenu()">🥇 Team Champions</button>
-    <button class="nav-dropdown-item" data-page="state" onclick="switchPage('state');toggleMenu()">🏅 State Champions</button>
-    <button class="nav-dropdown-item" data-page="pastresults" onclick="switchPage('pastresults');toggleMenu()">📋 Past Results</button>
+    <button class="nav-dropdown-item" data-page="countyrecords" onclick="switchPage('countyrecords');toggleMenu()">🎯 County Records</button>
     <button class="nav-dropdown-item" data-page="dreammeet" onclick="switchPage('dreammeet');toggleMenu()">🌟 Dream Meet</button>
+    <button class="nav-dropdown-item" data-page="pastresults" onclick="switchPage('pastresults');toggleMenu()">📋 Past Results</button>
+    <button class="nav-dropdown-item" data-page="records" onclick="switchPage('records');toggleMenu()">🏫 School Records</button>
+    <button class="nav-dropdown-item" data-page="state" onclick="switchPage('state');toggleMenu()">🏅 State Champions</button>
+    <button class="nav-dropdown-item" data-page="top25" onclick="switchPage('top25');toggleMenu()">🏆 County Top 25</button>
   </div>
 </nav>
 
@@ -602,7 +602,7 @@ const SCHOOL_MASCOTS = {
 };
 
 // ── State ──────────────────────────────────────────────────────
-let currentPage   = 'records';
+let currentPage   = 'countyrecords';
 let schoolRecordsData = null;
 let filterGender  = 'ALL';
 let filterSchool  = 'ALL';
@@ -661,9 +661,16 @@ function renderFilterBar() {
   }
 
   if (currentPage === 'dreammeet') {
+    const dmEventOpts = DREAM_EVENT_MAP.map(e => e.label);
     bar.innerHTML = `
       <span class="filter-label">Gender</span>
-      <div class="filter-group">${genderBtns}</div>`;
+      <div class="filter-group">${genderBtns}</div>
+      <div class="filter-divider"></div>
+      <span class="filter-label">Jump to</span>
+      <select class="filter-search" style="width:140px;" onchange="jumpDreamEvent(this.value)">
+        <option value="">— Event —</option>
+        ${dmEventOpts.map(e => `<option value="${e}">${e}</option>`).join('')}
+      </select>`;
     return;
   }
 
@@ -2887,6 +2894,15 @@ function setAllTimeLimit(n) {
   renderContent();
 }
 
+function jumpDreamEvent(label) {
+  if (!label) return;
+  const id = 'dm-evt-' + label.replace(/[\s\/×x]+/g,'_');
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+}
+
 function renderPastResults(container) {
   if (allTimeMode) {
     renderAllTimeResults(container);
@@ -3110,8 +3126,8 @@ const DREAM_EVENT_MAP = [
   { key:'200m',       label:'200m',             re:/^200\b/i,              relay:false, field:false },
   { key:'400m',       label:'400m',             re:/^400\b/i,              relay:false, field:false },
   { key:'800m',       label:'800m',             re:/^800\b/i,              relay:false, field:false },
-  { key:'1600m',      label:'1600m',            re:/^1600\b|^1,600\b/i,    relay:false, field:false },
-  { key:'3200m',      label:'3200m',            re:/^3200\b|^3,200\b/i,    relay:false, field:false },
+  { key:'1600m',      label:'1600m',            re:/^1600\b|^1,600\b|^1\s*mile|^mile\b/i,           relay:false, field:false },
+  { key:'3200m',      label:'3200m',            re:/^3200\b|^3,200\b|^2\s*mile|^3\.2\s*km/i,        relay:false, field:false },
   { key:'Hurdles',    label:'110/100 Hurdles',  re:/^(110|100)\s*(m|meter)?\s*hurdle/i, relay:false, field:false },
   { key:'300H',       label:'300 Hurdles',      re:/^300\s*(m|meter)?\s*hurdle/i, relay:false, field:false },
   { key:'Pole Vault', label:'Pole Vault',       re:/pole\s*vault/i,        relay:false, field:true  },
@@ -3125,17 +3141,39 @@ const DREAM_EVENT_MAP = [
   { key:'4x800',      label:'4×800 Relay',      re:/4\s*[x×]\s*800/i,      relay:true,  field:false },
 ];
 
+// Convert a mile time (seconds) to 1600m equivalent seconds
+function mileToMetricSecs(secs, isMile) {
+  const ratio = isMile ? (1600 / 1609.344) : (3200 / 3218.688);
+  return secs * ratio;
+}
+
+// Format seconds back to m:ss.xx string
+function secsToTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs - m * 60;
+  return `${m}:${s < 10 ? '0' : ''}${s.toFixed(2)}`;
+}
+
+// Detect and strip mile/2-mile suffix from a mark, return { cleanMark, isMile, is2Mile }
+function parseMileMark(mark) {
+  if (!mark) return { cleanMark: mark, isMile: false, is2Mile: false };
+  const m = mark.replace(/\(mi\)/gi, '').replace(/\(2mi\)/gi, '').trim();
+  const isMile = /\(mi\)/i.test(mark);
+  const is2Mile = /\(2mi\)/i.test(mark);
+  return { cleanMark: m, isMile, is2Mile };
+}
+
 // Convert a mark string to a sortable number (lower = better for track, higher = better for field)
 function dreamMarkToNum(mark, isField) {
   if (!mark) return isField ? -Infinity : Infinity;
-  mark = mark.replace(/['"]/g,'').trim();
-  // Distance feet-inches: "16-04.25" or "16'4.25\"" -> inches
+  // Strip known suffixes before parsing
+  mark = mark.replace(/\([^)]*\)/g, '').replace(/['"]/g,'').trim();
+  // Distance feet-inches: "16-04.25" -> inches
   const dm = mark.match(/^(\d+)[-'](\d+(?:\.\d+)?)(?:"|'')?$/);
   if (dm) return parseFloat(dm[1])*12 + parseFloat(dm[2]);
   // Time with colon: "1:23.45"
   const tm = mark.match(/^(\d+):(\d+(?:\.\d+)?)$/);
   if (tm) return parseInt(tm[1])*60 + parseFloat(tm[2]);
-  // Plain decimal or integer
   const n = parseFloat(mark);
   return isNaN(n) ? (isField ? -Infinity : Infinity) : n;
 }
@@ -3152,51 +3190,94 @@ function scoreDreamMeet(gender, schoolRecordsData) {
   const markKey  = gender === 'Boys' ? 'boysMark'  : 'girlsMark';
   const yearKey  = gender === 'Boys' ? 'boysYear'  : 'girlsYear';
 
+  // Exclude schools with incomplete/pre-metric records
+  const DREAM_EXCLUDE = new Set(['Canton Lehman','Lehman','Canton Lincoln','Lincoln']);
+  // Detect yards-era marks (hand-timed yard races)
+  const isYardsMark = (mark, year) =>
+    /\(y\)/i.test(mark||'') || /\(y\)/i.test(year||'') || /\bh\s*\(y\)/i.test(mark||'');
+
   const teamScores = {};
   const events = [];
 
   for (const evtDef of DREAM_EVENT_MAP) {
-    // --- Collect entries from school records (primary) ---
-    const entries = []; // {name, school, mark, year, markNum, source}
+    const entries = [];
 
     for (const school of schoolRecordsData) {
-      // Find matching event rows
+      if (DREAM_EXCLUDE.has(school.name)) continue;
+
       const rows = school.events.filter(e => evtDef.re.test(e.event || ''));
       if (!rows.length) continue;
 
       if (evtDef.relay) {
-        // Relay: one entry per school, best mark
-        const marks = rows.map(r => r[markKey]).filter(Boolean);
-        const names = rows.map(r => r[nameKey]).filter(Boolean);
-        if (!marks[0]) continue;
-        const markNum = dreamMarkToNum(marks[0], false);
-        entries.push({ name: school.name, school: school.name, mark: marks[0], year: rows[0][yearKey]||'', markNum, isRelay: true });
+        const mark = rows[0][markKey];
+        const year = rows[0][yearKey];
+        if (!mark || isYardsMark(mark, year)) continue;
+        const markNum = dreamMarkToNum(mark, false);
+        entries.push({ name: school.name, school: school.name, mark, displayMark: mark, year: year||'', markNum, isRelay: true });
       } else {
-        // Individual: collect all tied record holders from school records
         const seen = new Set();
         for (const row of rows) {
           const name = row[nameKey];
-          const mark = row[markKey];
+          const rawMark = row[markKey];
           const year = row[yearKey];
-          if (!name || !mark || seen.has(name)) continue;
+          if (!name || !rawMark || seen.has(name)) continue;
+          if (isYardsMark(rawMark, year)) continue;
           seen.add(name);
+
+          // Detect if this is a mile or 2-mile event row and convert
+          const isMileEvent = /^(1\s*)?mile\b/i.test(row.event || '');
+          const is2MileEvent = /^2\s*mile\b/i.test(row.event || '');
+          let mark = rawMark.replace(/\(mi\)/gi,'').replace(/\(2mi\)/gi,'').trim();
+          let displayMark = mark;
+          if (isMileEvent || is2MileEvent) {
+            const tm = mark.match(/^(\d+):(\d+(?:\.\d+)?)$/);
+            if (tm) {
+              const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
+              const converted = mileToMetricSecs(secs, isMileEvent);
+              displayMark = secsToTime(converted) + ' (c)';
+              mark = secsToTime(converted); // clean mark for sorting
+            }
+          }
+          // Also handle (mi) suffix already present in the mark string (Top 25 data style)
+          const miM = rawMark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
+          if (miM) {
+            const tm2 = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
+            if (tm2) {
+              const secs = parseInt(tm2[1])*60 + parseFloat(tm2[2]);
+              const converted = mileToMetricSecs(secs, true);
+              mark = secsToTime(converted);
+              displayMark = mark + ' (c)';
+            }
+          }
+
           const markNum = dreamMarkToNum(mark, evtDef.field);
-          entries.push({ name, school: school.name, mark, year, markNum, isRelay: false, source: 'record' });
+          entries.push({ name, school: school.name, mark, displayMark, year: year||'', markNum, isRelay: false, source: 'record' });
         }
 
-        // Second scorer: look in TOP25_DATA for another athlete from same school
-        if (!evtDef.relay) {
-          const top25list = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
-          // Find athletes from this school not already in entries
-          const schoolTop25 = top25list.filter(r =>
-            r.school === school.name &&
-            !entries.some(e => e.school === school.name && e.name === r.name)
-          );
-          if (schoolTop25.length > 0) {
-            const r = schoolTop25[0];
-            const markNum = dreamMarkToNum(r.mark, evtDef.field);
-            entries.push({ name: r.name, school: school.name, mark: r.mark, year: r.year, markNum, isRelay: false, source: 'top25' });
+        // Second scorer from Top 25 (also convert mile marks, filter yards)
+        const top25list = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
+        const schoolTop25 = top25list.filter(r =>
+          r.school === school.name &&
+          !entries.some(e => e.school === school.name && e.name === r.name) &&
+          !isYardsMark(r.mark, String(r.year))
+        );
+        if (schoolTop25.length > 0) {
+          const r = schoolTop25[0];
+          let mark = r.mark;
+          let displayMark = mark;
+          // Handle (mi) suffix in Top 25 data
+          const miM = mark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
+          if (miM) {
+            const tm = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
+            if (tm) {
+              const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
+              const converted = mileToMetricSecs(secs, true);
+              mark = secsToTime(converted);
+              displayMark = mark + ' (c)';
+            }
           }
+          const markNum = dreamMarkToNum(mark, evtDef.field);
+          entries.push({ name: r.name, school: school.name, mark, displayMark, year: r.year, markNum, isRelay: false, source: 'top25' });
         }
       }
     }
@@ -3311,13 +3392,14 @@ function renderDreamMeet(container) {
           <td class="rank-cell ${e.place<=3?'top3':''}">${e.place}</td>
           <td style="font-size:12px;white-space:normal;word-break:break-word;">${nameDisp}</td>
           <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span style="font-size:11px;color:var(--text-muted);white-space:normal;">${schoolDisp}</span></div></td>
-          <td class="mark-cell ${gClass}">${e.mark}</td>
+          <td class="mark-cell ${gClass}">${e.displayMark||e.mark}</td>
           <td class="year-cell">${e.year}</td>
           <td class="year-cell" style="color:${gClass==='boys'?'var(--blue)':'var(--red)'};font-weight:600;">${ptsDisp}</td>
         </tr>`;
       }).join('');
 
-      return `<div class="top25-event">
+      const anchorId = 'dm-evt-' + evt.label.replace(/[\s\/×x]+/g,'_');
+      return `<div class="top25-event" id="${anchorId}" style="scroll-margin-top:50px;">
         <div class="top25-event-header">
           <div class="top25-event-name">${evt.label}</div>
           <div class="top25-rule"></div>
@@ -3350,10 +3432,11 @@ function renderDreamMeet(container) {
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
   renderFilterBar();
+  // Mark the default tab active
+  document.querySelectorAll('.page-tab,.nav-dropdown-item').forEach(t =>
+    t.classList.toggle('active', t.dataset.page === 'countyrecords'));
   schoolRecordsData = await loadSchoolRecords();
-  if (schoolRecordsData) {
-    renderFilterBar();
-  }
+  if (schoolRecordsData) renderFilterBar();
   renderContent();
 }
 init();
