@@ -609,6 +609,7 @@ let highlightSchool = 'NONE';
 let searchQuery   = '';
 let resultsYear   = '2026';
 let allTimeEvent  = 'ALL';
+let allTimeLimit  = 25; // 25 or Infinity
 
 // ── Page switching ─────────────────────────────────────────────
 const PAGE_LABELS = {
@@ -693,7 +694,12 @@ function renderFilterBar() {
       <select class="filter-search" style="width:140px;" onchange="setAllTimeEvent(this.value)">
         <option value="ALL">— Event —</option>
         ${atEventOpts.map(e => `<option value="${e}">${e}</option>`).join('')}
-      </select>` : '';
+      </select>
+      <div class="filter-divider"></div>
+      <div class="filter-group">
+        <button class="filter-btn ${allTimeLimit===25?'active':''}" onclick="setAllTimeLimit(25)">Top 25</button>
+        <button class="filter-btn ${allTimeLimit===Infinity?'active':''}" onclick="setAllTimeLimit(Infinity)">All</button>
+      </div>` : '';
 
     bar.innerHTML = `
       ${yearSelect}
@@ -2543,8 +2549,8 @@ function extractMarkPts(rest) {
   let tokens = rest.trim().split(/\s+/).filter(Boolean);
   if (!tokens.length) return { mark: null, points: null };
 
-  // Strip standalone record markers like "%" or "#" that appear between seed and mark
-  tokens = tokens.filter(t => !/^[%@#*]$/.test(t));
+  // Strip standalone record markers like "%", "#", "M", "C" etc. between seed and mark
+  tokens = tokens.filter(t => !/^[%@#*MmCc]$/.test(t));
 
   let pts = null;
   // Points = last plain-number token
@@ -2562,7 +2568,7 @@ function extractMarkPts(rest) {
   }
   let mark = null;
   if (tokens.length) {
-    mark = tokens[tokens.length - 1].replace(/[%@#*jJQqM]/g, '').trim();
+    mark = tokens[tokens.length - 1].replace(/[%@#*jJQqMmCc]/g, '').trim();
     if (['NT','FS','DNS','DNF','DQ',''].includes(mark)) mark = null;
     if (mark && !/^[\d:'"\\-]/.test(mark)) mark = null;
   }
@@ -2864,6 +2870,12 @@ function setAllTimeEvent(val) {
   }
 }
 
+function setAllTimeLimit(n) {
+  allTimeLimit = n;
+  renderFilterBar();
+  renderContent();
+}
+
 function renderPastResults(container) {
   if (allTimeMode) {
     renderAllTimeResults(container);
@@ -2943,7 +2955,7 @@ function renderPastResults(container) {
       return `<div class="top25-col">
         <div class="top25-col-header ${gClass}">${label}</div>
         <div class="table-scroll"><table class="top25-table" style="table-layout:fixed;width:100%;">
-          <colgroup><col style="width:20px"><col style="width:auto"><col style="width:68px"><col style="width:68px"><col style="width:20px"></colgroup>
+          <colgroup><col style="width:20px"><col style="width:34%"><col style="width:58px"><col style="width:64px"><col style="width:20px"></colgroup>
           <thead><tr><th>#</th><th>Athlete / Team</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Pts</th></tr></thead>
           <tbody>${body}</tbody>
         </table></div>
@@ -3036,16 +3048,19 @@ function renderAllTimeResults(container) {
 
     const mkTable = (entries, gClass, label) => {
       if (!entries || !entries.length) return '';
-      // Mark ties for display (blank rank cell instead of repeating number)
-      const tagged = entries.map((r, i) => ({
+      const shown = allTimeLimit === Infinity ? entries : entries.slice(0, allTimeLimit);
+      const headerLabel = allTimeLimit === Infinity
+        ? `${label} — all ${entries.length} finishers`
+        : `${label} — Top ${Math.min(allTimeLimit, entries.length)}`;
+      const tagged = shown.map((r, i) => ({
         ...r,
-        tiedWithPrev: i > 0 && entries[i].mark === entries[i-1].mark
+        tiedWithPrev: i > 0 && shown[i].mark === shown[i-1].mark
       }));
       const rows = tagged.map(r => mkRow(r, gClass)).join('');
       return `<div class="top25-col">
-        <div class="top25-col-header ${gClass}">${label} — ${entries.length} finishers</div>
+        <div class="top25-col-header ${gClass}">${headerLabel}</div>
         <div class="table-scroll"><table class="top25-table" style="table-layout:fixed;width:100%;">
-          <colgroup><col style="width:20px"><col style="width:auto"><col style="width:68px"><col style="width:68px"><col style="width:28px"></colgroup>
+          <colgroup><col style="width:20px"><col style="width:34%"><col style="width:58px"><col style="width:64px"><col style="width:28px"></colgroup>
           <thead><tr><th>#</th><th>Athlete / Team</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Yr</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
