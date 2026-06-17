@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -965,7 +966,11 @@ function renderSchoolRecords(container) {
       e.boysName.toLowerCase().includes(searchQuery) ||
       e.girlsName.toLowerCase().includes(searchQuery)));
   if (!schools.length) { container.innerHTML = `<div class="loading-msg">No results found.</div>`; return; }
-  container.innerHTML = schools.map(renderSchoolCard).join('');
+  const footnote = `<div style="margin:18px 4px 4px;padding:10px 14px;background:#f8f9fc;border-radius:6px;border-left:3px solid var(--card-border);font-size:11px;color:var(--text-muted);line-height:1.8;">
+    <span style="font-family:var(--font-d);font-weight:700;">h</span> — Hand-timed. Add ~0.24s for FAT (Fully Automatic Timing) equivalent.&nbsp;&nbsp;
+    <span style="font-family:var(--font-d);font-weight:700;">c</span> — Converted from mile or 2-mile distance to metric equivalent.
+  </div>`;
+  container.innerHTML = schools.map(renderSchoolCard).join('') + footnote;
   container.querySelectorAll('.school-card-header').forEach(h =>
     h.addEventListener('click', () => h.closest('.school-card').classList.toggle('collapsed')));
 }
@@ -1830,149 +1835,150 @@ const TOP25_DATA = {
   },
   "4x800": {
     boys: [
-      {rank:1, name:"Elliott Zuckett, Sean McNulty,", school:"Jackson", mark:"7:40.02", year:2024},
-      {rank:2, name:"Kyle Esber, Marcus Mazzaferri,", school:"GlenOak", mark:"7:40.21", year:2010},
-      {rank:3, name:"Zach Fresenko, Noah Chaplik,", school:"Louisville", mark:"7:41.14", year:2017},
-      {rank:4, name:"Glenn Collins, David Blend,", school:"Hoover", mark:"7:41.74", year:2003},
-      {rank:5, name:"Glenn Collins, Alex Herald,", school:"Hoover", mark:"7:43.60", year:2002},
-      {rank:6, name:"Jason Bosyj, Parker Queen,", school:"Hoover", mark:"7:44.52", year:2009},
-      {rank:7, name:"Kyle Esber, Chris Noussias,", school:"GlenOak", mark:"7:44.92", year:2009},
-      {rank:8, name:"Elliott Zuckett, Sean McNulty,", school:"Jackson", mark:"7:45.75", year:2024},
-      {rank:9, name:"Luke Ryan, Michael Nicholls,", school:"Marlington", mark:"7:47.13", year:2024},
-      {rank:10, name:"Liam Blake, Cohen Boyce,", school:"Marlington", mark:"7:49.66", year:2022},
-      {rank:11, name:"Pierlus Burton, Jacob Murphy,", school:"GlenOak", mark:"7:49.82", year:2016},
-      {rank:12, name:"Tommy Rice, Tesfaye Young,", school:"GlenOak", mark:"7:49.92", year:2023},
-      {rank:13, name:"Corwin Swint, J.D. Horton,", school:"Perry", mark:"7:49.94", year:2007},
-      {rank:14, name:"Ron Maksim, Matt Dougherty,", school:"St. Thomas Aquinas", mark:"7:50.08", year:2010},
-      {rank:15, name:"Carson Morris, Ian Dennis,", school:"Hoover", mark:"7:50.30", year:2026},
+      {rank:1, name:"Elliott Zuckett, Sean McNulty, William Prato, Cael Ball", school:"Jackson", mark:"7:40.02", year:2024},
+      {rank:2, name:"Kyle Esber, Marcus Mazzaferri, J.B. DeRosa, Christian Jones", school:"GlenOak", mark:"7:40.21", year:2010},
+      {rank:3, name:"Zach Fresenko, Noah Chaplik, Noah Murray, Nick Chaplik", school:"Louisville", mark:"7:41.14", year:2017},
+      {rank:4, name:"Glenn Collins, David Blend, Tommy Noyes, Alex Ramsey", school:"Hoover", mark:"7:41.74", year:2003},
+      {rank:5, name:"Glenn Collins, Alex Herald, Tommy Noyes, Alex Ramsey", school:"Hoover", mark:"7:43.60", year:2002},
+      {rank:6, name:"Jason Bosyj, Parker Queen, Sean Newman, Zach Goulet", school:"Hoover", mark:"7:44.52", year:2009},
+      {rank:7, name:"Kyle Esber, Chris Noussias, Marcus Mazzaferri, Christian Jones", school:"GlenOak", mark:"7:44.92", year:2009},
+      {rank:8, name:"Elliott Zuckett, Sean McNulty, Eli Ilg, William Prato", school:"Jackson", mark:"7:45.75", year:2024},
+      {rank:9, name:"Luke Ryan, Michael Nicholls, Logan Citino, Colin Cernansky", school:"Marlington", mark:"7:47.13", year:2024},
+      {rank:10, name:"Liam Blake, Cohen Boyce, Noah Graham, Colin Cernansky", school:"Marlington", mark:"7:49.66", year:2022},
+      {rank:11, name:"Pierlus Burton, Jacob Murphy, Gage Feola, Alex Nupp", school:"GlenOak", mark:"7:49.82", year:2016},
+      {rank:12, name:"Tommy Rice, Tesfaye Young, Braedon Paolini, Wesley Marsden", school:"GlenOak", mark:"7:49.92", year:2023},
+      {rank:13, name:"Corwin Swint, J.D. Horton, Josh Tomasi, Ty Griffin", school:"Perry", mark:"7:49.94", year:2007},
+      {rank:14, name:"Ron Maksim, Matt Dougherty, Jordan McKelley, Maurice Kirksey", school:"St. Thomas Aquinas", mark:"7:50.08", year:2010},
+      {rank:15, name:"Carson Morris, Ian Dennis, Zach Renner, Jack Streb, implies D2/D3 - (1) is top D2/D3 mark", school:"Hoover", mark:"7:50.30", year:2026},
     ],
     girls: [
-      {rank:1, name:"Athena Welsh, Hannah Soehnlen,", school:"St. Thomas Aquinas", mark:"9:05.84", year:2016},
-      {rank:2, name:"Erin Garfield, Kelsey Peare,", school:"Hoover", mark:"9:09.45", year:2010},
-      {rank:3, name:"Kacee Soehnlen, Hannah Ohman,", school:"St. Thomas Aquinas", mark:"9:11.32", year:2017},
-      {rank:4, name:"Athena Welsh, Kalee Soehnlen,", school:"St. Thomas Aquinas", mark:"9:11.66", year:2014},
-      {rank:5, name:"Erin O'Reilly, Louidajean Holloway,", school:"GlenOak", mark:"9:13.96", year:1989},
-      {rank:6, name:"Sophia Ngetich, Jada Ames,", school:"GlenOak", mark:"9:16.14", year:2024},
-      {rank:7, name:"Kayla Gibson, Diana Pukys,", school:"Louisville", mark:"9:17.26", year:2019},
-      {rank:8, name:"Taylor Cropper, Hannah Christ,", school:"Hoover", mark:"9:18.12", year:2012},
-      {rank:9, name:"Stacie Clagg, Stephanie Noussias,", school:"GlenOak", mark:"9:18.45", year:2008},
-      {rank:10, name:"Stephanie Noussias, Stacie Clagg,", school:"GlenOak", mark:"9:19.41", year:2007},
-      {rank:11, name:"Grace Werren, Kinsey Knoch,", school:"GlenOak", mark:"9:19.45", year:2017},
-      {rank:12, name:"Maddie Schuler, April McPhearson,", school:"Jackson", mark:"9:20.98", year:2011},
-      {rank:13, name:"Tessa Gabriel, Anna Helmuth,", school:"Hoover", mark:"9:21.17", year:2026},
-      {rank:14, name:"Jetaiya Smith, Jen Fockler,", school:"GlenOak", mark:"9:22.32", year:2014},
-      {rank:15, name:"Jillian Roth, Megan Monte,", school:"Hoover", mark:"9:22.49", year:2011},
+      {rank:1, name:"Athena Welsh, Hannah Soehnlen, Kacee Soehnlen, Kalee Soehnlen", school:"St. Thomas Aquinas", mark:"9:05.84", year:2016},
+      {rank:2, name:"Erin Garfield, Kelsey Peare, Hannah Christ, Allison Peare", school:"Hoover", mark:"9:09.45", year:2010},
+      {rank:3, name:"Kacee Soehnlen, Hannah Ohman, Hannah Soehnlen, Kalee Soehnlen", school:"St. Thomas Aquinas", mark:"9:11.32", year:2017},
+      {rank:4, name:"Athena Welsh, Kalee Soehnlen, Kacee Soehnlen, Molly Pusateri", school:"St. Thomas Aquinas", mark:"9:11.66", year:2014},
+      {rank:5, name:"Erin O'Reilly, Louidajean Holloway, Ashley Edwards, Cheri Triner", school:"GlenOak", mark:"9:13.96", year:1989},
+      {rank:6, name:"Sophia Ngetich, Jada Ames, Panagiota Tzouloufis, Kaitlyn Esporite", school:"GlenOak", mark:"9:16.14", year:2024},
+      {rank:7, name:"Kayla Gibson, Diana Pukys, Morgan Cole, Cassidy Kiko", school:"Louisville", mark:"9:17.26", year:2019},
+      {rank:8, name:"Taylor Cropper, Hannah Christ, Ashley Hinderer, Kelsey Peare", school:"Hoover", mark:"9:18.12", year:2012},
+      {rank:9, name:"Stacie Clagg, Stephanie Noussias, Jessica Dunkle, Emily Mazzaferri", school:"GlenOak", mark:"9:18.45", year:2008},
+      {rank:10, name:"Stephanie Noussias, Stacie Clagg, Jillian Black, Emily Mazzaferri", school:"GlenOak", mark:"9:19.41", year:2007},
+      {rank:11, name:"Grace Werren, Kinsey Knoch, Shay Rosegreen, Hannah Werren", school:"GlenOak", mark:"9:19.45", year:2017},
+      {rank:12, name:"Maddie Schuler, April McPhearson, Dana Ward, Chase Kinney", school:"Jackson", mark:"9:20.98", year:2011},
+      {rank:13, name:"Tessa Gabriel, Anna Helmuth, Claire Jurica, Riley Dempsey", school:"Hoover", mark:"9:21.17", year:2026},
+      {rank:14, name:"Jetaiya Smith, Jen Fockler, Grace Werren, Hannah Werren", school:"GlenOak", mark:"9:22.32", year:2014},
+      {rank:15, name:"Jillian Roth, Megan Monte, Hannah Christ, Kelsey Peare", school:"Hoover", mark:"9:22.49", year:2011},
     ],
   },
   "4x200": {
     boys: [
-      {rank:1, name:"TaShaun Smith, Ardell Banks,", school:"Massillon Washington", mark:"1:26.43", year:2021},
-      {rank:2, name:"Bri'Rell Pinkney, Braizhon Marshall,", school:"Canton McKinley", mark:"1:26.63", year:2022},
-      {rank:3, name:"Ja'Brailon Wilcox, Sean Leahy,", school:"GlenOak", mark:"1:26.79", year:2024},
-      {rank:4, name:"Tyree Broyles, Dean Clark,", school:"Massillon Washington", mark:"1:27.15", year:2019},
-      {rank:5, name:"Steven Linn, Isaiah Barker,", school:"Hoover", mark:"1:27.18", year:2025},
-      {rank:6, name:"Skylan King, Kaleb Hahn,", school:"GlenOak", mark:"1:27.22", year:2025},
-      {rank:7, name:"Kyson Walker, Austin Mattox,", school:"Perry", mark:"1:27.40", year:2024},
-      {rank:8, name:"Steven Linn, Grant Walker,", school:"Hoover", mark:"1:27.45", year:2024},
-      {rank:9, name:"Eric Magnacca, Zach Yob,", school:"Perry", mark:"1:27.46", year:2005},
-      {rank:10, name:"Malik Kimbrough, Jeff Richardson,", school:"Canton McKinley", mark:"1:27:59", year:2012},
-      {rank:11, name:"Tyler Lancaster, Ryan Walker,", school:"GlenOak", mark:"1:27.73", year:2012},
-      {rank:12, name:"Jeff Koch, Austin Jasinski,", school:"Massillon Washington", mark:"1:27.79", year:2015},
-      {rank:13, name:"Joe Morgan, Kellen Showes,", school:"Canton McKinley", mark:"1:27.82", year:2005},
-      {rank:14, name:"Damere McClellan, Christiopher Crook,", school:"Canton McKinley", mark:"1:27.93", year:2026},
-      {rank:15, name:"Ryan Hood, Robert Partridge,", school:"Massillon Washington", mark:"1:27.94", year:2010},
+      {rank:1, name:"TaShaun Smith, Ardell Banks, Austin Brawley, Freddie Lenix", school:"Massillon Washington", mark:"1:26.43", year:2021},
+      {rank:2, name:"Bri'Rell Pinkney, Braizhon Marshall, Colin Ruffin, Caleb Ruffin", school:"Canton McKinley", mark:"1:26.63", year:2022},
+      {rank:3, name:"Ja'Brailon Wilcox, Sean Leahy, Javi'ion McClendon, Ryder Greenwood", school:"GlenOak", mark:"1:26.79", year:2024},
+      {rank:4, name:"Tyree Broyles, Dean Clark, Jayden Ballard, Andrew Wilson-Lamp", school:"Massillon Washington", mark:"1:27.15", year:2019},
+      {rank:5, name:"Steven Linn, Isaiah Barker, Carson Morris, John Collins", school:"Hoover", mark:"1:27.18", year:2025},
+      {rank:6, name:"Skylan King, Kaleb Hahn, Sean Leahy, Javi'lon McClendon", school:"GlenOak", mark:"1:27.22", year:2025},
+      {rank:7, name:"Kyson Walker, Austin Mattox, Tristan Swallen, Carson Basham", school:"Perry", mark:"1:27.40", year:2024},
+      {rank:8, name:"Steven Linn, Grant Walker, Will Kostur, Isaiah Barker", school:"Hoover", mark:"1:27.45", year:2024},
+      {rank:9, name:"Eric Magnacca, Zach Yob, Darrell Parker, Jeff Tallman", school:"Perry", mark:"1:27.46", year:2005},
+      {rank:10, name:"Malik Kimbrough, Jeff Richardson, Christian Thompson, Jermaine Edmondson", school:"Canton McKinley", mark:"1:27:59", year:2012},
+      {rank:11, name:"Tyler Lancaster, Ryan Walker, Josh Lever, Andrew Flocker", school:"GlenOak", mark:"1:27.73", year:2012},
+      {rank:12, name:"Jeff Koch, Austin Jasinski, Justice Kemp, Deionne Harper", school:"Massillon Washington", mark:"1:27.79", year:2015},
+      {rank:13, name:"Joe Morgan, Kellen Showes, Jamie Minor, Brian Williams", school:"Canton McKinley", mark:"1:27.82", year:2005},
+      {rank:14, name:"Damere McClellan, Christiopher Crook, Dedrick Britt, Kamar Lucius", school:"Canton McKinley", mark:"1:27.93", year:2026},
+      {rank:15, name:"Ryan Hood, Robert Partridge, Justin Olack, Devin Smith, implies D2/D3 - (1) is top D2/D3 mark", school:"Massillon Washington", mark:"1:27.94", year:2010},
     ],
     girls: [
-      {rank:1, name:"Cherrelle Montgomery, Sybil McLeod,", school:"Canton McKinley", mark:"1:38.88", year:2003},
-      {rank:2, name:"Aly Peddicord, Natash Aguiar,", school:"GlenOak", mark:"1:39.45", year:2005},
-      {rank:3, name:"Allison Reese, Mya Patton,", school:"Perry", mark:"1:39.70", year:2026},
-      {rank:4, name:"Morgan Giordano, Kaylee Lusk,", school:"Jackson", mark:"1:40.10", year:2025},
-      {rank:5, name:"Savannah Tindell, Lexi Wims,", school:"Hoover", mark:"1:40.25", year:2024},
-      {rank:6, name:"Emily Adams, Kaylee Lusk,", school:"Jackson", mark:"1:40.53", year:2024},
-      {rank:7, name:"Sybil McLeod, Cherrelle Montgomery,", school:"Canton McKinley", mark:"1:40.69", year:2005},
-      {rank:8, name:"Mariah Hackworth, Ka'rynn Thomas,", school:"GlenOak", mark:"1:40.98", year:2010},
-      {rank:9, name:"Kylie Malinowski, Keshia Smith,", school:"GlenOak", mark:"1:41.02", year:2004},
-      {rank:10, name:"Emerson Karrenbauer, Allison Reese,", school:"Perry", mark:"1:41.14", year:2025},
-      {rank:11, name:"Cathy Hardesty, Kristy Evans,", school:"Jackson", mark:"1:41.29", year:2004},
-      {rank:12, name:"Julie Spitale, Sara Barr,", school:"Hoover", mark:"1:41.44", year:2001},
-      {rank:13, name:"Robynn Umbles, Emily Fisher,", school:"Canton McKinley", mark:"1:41.65", year:2008},
-      {rank:14, name:"Alyssa Peddicord, Jasmyn Hawkins,", school:"GlenOak", mark:"1:41.67", year:2006},
-      {rank:15, name:"Lindsey Walker, Erica McElroy,", school:"GlenOak", mark:"1:41.70", year:2002},
+      {rank:1, name:"Cherrelle Montgomery, Sybil McLeod, Destanie Morgan, Corine Gavin-Hall", school:"Canton McKinley", mark:"1:38.88", year:2003},
+      {rank:2, name:"Aly Peddicord, Natash Aguiar, Dejaa Shearer, Jericha Mann", school:"GlenOak", mark:"1:39.45", year:2005},
+      {rank:3, name:"Allison Reese, Mya Patton, Baileigh Brown, Emerson Karrenbauer", school:"Perry", mark:"1:39.70", year:2026},
+      {rank:4, name:"Morgan Giordano, Kaylee Lusk, Rory Parsons, Tayah Wilson", school:"Jackson", mark:"1:40.10", year:2025},
+      {rank:5, name:"Savannah Tindell, Lexi Wims, Peyton Waldorff, Amahrie Harsh", school:"Hoover", mark:"1:40.25", year:2024},
+      {rank:6, name:"Emily Adams, Kaylee Lusk, Morgan Giordano, Tayah Wilson", school:"Jackson", mark:"1:40.53", year:2024},
+      {rank:7, name:"Sybil McLeod, Cherrelle Montgomery, Janean Stokes, Destanie Morgan", school:"Canton McKinley", mark:"1:40.69", year:2005},
+      {rank:8, name:"Mariah Hackworth, Ka'rynn Thomas, Reilyn Boone, Kandace Thomas", school:"GlenOak", mark:"1:40.98", year:2010},
+      {rank:9, name:"Kylie Malinowski, Keshia Smith, Dajaa Shearer, Jericha Mann", school:"GlenOak", mark:"1:41.02", year:2004},
+      {rank:10, name:"Emerson Karrenbauer, Allison Reese, Olivia Offineer, Baileigh Brown", school:"Perry", mark:"1:41.14", year:2025},
+      {rank:11, name:"Cathy Hardesty, Kristy Evans, Christy Hardesty, Nnenna Ike", school:"Jackson", mark:"1:41.29", year:2004},
+      {rank:12, name:"Julie Spitale, Sara Barr, Ambrea Whitlock, Krystal Holloway", school:"Hoover", mark:"1:41.44", year:2001},
+      {rank:13, name:"Robynn Umbles, Emily Fisher, Katrina Rettburg, Kandace Thomas", school:"Canton McKinley", mark:"1:41.65", year:2008},
+      {rank:14, name:"Alyssa Peddicord, Jasmyn Hawkins, Natasha Aguire, Dejaa Shearer", school:"GlenOak", mark:"1:41.67", year:2006},
+      {rank:15, name:"Lindsey Walker, Erica McElroy, Liz Redd, Jericha Mann", school:"GlenOak", mark:"1:41.70", year:2002},
     ],
   },
   "4x100": {
     boys: [
-      {rank:1, name:"Matt Miller, Derrick Williams,", school:"GlenOak", mark:"41.50", year:2001},
-      {rank:2, name:"Damario Boles, A. Wilson-Lamp,", school:"Massillon Washington", mark:"41.55", year:2019},
-      {rank:3, name:"Christian Culler, Chayce White,", school:"Massillon Washington", mark:"41.61", year:2026},
-      {rank:4, name:"Micah Regimbal, Corey Jacobs,", school:"Jackson", mark:"41.66", year:2026},
-      {rank:5, name:"Ja'Brailon Wilcox, Javi'ion McClendon,", school:"GlenOak", mark:"41.75", year:2024},
-      {rank:6, name:"Deontay Malone, Trayon Williams,", school:"Massillon Washington", mark:"41.81", year:2024},
-      {rank:7, name:"Jeff Richardson, Elijah Beech,", school:"Canton McKinley", mark:"41.93", year:2012},
-      {rank:8, name:"Patrick Benson, Tyler Lancaster,", school:"GlenOak", mark:"41.97", year:2012},
-      {rank:9, name:"Brian Williams, Joe Morgan,", school:"Canton McKinley", mark:"42.00", year:2005},
-      {rank:10, name:"Marcus Quincy, Matt Curry,", school:"Canton McKinley", mark:"42.02", year:1998},
-      {rank:11, name:"Ryan Brinson, Brad Jones,", school:"Canton McKinley", mark:"42.06", year:2003},
-      {rank:12, name:"Benjamin Keith, Joshua Sedmock,", school:"Lake", mark:"42.08", year:2024},
-      {rank:13, name:"Jacques Carter, Deontay Malone,", school:"Massillon Washington", mark:"42.09", year:2025},
-      {rank:14, name:"Andrew White, Michael Contrucci,", school:"GlenOak", mark:"42.10", year:2018},
-      {rank:15, name:"Abe Billings, Michael Contrucci,", school:"GlenOak", mark:"42.11", year:2017},
+      {rank:1, name:"Matt Miller, Derrick Williams, Josh Anderson, Dustin Fox", school:"GlenOak", mark:"41.50", year:2001},
+      {rank:2, name:"Damario Boles, A. Wilson-Lamp, Tyree Broyles, Jayden Ballard", school:"Massillon Washington", mark:"41.55", year:2019},
+      {rank:3, name:"Christian Culler, Chayce White, Nehemiah Stone, Deontay Malone", school:"Massillon Washington", mark:"41.61", year:2026},
+      {rank:4, name:"Micah Regimbal, Corey Jacobs, Preston Young, Jackson Baker", school:"Jackson", mark:"41.66", year:2026},
+      {rank:5, name:"Ja'Brailon Wilcox, Javi'ion McClendon, Jameir McClendon, Ryder Greenwood", school:"GlenOak", mark:"41.75", year:2024},
+      {rank:6, name:"Deontay Malone, Trayon Williams, Mylen Lenix, Ja'Meir Gamble", school:"Massillon Washington", mark:"41.81", year:2024},
+      {rank:7, name:"Jeff Richardson, Elijah Beech, Christian Thompson, Jermaine Edmondson", school:"Canton McKinley", mark:"41.93", year:2012},
+      {rank:8, name:"Patrick Benson, Tyler Lancaster, Denell Dotson, Josh Lever", school:"GlenOak", mark:"41.97", year:2012},
+      {rank:9, name:"Brian Williams, Joe Morgan, Jamie Minor, Kellen Showes", school:"Canton McKinley", mark:"42.00", year:2005},
+      {rank:10, name:"Marcus Quincy, Matt Curry, Mike Doss, James Gamble", school:"Canton McKinley", mark:"42.02", year:1998},
+      {rank:11, name:"Ryan Brinson, Brad Jones, Joey Smith, Dorian Chenault", school:"Canton McKinley", mark:"42.06", year:2003},
+      {rank:12, name:"Benjamin Keith, Joshua Sedmock, Ethan Hunt, Ryan Anderson", school:"Lake", mark:"42.08", year:2024},
+      {rank:13, name:"Jacques Carter, Deontay Malone, Trayon Williams, Ja'meir Gamble", school:"Massillon Washington", mark:"42.09", year:2025},
+      {rank:14, name:"Andrew White, Michael Contrucci, Nucci Smith, Tate Rhoads", school:"GlenOak", mark:"42.10", year:2018},
+      {rank:15, name:"Abe Billings, Michael Contrucci, Tay Pryor, Tate Rhoads, implies D2/D3 - (1) is top D2/D3 mark", school:"GlenOak", mark:"42.11", year:2017},
     ],
     girls: [
-      {rank:1, name:"Kandace Thomas, Nina Grambling,", school:"GlenOak", mark:"47.05", year:2011},
-      {rank:2, name:"Mariah Hackworth, Ka'rynn Thomas,", school:"GlenOak", mark:"47.32", year:2010},
-      {rank:3, name:"Kenley Waldorff, Savannah Tindell,", school:"Hoover", mark:"47.68", year:2026},
-      {rank:4, name:"Cherrelle Mongomery, Sybil McLeod,", school:"Canton McKinley", mark:"47.79", year:2003},
-      {rank:5, name:"Allison Reese, Baileigh Brown,", school:"Perry", mark:"47.83", year:2026},
-      {rank:6, name:"Kenley Waldorff, Savannah Tindell,", school:"Hoover", mark:"47.86", year:2025},
-      {rank:7, name:"Keshia Smith, Lindsey Walker,", school:"GlenOak", mark:"47.92", year:2002},
-      {rank:8, name:"Ka'rynn Thomas, Kandace Thomas,", school:"GlenOak", mark:"48.05", year:2009},
-      {rank:9, name:"Kylie Malinowski, Keshia Smith,", school:"GlenOak", mark:"48.12", year:2004},
-      {rank:9, name:"Aniya Lowery, Lauren Brown,", school:"Massillon Washington", mark:"48.12", year:2018},
-      {rank:11, name:"A'Niya Woodson, Shamaya Hubbard,", school:"Massillon Washington", mark:"48.17", year:2026},
-      {rank:12, name:"Karrah Spencer, Juanita Gray,", school:"Massillon Washington", mark:"48.22", year:2016},
-      {rank:13, name:"Kristin Kirkland, Jhni Flemming,", school:"GlenOak", mark:"48.23", year:2012},
-      {rank:14, name:"Alyssa Peddicord, Dejaa Shearer,", school:"GlenOak", mark:"48.30", year:2005},
-      {rank:15, name:"Morgan Fisher, Peyton Clarke,", school:"Perry", mark:"48.31", year:2017},
+      {rank:1, name:"Kandace Thomas, Nina Grambling, Reilyn Boone, Ka'rynn Thomas", school:"GlenOak", mark:"47.05", year:2011},
+      {rank:2, name:"Mariah Hackworth, Ka'rynn Thomas, Reilyn Boone, Kandace Thomas", school:"GlenOak", mark:"47.32", year:2010},
+      {rank:3, name:"Kenley Waldorff, Savannah Tindell, Maya Griffith, Peyton Waldorff", school:"Hoover", mark:"47.68", year:2026},
+      {rank:4, name:"Cherrelle Mongomery, Sybil McLeod, Destinee Morgan, Corine Gavin-Hall", school:"Canton McKinley", mark:"47.79", year:2003},
+      {rank:5, name:"Allison Reese, Baileigh Brown, Mya Patton, Emerson Karrenbauer", school:"Perry", mark:"47.83", year:2026},
+      {rank:6, name:"Kenley Waldorff, Savannah Tindell, Peyton Waldorff, Lexi Wims", school:"Hoover", mark:"47.86", year:2025},
+      {rank:7, name:"Keshia Smith, Lindsey Walker, Liz Redd, Jericha Mann", school:"GlenOak", mark:"47.92", year:2002},
+      {rank:8, name:"Ka'rynn Thomas, Kandace Thomas, Reilyn Boone, Lexi Kyriakedes", school:"GlenOak", mark:"48.05", year:2009},
+      {rank:9, name:"Kylie Malinowski, Keshia Smith, Dajaa Shearer, Jericha Mann", school:"GlenOak", mark:"48.12", year:2004},
+      {rank:9, name:"Aniya Lowery, Lauren Brown, Maria Welch, Juanita Gray", school:"Massillon Washington", mark:"48.12", year:2018},
+      {rank:11, name:"A'Niya Woodson, Shamaya Hubbard, Leah Woods, Denasia Adams", school:"Massillon Washington", mark:"48.17", year:2026},
+      {rank:12, name:"Karrah Spencer, Juanita Gray, Israel Robinson, Aniya Lowery", school:"Massillon Washington", mark:"48.22", year:2016},
+      {rank:13, name:"Kristin Kirkland, Jhni Flemming, Reilyn Boone, Majale' Curtis", school:"GlenOak", mark:"48.23", year:2012},
+      {rank:14, name:"Alyssa Peddicord, Dejaa Shearer, Jessica Swihart, Jericha Mann", school:"GlenOak", mark:"48.30", year:2005},
+      {rank:15, name:"Morgan Fisher, Peyton Clarke, Taylor Anthony, Laila Strickland", school:"Perry", mark:"48.31", year:2017},
     ],
   },
   "4x400": {
     boys: [
-      {rank:1, name:"Alex DiMarzio, Dwight Lewis,", school:"Canton McKinley", mark:"3:17.5h (y)", year:1971},
-      {rank:2, name:"Gage Feola, Pierlus Burton,", school:"GlenOak", mark:"3:18.06", year:2016},
-      {rank:2, name:"Montrell Devaughn, Deshawn White,", school:"Canton McKinley", mark:"3:18.06", year:2017},
-      {rank:4, name:"Nick Harrison, Justin Runner,", school:"Hoover", mark:"3:18.07", year:2011},
-      {rank:5, name:"Tony DiMarzio, Randy Winn,", school:"Canton McKinley", mark:"3:19.0h (y)", year:1972},
-      {rank:6, name:"Josh Anderson, Greg Williams,", school:"GlenOak", mark:"3:18.24", year:2001},
-      {rank:7, name:"Parker Queen, J. C. Everett,", school:"Hoover", mark:"3:18.97", year:2010},
-      {rank:8, name:"Shaquille Perry, Montrell Devaughn,", school:"Canton McKinley", mark:"3:19.03", year:2016},
-      {rank:9, name:"James Hall, James Knight,", school:"Canton McKinley", mark:"3:20.2h (y)", year:1974},
-      {rank:10, name:"Darnell McLeod, Austin Mattox,", school:"Perry", mark:"3:19.33", year:2025},
-      {rank:11, name:"Meachy Edwards, Darone Cherry,", school:"Alliance", mark:"3:19.1 h", year:1990},
-      {rank:12, name:"Ryan Terry, Jory Lombardi,", school:"St. Thomas Aquinas", mark:"3:19.81", year:2010},
-      {rank:13, name:"Jessie Scott, Joe Shimek,", school:"Perry", mark:"3:19.89", year:1998},
-      {rank:14, name:"Austin Wydra, Gage Feola,", school:"GlenOak", mark:"3:20.25", year:2017},
-      {rank:15, name:"Donte Pocock, Evan Spurell,", school:"Perry", mark:"3:20.30", year:2026},
+      {rank:1, name:"Alex DiMarzio, Dwight Lewis, Willie Johnson, Tony DiMarzio", school:"Canton McKinley", mark:"3:17.5h (y)", year:1971},
+      {rank:2, name:"Gage Feola, Pierlus Burton, Paul Murray, Alex Nupp", school:"GlenOak", mark:"3:18.06", year:2016},
+      {rank:2, name:"Montrell Devaughn, Deshawn White, Steve Ashcraft, Jamison Strickland", school:"Canton McKinley", mark:"3:18.06", year:2017},
+      {rank:4, name:"Nick Harrison, Justin Runner, Max Ertle, Stephen Denissoff", school:"Hoover", mark:"3:18.07", year:2011},
+      {rank:5, name:"Tony DiMarzio, Randy Winn, Jack Taylor, Dwight Lewis", school:"Canton McKinley", mark:"3:19.0h (y)", year:1972},
+      {rank:6, name:"Josh Anderson, Greg Williams, Derrick Iannamorelli, Derrick Williams", school:"GlenOak", mark:"3:18.24", year:2001},
+      {rank:7, name:"Parker Queen, J. C. Everett, Stephen Denissoff, Nick Harrison", school:"Hoover", mark:"3:18.97", year:2010},
+      {rank:8, name:"Shaquille Perry, Montrell Devaughn, Steve Ashcraft, Jamison Strickland", school:"Canton McKinley", mark:"3:19.03", year:2016},
+      {rank:9, name:"James Hall, James Knight, Eric Lewis, Jack Taylor", school:"Canton McKinley", mark:"3:20.2h (y)", year:1974},
+      {rank:10, name:"Darnell McLeod, Austin Mattox, Evan Spurell, Jayden Wilson,", school:"Perry", mark:"3:19.33", year:2025},
+      {rank:11, name:"Meachy Edwards, Darone Cherry, Keith Franklin, Melvin Jackson", school:"Alliance", mark:"3:19.1 h", year:1990},
+      {rank:12, name:"Ryan Terry, Jory Lombardi, Matt Dougherty, Maurice Kirksey", school:"St. Thomas Aquinas", mark:"3:19.81", year:2010},
+      {rank:13, name:"Jessie Scott, Joe Shimek, Spencer Smith, Brandon Smith", school:"Perry", mark:"3:19.89", year:1998},
+      {rank:14, name:"Austin Wydra, Gage Feola, Dean Sarris, Pierlus Stewart", school:"GlenOak", mark:"3:20.25", year:2017},
+      {rank:15, name:"Donte Pocock, Evan Spurell, Parker Offineer, Jayden Wilson, implies D2/D3 - (1) is top D2/D3 mark, y indicates distance was 1 mile, # indicates time was converted from 1 mile to 1600m", school:"Perry", mark:"3:20.30", year:2026},
     ],
     girls: [
-      {rank:1, name:"Faith Strickland, Jackie Genetin,", school:"Perry", mark:"3:48.59", year:2013},
-      {rank:2, name:"Stephanie Noussias,Jasmyn Hawkins,", school:"GlenOak", mark:"3:53.09", year:2007},
-      {rank:3, name:"Ambrea Whitlock, Lia Ramsey,", school:"Hoover", mark:"3:54.47", year:2004},
-      {rank:4, name:"Hailey Floom, Faith Strickland,", school:"Perry", mark:"3:54.61", year:2012},
-      {rank:5, name:"Keshia Smith, Liz Redd,", school:"GlenOak", mark:"3:54.62", year:2002},
-      {rank:6, name:"Christy Hardesty, Kristy Evans.", school:"Jackson", mark:"3:55.86", year:2004},
-      {rank:7, name:"Emily Fisher, Mariah Curtis,", school:"Canton McKinley", mark:"3:56.11", year:2010},
-      {rank:8, name:"Peyton Clarke, Laila Strickland,", school:"Perry", mark:"3:56.25", year:2016},
-      {rank:9, name:"Hannah Ohman, Hannah Soehnlen,", school:"St. Thomas Aquinas", mark:"3:56.58", year:2017},
-      {rank:10, name:"Christy Hardesty, Mandy Farson,", school:"Jackson", mark:"3:57.00", year:2005},
-      {rank:11, name:"Kim Brown, Tina Stokes,", school:"Canton McKinley", mark:"3:57.30", year:1982},
-      {rank:12, name:"Jasmyn Hawkins, Dejaa Shearer,", school:"GlenOak", mark:"3:57.41", year:2005},
-      {rank:13, name:"Laura Bergstrom, April Bender,", school:"Jackson", mark:"3:57.62", year:2012},
-      {rank:14, name:"Gracie Hendricks, Grace Werren,", school:"GlenOak", mark:"3:57.62", year:2015},
-      {rank:15, name:"Erin Henderson, Liz Redd,", school:"GlenOak", mark:"3:57.90", year:2001},
+      {rank:1, name:"Faith Strickland, Jackie Genetin, Mikayla Dearing, Hannah Luke", school:"Perry", mark:"3:48.59", year:2013},
+      {rank:2, name:"Stephanie Noussias,Jasmyn Hawkins, Dejaa Shearer, Emily Mazzaferri", school:"GlenOak", mark:"3:53.09", year:2007},
+      {rank:3, name:"Ambrea Whitlock, Lia Ramsey, Bethany McDearmon, Madison Woods", school:"Hoover", mark:"3:54.47", year:2004},
+      {rank:4, name:"Hailey Floom, Faith Strickland, Mikayla Dearing, Hannah Luke", school:"Perry", mark:"3:54.61", year:2012},
+      {rank:5, name:"Keshia Smith, Liz Redd, Lindsey Walker, Erica McElroy", school:"GlenOak", mark:"3:54.62", year:2002},
+      {rank:6, name:"Christy Hardesty, Kristy Evans., Mandy Farson, Cathy Hardesty", school:"Jackson", mark:"3:55.86", year:2004},
+      {rank:7, name:"Emily Fisher, Mariah Curtis, Daziah Green, Aziah Green", school:"Canton McKinley", mark:"3:56.11", year:2010},
+      {rank:8, name:"Peyton Clarke, Laila Strickland, Taylor Anthony, Rebekah Carr", school:"Perry", mark:"3:56.25", year:2016},
+      {rank:9, name:"Hannah Ohman, Hannah Soehnlen, Kacee Soehnlen, Kalee Soehnlen", school:"St. Thomas Aquinas", mark:"3:56.58", year:2017},
+      {rank:10, name:"Christy Hardesty, Mandy Farson, Emily Kenyon, Cathy Hardesty", school:"Jackson", mark:"3:57.00", year:2005},
+      {rank:11, name:"Kim Brown, Tina Stokes, Barbara Biggums, Rhonda Sanches", school:"Canton McKinley", mark:"3:57.30", year:1982},
+      {rank:12, name:"Jasmyn Hawkins, Dejaa Shearer, Kari Isler, Natasha Aguiar", school:"GlenOak", mark:"3:57.41", year:2005},
+      {rank:13, name:"Laura Bergstrom, April Bender, Miriah Richards, Chase Kinney", school:"Jackson", mark:"3:57.62", year:2012},
+      {rank:14, name:"Gracie Hendricks, Grace Werren, Dajia Mills, Jetaiya Smith", school:"GlenOak", mark:"3:57.62", year:2015},
+      {rank:15, name:"Erin Henderson, Liz Redd, Lindsey Walker, Erica McElroy", school:"GlenOak", mark:"3:57.90", year:2001},
     ],
   },
 };
+
 
 
 
@@ -2012,17 +2018,21 @@ function renderTop25(container) {
       const school = r.school;
       const isHL = highlightSchool !== 'NONE' && school === highlightSchool;
       const isRelay = evt.label.startsWith('4x');
-      let nameHtml;
+      const logo = schoolLogo(school);
+      const logoHtml = logo ? `<img src="${logo}" style="width:16px;height:16px;object-fit:contain;flex-shrink:0;margin-right:3px;" alt="" onerror="this.style.display='none'">` : '';
+      let nameCell;
       if (isRelay) {
-        const names = r.name.split(',').map(n => n.trim()).filter(Boolean);
-        nameHtml = names.map(n => `<span class="relay-line">${n}</span>`).join('');
+        const members = r.name.replace(/,\s*$/, '').split(',').map(n => n.trim()).filter(Boolean);
+        const memberHtml = members.length
+          ? `<div style="font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:1px;white-space:normal;">${members.join(' · ')}</div>` : '';
+        nameCell = `<td colspan="2"><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span style="font-size:12px;font-weight:600;">${displaySchool(school)}</span></div>${memberHtml}</td>`;
       } else {
-        nameHtml = `<span style="font-size:12.5px;font-weight:${isHL?'700':'400'}">${r.name}</span>`;
+        nameCell = `<td style="font-weight:${isHL?'700':'400'};font-size:12.5px;">${r.name}</td>
+          <td class="school-cell">${displaySchool(school)}</td>`;
       }
       return `<tr class="${isHL?'school-highlight':''}">
         <td class="rank-cell ${rankClass(r.rank)}">${r.rank}</td>
-        <td style="font-weight:${isHL?'700':'400'}">${nameHtml}</td>
-        <td class="school-cell">${displaySchool(school)}</td>
+        ${nameCell}
         <td class="mark-cell ${g}">${fmtMark(r.mark)}</td>
         <td class="year-cell">${r.year}</td>
       </tr>`;
@@ -2058,7 +2068,7 @@ function renderTop25(container) {
     </div>`;
   }).join('');
 
-  container.innerHTML = html || `<div class="loading-msg">No results found.</div>`;
+  container.innerHTML = (html || `<div class="loading-msg">No results found.</div>`) + `<div style="margin:18px 4px 4px;padding:10px 14px;background:#f8f9fc;border-radius:6px;border-left:3px solid var(--card-border);font-size:11px;color:var(--text-muted);line-height:1.8;"><span style="font-family:var(--font-d);font-weight:700;">h</span> — Hand-timed. Add ~0.24s for FAT (Fully Automatic Timing) equivalent.&nbsp;&nbsp;<span style="font-family:var(--font-d);font-weight:700;">c</span> — Converted from mile or 2-mile distance to metric equivalent.</div>`;
 }
 
 // ── County Records Data ────────────────────────────────────────
@@ -2232,7 +2242,7 @@ function renderCountyRecordsTable(rows, title, subtitle) {
 function renderCountyRecords(container) {
   const overall = renderCountyRecordsTable(getOverallRecords(), '🏅 All-Time County Records', 'All venues, all years');
   const meet    = renderCountyRecordsTable(MEET_RECORDS, '🎽 County Meet Records', 'Best marks set at the Championship');
-  container.innerHTML = overall + meet;
+  container.innerHTML = overall + meet + `<div style="margin:18px 4px 4px;padding:10px 14px;background:#f8f9fc;border-radius:6px;border-left:3px solid var(--card-border);font-size:11px;color:var(--text-muted);line-height:1.8;"><span style="font-family:var(--font-d);font-weight:700;">h</span> — Hand-timed. Add ~0.24s for FAT (Fully Automatic Timing) equivalent.&nbsp;&nbsp;<span style="font-family:var(--font-d);font-weight:700;">c</span> — Converted from mile or 2-mile distance to metric equivalent.</div>`;
 }
 
 // ── Team Champions Data ────────────────────────────────────────
@@ -3043,8 +3053,8 @@ async function loadResultsYear(year) {
     const parser = new DOMParser();
     const cleaned = texts.map(html => {
       const doc = parser.parseFromString(html, 'text/html');
-      const pre = doc.querySelector('pre,PRE');
-      return pre ? pre.textContent : doc.body.textContent;
+      const pres = doc.querySelectorAll('pre,PRE');
+      return pres.length ? Array.from(pres).map(p => p.textContent).join('\n') : doc.body.textContent;
     }).join('\n');
     const events = parseHytekText(cleaned);
     resultsCache[year] = events;
