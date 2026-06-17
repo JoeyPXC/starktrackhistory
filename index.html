@@ -1367,7 +1367,7 @@ const TOP25_DATA = {
       {rank:6, name:"Bella Graham", school:"Marlington", mark:"10:47.37", year:2021},
       {rank:7, name:"Kayla Chapman", school:"Jackson", mark:"10:49.18", year:2016},
       {rank:8, name:"Alexandria Bauer", school:"Lake", mark:"10:49.75", year:2021},
-      {rank:9, name:"Christina Prusinowski", school:"GlenOak", mark:"10:50.36", year:1992},
+      {rank:9, name:"Christa Prusinowski", school:"GlenOak", mark:"10:50.36", year:1992},
       {rank:10, name:"Sofia Istnick", school:"Jackson", mark:"10:53.56", year:2019},
       {rank:11, name:"Emily Halm", school:"Jackson", mark:"10:54.02", year:2000},
       {rank:12, name:"Jen Wollam", school:"Alliance", mark:"10:54.48", year:1998},
@@ -1759,7 +1759,7 @@ const TOP25_DATA = {
       {rank:25, name:"Jason Calkins/*Luke Sommer", school:"Sandy Valley", mark:"6' 7\"", year:"95/14"},
       {rank:25, name:"Ben Bartolone/*Jimmy Huggett", school:"Central Catholic", mark:"6' 7\"", year:"96/05"},
       {rank:25, name:"Brian Hartline/Larry Gavin/JT Hampton", school:"GlenOak", mark:"6' 7\"", year:"03/04/16"},
-      {rank:25, name:"Zaybreyon Perry/Von McGuire", school:"Canton McKinley", mark:"6' 7\"", year:"15/05"},
+      {rank:25, name:"Zaybreyon Perry/Von McGuire", school:"McKinley/Massillon", mark:"6' 7\"", year:"15/05"},
       {rank:25, name:"Chris Hendrix", school:"Fairless", mark:"6' 7\"", year:1992},
     ],
     girls: [
@@ -1788,7 +1788,7 @@ const TOP25_DATA = {
       {rank:23, name:"Alanna Dreussi", school:"GlenOak", mark:"5' 5.5\"", year:2001},
       {rank:24, name:"DuAnn Beisel", school:"Louisville", mark:"5' 5\"", year:1979},
       {rank:24, name:"Rochelle Moser/Julie Worley", school:"Hoover", mark:"5' 5\"", year:"79/13"},
-      {rank:24, name:"Erica Loutzenhiser/Tiera Thomas", school:"Canton South", mark:"5' 5\"", year:"80/93"},
+      {rank:24, name:"Erica Loutzenhiser/Tiera Thomas", school:"Canton South/Alliance", mark:"5' 5\"", year:"80/93"},
       {rank:24, name:"Karen Freeman/Angie Bonner", school:"Canton Timken", mark:"5' 5\"", year:"84/86"},
       {rank:24, name:"Elaine Russell/*Katie Nixdorf", school:"Central Catholic", mark:"5' 5\"", year:"85/12"},
       {rank:24, name:"Felicia Prowell/Julie Schaller", school:"Massillon Washington", mark:"5' 5\"", year:"89/99"},
@@ -1941,6 +1941,7 @@ const TOP25_DATA = {
     ],
   },
 };
+
 
 
 
@@ -3324,6 +3325,41 @@ function scoreDreamMeet(gender, schoolRecordsData) {
           const markNum = dreamMarkToNum(mark, evtDef.field);
           const handTime = !evtDef.field && isHandTime(mark);
           entries.push({ name, school: school.name, mark, displayMark, year: year||'', markNum, isRelay: false, source: 'record', handTime });
+        }
+
+        // After school records: upgrade any entry's mark with the TOP25 canonical value.
+        // This corrects cases where the school records doc has a slightly different mark
+        // than the all-time top 25 (e.g. missing (mi) flag, or a county-best vs all-time-best).
+        const top25All = (TOP25_DATA[evtDef.key] || {})[gKey] || [];
+        for (const entry of entries.filter(e => e.school === school.name)) {
+          const t25 = top25All.find(r =>
+            !isExcludedSchool(r.school) &&
+            canonicalSchool(r.school) === schoolCanon &&
+            r.name === entry.name &&
+            !isYardsMark(r.mark, String(r.year), '')
+          );
+          if (!t25) continue;
+          let mark = t25.mark;
+          let displayMark = mark;
+          const miM = mark.match(/^([\d:]+(?:\.\d+)?)\s*\(mi\)/i);
+          if (miM) {
+            const tm = miM[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
+            if (tm) {
+              const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
+              const converted = mileToMetricSecs(secs, true);
+              mark = secsToTime(converted);
+              displayMark = mark + ' (c)';
+            }
+          }
+          // Only upgrade if better (lower for track, higher for field)
+          const newNum = dreamMarkToNum(mark, evtDef.field);
+          const isBetter = evtDef.field ? newNum > entry.markNum : newNum < entry.markNum;
+          if (isBetter || !isFinite(entry.markNum)) {
+            entry.mark = mark;
+            entry.displayMark = displayMark;
+            entry.markNum = newNum;
+            entry.handTime = !evtDef.field && isHandTime(mark);
+          }
         }
 
         // Second scorer: find Top 25 athletes from this school not already entered, cap at 2 total
