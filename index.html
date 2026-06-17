@@ -447,6 +447,7 @@
   <button class="page-tab" data-page="countyrecords" onclick="switchPage('countyrecords')">🎯 County Records</button>
   <button class="page-tab" data-page="champs" onclick="switchPage('champs')">🥇 Team Champions</button>
   <button class="page-tab" data-page="state" onclick="switchPage('state')">🏅 State Champions</button>
+  <button class="page-tab" data-page="pastresults" onclick="switchPage('pastresults')">📋 Past Results</button>
 </nav>
 
 <!-- Mobile hamburger nav -->
@@ -463,6 +464,7 @@
     <button class="nav-dropdown-item" data-page="countyrecords" onclick="switchPage('countyrecords');toggleMenu()">🎯 County Records</button>
     <button class="nav-dropdown-item" data-page="champs" onclick="switchPage('champs');toggleMenu()">🥇 Team Champions</button>
     <button class="nav-dropdown-item" data-page="state" onclick="switchPage('state');toggleMenu()">🏅 State Champions</button>
+    <button class="nav-dropdown-item" data-page="pastresults" onclick="switchPage('pastresults');toggleMenu()">📋 Past Results</button>
   </div>
 </nav>
 
@@ -605,6 +607,7 @@ let filterSchool  = 'ALL';
 let filterEvent   = 'ALL';
 let highlightSchool = 'NONE';
 let searchQuery   = '';
+let resultsYear   = '2026';
 
 // ── Page switching ─────────────────────────────────────────────
 const PAGE_LABELS = {
@@ -613,6 +616,7 @@ const PAGE_LABELS = {
   countyrecords: '🎯 County Records',
   champs: '🥇 Team Champions',
   state: '🏅 State Champions',
+  pastresults: '📋 Past Results',
 };
 
 function toggleMenu() {
@@ -665,6 +669,19 @@ function renderFilterBar() {
     return;
   }
 
+  if (currentPage === 'pastresults') {
+    const years = RESULTS_YEARS.map(y => y.year);
+    bar.innerHTML = `
+      <span class="filter-label">Year</span>
+      <select class="filter-search" style="width:90px;" onchange="setResultsYear(this.value)">
+        ${years.map(y => `<option value="${y}" ${resultsYear==y?'selected':''}>${y}</option>`).join('')}
+      </select>
+      <div class="filter-divider"></div>
+      <span class="filter-label">Gender</span>
+      <div class="filter-group">${genderBtns}</div>`;
+    return;
+  }
+
   if (currentPage === 'records') {
     const schools = schoolRecordsData ? schoolRecordsData.map(s=>s.name).sort() : [];
     bar.innerHTML = `
@@ -714,6 +731,7 @@ function setSchool(s) { filterSchool=s; renderFilterBar(); renderContent(); }
 function setEvent(e)  { filterEvent=e;  renderFilterBar(); renderContent(); }
 function setHighlight(s) { highlightSchool=s; renderFilterBar(); renderContent(); }
 function setSearch(v) { searchQuery=v.toLowerCase(); renderContent(); }
+function setResultsYear(y) { resultsYear=y; renderFilterBar(); renderContent(); }
 
 // ── School records fetch ───────────────────────────────────────
 async function loadSchoolRecords() {
@@ -839,6 +857,7 @@ function renderContent() {
   else if (currentPage === 'countyrecords') renderCountyRecords(c);
   else if (currentPage === 'champs') renderChamps(c);
   else if (currentPage === 'state') renderState(c);
+  else if (currentPage === 'pastresults') renderPastResults(c);
   else renderTop25(c);
 }
 
@@ -2412,6 +2431,384 @@ function renderState(container) {
     <div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">🏅 State Champions of Stark County</div>
     <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">1914 – Present</div>
     ${cards}`;
+}
+
+
+// ── Past Results ───────────────────────────────────────────────
+
+// Year manifest — maps year to file(s). Files live alongside index.html.
+// For years with split boys/girls files, supply both.
+const RESULTS_YEARS = [
+  { year:'2026', files:['04-25-2026 Stark County Overall Results.htm'] },
+  { year:'2025', files:['04-26-2025 Stark County Results with splits.htm'] },
+  { year:'2024', files:['04-20-2024 Stark County Results with splits.htm'] },
+  { year:'2023', files:['04-22-2023 Stark County Results with splits.htm'] },
+  { year:'2022', files:['04-23-2022 Overall Stark County Results.htm'] },
+  { year:'2021', files:['04-24-2021 Overall Stark County Results.htm'] },
+  { year:'2019', files:['04-20-2019 Overall Stark County Results.htm'] },
+  { year:'2018', files:['04-21-2018 Overall Stark County Results.htm'] },
+  { year:'2017', files:['04-22-2017 Overall Stark County Results.htm'] },
+  { year:'2016', files:['04-23-2016 Overall Stark County Results.htm'] },
+  { year:'2015', files:['04-25-2015 Overall Stark County Results.htm'] },
+  { year:'2014', files:['04-26-2014 Overall Stark County Results.htm'] },
+  { year:'2013', files:['04-27-2013 Overall Stark County Results.htm'] },
+  { year:'2012', files:['04-21-2012 Overall Stark County Results.htm'] },
+  { year:'2011', files:['04-23-2011 Overall Stark County Results.htm'] },
+  { year:'2010', files:['04-24-2010 Boys Overall Stark County Results.htm','04-24-2010 Girls Overall Stark County Results.htm'] },
+  { year:'2009', files:['04-25-2009 Overall Stark County Results.htm'] },
+  { year:'2008', files:['04-26-2008 Boys Overall Stark County Results.htm','04-26-2008 Girls Overall Stark County Results.htm'] },
+  { year:'2007', files:['04-21-2007 Boys Overall Stark County Results.htm','04-21-2007 Girls Overall Stark County Results.htm'] },
+  { year:'2006', files:['04-22-2006 Overall Stark County Results.htm'] },
+  { year:'2005', files:['04-23-2005 Boys Stark County Results.htm','04-23-2005 Girls Stark County Results.htm'] },
+];
+
+// Cache parsed results by year
+const resultsCache = {};
+
+// Normalize abbreviated school names from Hy-Tek back to canonical names
+function normalizeHytekSchool(s) {
+  if (!s) return s;
+  s = s.trim();
+  // Exact or near-exact common Hy-Tek abbreviations
+  const map = [
+    [/^mass\.?\s*perry$/i,       'Perry'],
+    [/^mass\.?\s*jackso/i,       'Jackson'],
+    [/^mass\.?\s*washin/i,       'Massillon Washington'],
+    [/^mass\.?\s*tuslaw/i,       'Tuslaw'],
+    [/^canton\s*mckin/i,         'Canton McKinley'],
+    [/^mckinley$/i,              'Canton McKinley'],
+    [/^canton\s*south$/i,        'Canton South'],
+    [/^canton\s*c\.?c\.?$/i,     'Central Catholic'],
+    [/^canton\s*centr/i,         'Central Catholic'],
+    [/^c\.?c\.?\s*northwe/i,     'Northwest'],
+    [/^cf\s*northwe/i,           'Northwest'],
+    [/^st\.?\s*thomas/i,         'St. Thomas Aquinas'],
+    [/^uniont\.?\s*lake$/i,      'Lake'],
+    [/^uniontown\s*la/i,         'Lake'],
+    [/^lake\s*center/i,          'Lake Center Christian'],
+    [/^sandy\s*valley/i,         'Sandy Valley'],
+    [/^east\s*canton$/i,         'East Canton'],
+    [/^canton\s*timke/i,         'Canton Timken'],
+    [/^timken$/i,                'Canton Timken'],
+    [/^canton\s*lehma/i,         'Canton Lehman'],
+    [/^canton\s*linco/i,         'Canton Lincoln'],
+    [/^glenoak$/i,               'GlenOak'],
+    [/^glen\s*oak$/i,            'GlenOak'],
+    [/^alliance$/i,              'Alliance'],
+    [/^fairless$/i,              'Fairless'],
+    [/^hoover$/i,                'Hoover'],
+    [/^jackson$/i,               'Jackson'],
+    [/^lake$/i,                  'Lake'],
+    [/^louisville$/i,            'Louisville'],
+    [/^marlington$/i,            'Marlington'],
+    [/^massillon$/i,             'Massillon Washington'],
+    [/^minerva$/i,               'Minerva'],
+    [/^northwest$/i,             'Northwest'],
+    [/^perry$/i,                 'Perry'],
+    [/^tuslaw$/i,                'Tuslaw'],
+  ];
+  for (const [re, canonical] of map) {
+    if (re.test(s)) return canonical;
+  }
+  return s;
+}
+
+// Parse raw Hy-Tek <pre> text into structured events
+// Returns array of { gender, event, results: [{place, name, school, year, mark, points, isRelay, members}] }
+function parseHytekText(text) {
+  // Normalize line endings
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  const events = [];
+  let i = 0;
+
+  // Event header patterns:
+  //   "Girls 100 Meter Dash" or "Event 2  Girls 100 Meter Dash" or "Girls 100 Meter Dash Varsity"
+  const eventHeaderRe = /^(?:Event\s+\d+\s+)?(Boys|Girls|Men|Women)\s+(.+?)(?:\s+Varsity)?(?:\s+Wheelchair)?$/i;
+  const separatorRe   = /^[=\-]{10,}/;
+  // Finals section marker
+  const finalsRe      = /^Finals$/i;
+  // Result row — numbered place:  "  1 Smith, John    12 GlenOak   ..."
+  const trackRowRe    = /^\s{0,4}(\d+)\s+([\w',.\- ]+?)\s{2,}(\d{1,2}|[A-Z]{2})\s+([\w.\- ]+?)\s{2,}.*?([\d:.'\"]+(?:\.\d+)?(?:[a-z]+)?)\s*(?:\d+\.\d)?\s*(\d+(?:\.\d+)?(?:\s*\.\d+)?)?\s*$/;
+  // Relay result row — school first: "  1 GlenOak    ..."
+  const relayRowRe    = /^\s{0,4}(\d+)\s+([\w.\- ]+?)\s{2,}.*?([\d:.'\"]+)\s+(?:\d+\s+)?(\d+(?:\.\d+)?)?/;
+  // Relay member line: "     1) Smith, John 11     2) Doe, Jane 10"
+  const memberRe      = /\d\)\s+([\w',.\- ]+?)\s+\d{1,2}\b/g;
+
+  const isRelayEvent = (name) => /relay/i.test(name);
+
+  while (i < lines.length) {
+    const line = lines[i].trimEnd();
+
+    // Detect event header
+    const hm = line.match(eventHeaderRe);
+    if (hm && !separatorRe.test(lines[i+1] || '') === false) {
+      // Confirm next non-empty line is a separator
+      let j = i + 1;
+      while (j < lines.length && !lines[j].trim()) j++;
+      if (separatorRe.test(lines[j] || '')) {
+        const gender = /girls|women/i.test(hm[1]) ? 'Girls' : 'Boys';
+        const eventName = hm[2].trim().replace(/\s+/g,' ');
+        const relay = isRelayEvent(eventName);
+
+        // Scan forward to find Finals section, collect results
+        let results = [];
+        let inFinals = false;
+        let inPrelims = false;
+        let k = j + 1;
+
+        while (k < lines.length) {
+          const l = lines[k].trimEnd();
+
+          // Stop at next event header (non-relay: "Girls/Boys ...")
+          if (eventHeaderRe.test(l) && !/^\s/.test(l)) {
+            // Check next line for separator
+            let nj = k + 1;
+            while (nj < lines.length && !lines[nj].trim()) nj++;
+            if (separatorRe.test(lines[nj] || '')) break;
+          }
+
+          if (/^Finals$/i.test(l.trim())) { inFinals = true; inPrelims = false; k++; continue; }
+          if (/^Preliminaries$/i.test(l.trim())) { inPrelims = true; inFinals = false; k++; continue; }
+          if (separatorRe.test(l)) { k++; continue; }
+          // Skip record/header lines
+          if (/County Meet:|Stark County:|Facility:|Small School:|^\s*Name\s|^\s*School\s/i.test(l)) { k++; continue; }
+
+          if (inFinals) {
+            if (relay) {
+              // Relay: "  1 GlenOak    ...    48.77    10"
+              const rm = l.match(/^\s{0,4}(\d+)\s+([\w.\-', ]+?)\s{2,}[\d:.'\"]+\s+([\d:.'\"]+(?:\.\d+)?[A-Z%@#*]*)\s*(?:[+\-]?\d+\.\d)?\s*(\d+(?:\.\d+)?)?\s*$/);
+              if (rm) {
+                const school = normalizeHytekSchool(rm[2].trim());
+                const mark   = rm[3].replace(/[%@#*]/g,'').trim();
+                const points = rm[4] ? parseFloat(rm[4]) : 0;
+                // Collect member lines following
+                let members = [];
+                let m = k + 1;
+                while (m < lines.length && /^\s{4,}/.test(lines[m]) && /\d\)/.test(lines[m])) {
+                  let mc;
+                  const mline = lines[m];
+                  const localRe = /\d\)\s+([\w',.\- ]+?)\s+\d{1,2}\b/g;
+                  while ((mc = localRe.exec(mline)) !== null) {
+                    const nm = mc[1].trim();
+                    // Format "Last, First" -> "First Last"
+                    const parts = nm.split(',').map(p => p.trim());
+                    members.push(parts.length === 2 ? `${parts[1]} ${parts[0]}` : nm);
+                  }
+                  m++;
+                }
+                results.push({ place: parseInt(rm[1]), name: school, school, mark, points, isRelay: true, members });
+                k = m;
+                continue;
+              }
+            } else {
+              // Individual: "  1 Smith, John    12 GlenOak    ...   10.96    10"
+              const im = l.match(/^\s{0,4}(\d+)\s+([\w',.\- ]+?)\s{2,}(\d{1,2})\s+([\w.\-', ]+?)\s{2,}.*?([\d:'\"]+(?:[\-\.]\d+)*(?:\.\d+)?[A-Z%@#*jJ]*)\s*(?:[+\-]?\d+\.\d+)?\s+(\d+(?:\.\d+)?)?\s*$/);
+              if (im) {
+                const rawName   = im[2].trim();
+                const parts     = rawName.split(',').map(p => p.trim());
+                const name      = parts.length === 2 ? `${parts[1]} ${parts[0]}` : rawName;
+                const gradYear  = im[3];
+                const school    = normalizeHytekSchool(im[4].trim());
+                const mark      = im[5].replace(/[%@#*jJ]/gi,'').trim();
+                const points    = im[6] ? parseFloat(im[6]) : 0;
+                results.push({ place: parseInt(im[1]), name, school, gradYear, mark, points, isRelay: false });
+              }
+            }
+          }
+          k++;
+        }
+
+        if (results.length) {
+          events.push({ gender, event: eventName, results });
+        }
+        i = k;
+        continue;
+      }
+    }
+    i++;
+  }
+  return events;
+}
+
+async function loadResultsYear(year) {
+  if (resultsCache[year]) return resultsCache[year];
+  const entry = RESULTS_YEARS.find(e => e.year === String(year));
+  if (!entry) return null;
+
+  try {
+    const texts = await Promise.all(
+      entry.files.map(f => fetch(encodeURIComponent(f)).then(r => r.text()))
+    );
+    // Strip HTML tags, decode entities
+    const parser = new DOMParser();
+    const cleaned = texts.map(html => {
+      const doc = parser.parseFromString(html, 'text/html');
+      const pre = doc.querySelector('pre, PRE');
+      return pre ? pre.textContent : doc.body.textContent;
+    }).join('\n');
+
+    const events = parseHytekText(cleaned);
+    resultsCache[year] = events;
+    return events;
+  } catch(e) {
+    console.error('Results load error:', e);
+    return null;
+  }
+}
+
+function renderPastResults(container) {
+  container.innerHTML = `<div class="loading-msg"><div class="loading-spinner"></div>Loading ${resultsYear} results…</div>`;
+  loadResultsYear(resultsYear).then(events => {
+    if (!events || !events.length) {
+      container.innerHTML = `<div class="loading-msg">Could not load results for ${resultsYear}. Make sure the result files are in the same folder as index.html.</div>`;
+      return;
+    }
+
+    const showBoys  = filterGender !== 'F';
+    const showGirls = filterGender !== 'M';
+
+    // Filter to gender
+    let filtered = events.filter(e =>
+      (showBoys  && e.gender === 'Boys') ||
+      (showGirls && e.gender === 'Girls')
+    );
+
+    // Group by event name so Boys+Girls appear side by side
+    const eventNames = [...new Set(filtered.map(e => e.event))];
+    // Dedupe: same event can appear twice (once per gender in combined file)
+    // Build map: eventName -> { boys, girls }
+    const grouped = {};
+    for (const e of filtered) {
+      if (!grouped[e.event]) grouped[e.event] = {};
+      grouped[e.event][e.gender] = e.results;
+    }
+
+    // Canonical event order (track, then field, then relays, then seated)
+    const ORDER = [
+      '4x800 Meter Relay','100 Meter Dash','110 Meter Hurdles','100 Meter Hurdles',
+      '200 Meter Dash','400 Meter Dash','300 Meter Hurdles','800 Meter Run',
+      '1600 Meter Run','3200 Meter Run',
+      'Pole Vault','High Jump','Long Jump','Triple Jump','Shot Put','Discus',
+      '4x100 Meter Relay','4x200 Meter Relay','4x400 Meter Relay',
+    ];
+    const orderIndex = name => {
+      const n = name.replace(/\s+Varsity\s*/i,'').trim();
+      const i = ORDER.findIndex(o => n.includes(o.split(' ').slice(0,2).join(' ')));
+      return i === -1 ? 99 : i;
+    };
+    const sortedEvents = Object.keys(grouped).sort((a,b) => orderIndex(a)-orderIndex(b));
+
+    const mkRow = (r, gClass) => {
+      const schoolShort = displaySchool(r.school);
+      const logo = schoolLogo(r.school);
+      const logoHtml = logo
+        ? `<img src="${logo}" style="width:20px;height:20px;object-fit:contain;flex-shrink:0;margin-right:4px;" alt="" onerror="this.style.display='none'">`
+        : '';
+      if (r.isRelay) {
+        const memberHtml = r.members && r.members.length
+          ? `<div style="font-size:10px;color:var(--text-dim);margin-top:1px;line-height:1.5;">${r.members.join(' · ')}</div>`
+          : '';
+        return `<tr>
+          <td class="rank-cell ${r.place<=3?'top3':''}">${r.place}</td>
+          <td><div style="display:flex;align-items:center;gap:4px;">${logoHtml}<span style="font-size:12.5px;font-weight:600;">${schoolShort}</span></div>${memberHtml}</td>
+          <td class="school-cell"></td>
+          <td class="mark-cell ${gClass}">${r.mark}</td>
+          <td class="year-cell">${r.points||''}</td>
+        </tr>`;
+      }
+      return `<tr>
+        <td class="rank-cell ${r.place<=3?'top3':''}">${r.place}</td>
+        <td style="font-size:12.5px;">${r.name}</td>
+        <td><div style="display:flex;align-items:center;gap:3px;">${logoHtml}<span class="school-cell">${schoolShort}</span></div></td>
+        <td class="mark-cell ${gClass}">${r.mark}</td>
+        <td class="year-cell">${r.points||''}</td>
+      </tr>`;
+    };
+
+    const mkTable = (results, gClass, label) => {
+      if (!results || !results.length) return '';
+      const rows = results.slice(0,8).map(r => mkRow(r, gClass)).join('');
+      return `<div class="top25-col">
+        <div class="top25-col-header ${gClass}">${label}</div>
+        <div class="table-scroll"><table class="top25-table">
+          <colgroup><col style="width:24px"><col><col style="width:70px"><col style="width:66px"><col style="width:28px"></colgroup>
+          <thead><tr><th>#</th><th>Athlete / Team</th><th>School</th><th style="text-align:right">Mark</th><th style="text-align:right">Pts</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+      </div>`;
+    };
+
+    // Team scores
+    const scoreMap = { Boys: {}, Girls: {} };
+    for (const e of Object.values(grouped)) {
+      for (const [gender, results] of Object.entries(e)) {
+        for (const r of results) {
+          const s = r.school;
+          if (!scoreMap[gender][s]) scoreMap[gender][s] = 0;
+          scoreMap[gender][s] += r.points || 0;
+        }
+      }
+    }
+    const mkScores = (gender, gClass) => {
+      const entries = Object.entries(scoreMap[gender])
+        .filter(([,pts]) => pts > 0)
+        .sort(([,a],[,b]) => b-a)
+        .slice(0,10);
+      if (!entries.length) return '';
+      const rows = entries.map(([school, pts], idx) => {
+        const logo = schoolLogo(school);
+        const logoHtml = logo
+          ? `<img src="${logo}" style="width:22px;height:22px;object-fit:contain;margin-right:5px;" alt="" onerror="this.style.display='none'">`
+          : '';
+        return `<tr>
+          <td class="rank-cell ${idx<3?'top3':''}">${idx+1}</td>
+          <td><div style="display:flex;align-items:center;">${logoHtml}<span style="font-size:12.5px;font-weight:${idx===0?'700':'400'}">${displaySchool(school)}</span></div></td>
+          <td class="mark-cell ${gClass}">${pts % 1 === 0 ? pts : pts.toFixed(1)}</td>
+        </tr>`;
+      }).join('');
+      return `<div class="top25-col">
+        <div class="top25-col-header ${gClass}">${gender} Team Scores</div>
+        <div class="table-scroll"><table class="top25-table">
+          <colgroup><col style="width:24px"><col><col style="width:60px"></colgroup>
+          <thead><tr><th>#</th><th>School</th><th style="text-align:right">Pts</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+      </div>`;
+    };
+
+    let html = `<div style="text-align:center;font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">📋 ${resultsYear} Stark County Championships</div>
+      <div style="text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">Finals Results</div>`;
+
+    // Team scores block
+    if (filterGender === 'ALL') {
+      const bScores = showBoys  ? mkScores('Boys',  'boys')  : '';
+      const gScores = showGirls ? mkScores('Girls', 'girls') : '';
+      if (bScores || gScores) {
+        html += `<div class="top25-event">
+          <div class="top25-event-header"><div class="top25-event-name">Team Scores</div><div class="top25-rule"></div></div>
+          <div class="top25-split">${bScores}${gScores}</div>
+        </div>`;
+      }
+    }
+
+    // Event results
+    for (const evtName of sortedEvents) {
+      const g = grouped[evtName];
+      const bTable = showBoys  ? mkTable(g['Boys'],  'boys',  'Boys')  : '';
+      const gTable = showGirls ? mkTable(g['Girls'], 'girls', 'Girls') : '';
+      if (!bTable && !gTable) continue;
+      const label = evtName.replace(/\s*Varsity\s*/i,'').trim();
+      html += `<div class="top25-event">
+        <div class="top25-event-header">
+          <div class="top25-event-name">${label}</div>
+          <div class="top25-rule"></div>
+        </div>
+        <div class="top25-split">${bTable}${gTable}</div>
+      </div>`;
+    }
+
+    container.innerHTML = html;
+  });
 }
 
 // ── Init ───────────────────────────────────────────────────────
