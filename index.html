@@ -2553,11 +2553,14 @@ function parseIndivRow(line) {
   const place = parseInt(pm[1]);
   const rest = line.slice(pm[0].length).trimEnd();
 
-  const commaIdx = rest.indexOf(',');
+  // Strip parenthetical alternate last name, e.g. "(Green) Linkous, Nate"
+  const cleanRest = rest.replace(/^\([^)]+\)\s*/, '');
+
+  const commaIdx = cleanRest.indexOf(',');
   if (commaIdx === -1) return null; // relay or junk
 
-  const lastName = rest.slice(0, commaIdx).trim();
-  const afterComma = rest.slice(commaIdx + 1).trimStart();
+  const lastName = cleanRest.slice(0, commaIdx).trim();
+  const afterComma = cleanRest.slice(commaIdx + 1).trimStart();
 
   // First name: one word (letters/apostrophes/hyphens only)
   const fnM = afterComma.match(/^([A-Za-z''\-]+)\s+/);
@@ -2636,8 +2639,21 @@ function parseHytekText(text) {
   const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   const events = [];
   const sepRe = /^[=\-]{8,}/;
-  const evtHdrRe = /^(?:Event\s+\d+\s+)?(Boys|Girls|Men|Women)\s+(.+?)(?:\s+Varsity)?(?:\s+Wheelchair)?(?:\s+Seated)?\s*$/i;
+  // Capture full event name including Seated/Wheelchair suffix; strip only trailing "Varsity"
+  const evtHdrRe = /^(?:Event\s+\d+\s+)?(Boys|Girls|Men|Women)\s+(.+?)\s*(?:\bVarsity\b)?\s*$/i;
   const isRelayEvt = name => /relay/i.test(name);
+
+  // Helper: clean up event name
+  function cleanEvtName(raw) {
+    return raw
+      .replace(/\bVarsity\b/gi, '')
+      .replace(/\bWheelchair\s*Wheelchair\b/gi, 'Wheelchair')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Build a map of gender|eventName -> event object so duplicate headers (prelims+finals) merge
+  const eventMap = {};
 
   let i = 0;
   while (i < lines.length) {
@@ -2650,66 +2666,79 @@ function parseHytekText(text) {
       if (!sepRe.test(lines[si] || '')) { i++; continue; }
 
       const gender = /girls|women/i.test(hm[1]) ? 'Girls' : 'Boys';
-      const eventName = hm[2].trim().replace(/\s+/g,' ');
+      const eventName = cleanEvtName(hm[2]);
       const relay = isRelayEvt(eventName);
-      const finals = [], prelims = [];
-      let inFinals = false, inPrelims = false;
+      const key = `${gender}|${eventName}`;
+
+      if (!eventMap[key]) eventMap[key] = { gender, event: eventName, finals: [], prelims: [] };
+      const evtObj = eventMap[key];
+
+      // Default to inFinals=true so single-section events (400m, field, relays) are captured.
+      // If a Preliminaries marker appears, flip to prelims. Finals marker flips back.
+      let inFinals = true, inPrelims = false;
 
       let k = si + 1;
       while (k < lines.length) {
         const l = lines[k].trimEnd();
 
         // Stop at next event header
-        if (evtHdrRe.test(l) && !/^\s/.test(l)) {
+        if (!l.startsWith(' ') && evtHdrRe.test(l)) {
           let nsi = k + 1;
           while (nsi < lines.length && !lines[nsi].trim()) nsi++;
           if (sepRe.test(lines[nsi] || '')) break;
         }
 
         const ltrim = l.trim();
-        if (/^Finals$/i.test(ltrim)) { inFinals = true; inPrelims = false; k++; continue; }
-        if (/^Preliminaries$/i.test(ltrim)) { inPrelims = true; inFinals = false; k++; continue; }
+        if (/^Finals$/i.test(ltrim))        { inFinals = true;  inPrelims = false; k++; continue; }
+        if (/^Preliminaries$/i.test(ltrim)) { inPrelims = true; inFinals  = false; k++; continue; }
         if (sepRe.test(l)) { k++; continue; }
         if (/County Meet:|Stark County:|Facility:|Small School:|^\s*(Name|School)\s/i.test(l)) { k++; continue; }
 
-        if (inFinals || inPrelims) {
-          const bucket = inFinals ? finals : prelims;
-          if (relay) {
-            const r = parseRelayRow(l);
-            if (r) {
-              r.isPrelim = inPrelims;
-              bucket.push(r);
-              // Collect member lines immediately after
-              let mk = k + 1;
-              while (mk < lines.length && /^\s{4,}/.test(lines[mk]) && /\d\)/.test(lines[mk])) {
-                r.members.push(...parseRelayMembers(lines[mk]));
-                mk++;
-              }
-              k = mk;
-              continue;
+        const bucket = inFinals ? evtObj.finals : evtObj.prelims;
+        if (relay) {
+          const r = parseRelayRow(l);
+          if (r) {
+            r.isPrelim = inPrelims;
+            bucket.push(r);
+            let mk = k + 1;
+            while (mk < lines.length && /^\s{4,}/.test(lines[mk]) && /\d\)/.test(lines[mk])) {
+              r.members.push(...parseRelayMembers(lines[mk]));
+              mk++;
             }
-          } else {
-            const r = parseIndivRow(l);
-            if (r) {
-              r.isPrelim = inPrelims;
-              // Skip split-time continuation lines
-              k++;
-              while (k < lines.length && /^\s{5,}\d/.test(lines[k])) k++;
-              bucket.push(r);
-              continue;
-            }
+            k = mk;
+            continue;
+          }
+        } else {
+          const r = parseIndivRow(l);
+          if (r) {
+            r.isPrelim = inPrelims;
+            k++;
+            while (k < lines.length && /^\s{5,}[\d(]/.test(lines[k])) k++; // skip splits
+            bucket.push(r);
+            continue;
           }
         }
         k++;
       }
 
-      if (finals.length || prelims.length) {
-        events.push({ gender, event: eventName, finals, prelims });
-      }
       i = k;
       continue;
     }
     i++;
+  }
+
+  // Convert map to array in insertion order, deduplicate finals by place
+  for (const evtObj of Object.values(eventMap)) {
+    if (evtObj.finals.length || evtObj.prelims.length) {
+      // If finals got duplicated (two "Finals" blocks merged), dedupe by place+name
+      const seen = new Set();
+      evtObj.finals = evtObj.finals.filter(r => {
+        const key = `${r.place}|${r.name}`;
+        if (seen.has(key)) return false;
+        seen.add(key); return true;
+      });
+      events.push(evtObj);
+    }
   }
   return events;
 }
