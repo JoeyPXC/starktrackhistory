@@ -3521,6 +3521,26 @@ function scoreDreamMeet(gender, schoolRecordsData) {
       }
     }
 
+    // A trailing "2 Mile"/"2Mile"/"2-Mile" (optionally "Run"), or plain
+    // "Mile"/"1 Mile", written directly into the mark text itself — e.g.
+    // "10:03.1 2 Mile" — rather than the event name or a recognized
+    // suffix. Common on older marks from before events were standardized
+    // to metric distances. Needs the same conversion as a "(mi)" mark;
+    // left alone, the trailing words break every pattern in dreamMarkToNum
+    // and the whole entry silently gets dropped. Checks "2 Mile" first
+    // since plain "Mile" would otherwise match inside it too.
+    const twoMileM = mark.match(/^([\d:]+(?:\.\d+)?)\s*\(?\s*2[\s-]?mile(?:\s*run)?\)?\s*$/i);
+    const oneMileM = !twoMileM && mark.match(/^([\d:]+(?:\.\d+)?)\s*\(?\s*(?:1[\s-]?)?mile(?:\s*run)?\)?\s*$/i);
+    if (twoMileM || oneMileM) {
+      const tm = (twoMileM || oneMileM)[1].match(/^(\d+):(\d+(?:\.\d+)?)$/);
+      if (tm) {
+        const secs = parseInt(tm[1])*60 + parseFloat(tm[2]);
+        const c = mileToMetricSecs(secs, !!oneMileM);
+        mark = secsToTime(c);
+        displayMark = mark + ' (c)';
+      }
+    }
+
     // A bare trailing "c" (e.g. "10:12.59c", no parentheses) marks a mark
     // that's already been manually converted to its metric equivalent —
     // same idea as the auto-converter's "(c)" above, just typed directly
