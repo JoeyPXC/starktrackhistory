@@ -3811,9 +3811,41 @@ async function init() {
   // Mark the default tab active
   document.querySelectorAll('.page-tab,.nav-dropdown-item').forEach(t =>
     t.classList.toggle('active', t.dataset.page === 'countyrecords'));
-  schoolRecordsData = await loadSchoolRecords();
-  if (schoolRecordsData) renderFilterBar();
-  renderContent();
+
+  // Instant paint: render immediately from the last visit's saved copy of
+  // the school-records doc (if we have one), THEN fetch the live doc in the
+  // background. Previously every single open — even with unchanged data —
+  // sat on the loading spinner until the Google Doc round trip finished.
+  // Now repeat visits paint instantly and quietly self-update; the doc
+  // fetch only blocks first-ever visits. (Same stale-while-revalidate
+  // pattern the Perry app uses for its athlete database.)
+  let cachedJson = null;
+  try { cachedJson = localStorage.getItem('stark_school_records_v1'); } catch(e) {}
+  if (cachedJson) {
+    try {
+      schoolRecordsData = JSON.parse(cachedJson);
+      renderFilterBar();
+      renderContent();
+    } catch(e) { schoolRecordsData = null; cachedJson = null; }
+  }
+
+  const fresh = await loadSchoolRecords();
+  if (fresh && fresh.length) {
+    const freshJson = JSON.stringify(fresh);
+    try { localStorage.setItem('stark_school_records_v1', freshJson); } catch(e) {}
+    // Only re-render if the doc actually changed since last visit —
+    // avoids yanking the page out from under someone mid-scroll for no
+    // reason (a re-render collapses expanded cards and resets position).
+    if (freshJson !== cachedJson) {
+      schoolRecordsData = fresh;
+      renderFilterBar();
+      renderContent();
+    }
+  } else if (!cachedJson) {
+    // No cache AND the fetch failed — render anyway so each page shows
+    // its own empty/loading state instead of the boot spinner.
+    renderContent();
+  }
 }
 init();
 
